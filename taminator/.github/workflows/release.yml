@@ -11,7 +11,50 @@ on:
         required: true
         default: 'v1.9.2'
 
+permissions:
+  contents: write
+
 jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: gui/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Install Node dependencies
+        working-directory: gui
+        run: npm ci
+
+      - name: Build Linux AppImage
+        working-directory: gui
+        run: npm run build:linux
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: gui/dist/*.AppImage
+          retention-days: 7
+
   build-windows:
     runs-on: windows-latest
     steps:
@@ -25,13 +68,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: gui/package-lock.json
 
-      - name: Install dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if (Test-Path requirements.txt) { pip install -r requirements.txt }
+
+      - name: Install Node dependencies
         working-directory: gui
         run: npm ci
 
       - name: Build Windows installer
         working-directory: gui
-        run: npm run build -- --win
+        run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -55,13 +108,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: gui/package-lock.json
 
-      - name: Install dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
+
+      - name: Install Node dependencies
         working-directory: gui
         run: npm ci
 
       - name: Build macOS DMG
         working-directory: gui
-        run: npm run build -- --mac
+        run: npm run build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -73,13 +136,17 @@ jobs:
           retention-days: 7
 
   create-release:
-    needs: [build-windows, build-macos]
+    needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-appimage
+          path: dist/
 
       - name: Download Windows artifact
         uses: actions/download-artifact@v4
@@ -93,29 +160,65 @@ jobs:
           name: macos-dmg
           path: dist/
 
+      - name: List all artifacts (debug)
+        run: |
+          echo "All release artifacts:"
+          ls -lh dist/
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${{ github.event.inputs.version || github.ref_name }}
+          VERSION_NUM=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_num=$VERSION_NUM" >> $GITHUB_OUTPUT
+
+      - name: Read release notes
+        id: release_notes
+        run: |
+          if [ -f "v${{ steps.version.outputs.version_num }}-release-notes.md" ]; then
+            echo "Release notes found: v${{ steps.version.outputs.version_num }}-release-notes.md"
+            echo "has_notes=true" >> $GITHUB_OUTPUT
+          else
+            echo "No release notes found, using default"
+            echo "has_notes=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.event.inputs.version || github.ref_name }}
-          name: Taminator ${{ github.event.inputs.version || github.ref_name }}
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Taminator ${{ steps.version.outputs.version }}
           body: |
-            ## Taminator ${{ github.event.inputs.version || github.ref_name }}
+            ## Taminator ${{ steps.version.outputs.version }}
             
             ### Downloads
-            - **Windows**: `Taminator-Setup-*.exe` (NSIS Installer)
-            - **macOS Intel**: `Taminator-*-x64.dmg` 
-            - **macOS Apple Silicon**: `Taminator-*-arm64.dmg`
+            - **🐧 Linux**: `Taminator-*.AppImage` (~118 MB)
+            - **🪟 Windows**: `Taminator-Setup-*.exe` (NSIS Installer)
+            - **🍎 macOS Intel**: `Taminator-*-x64.dmg` 
+            - **🍎 macOS Apple Silicon**: `Taminator-*-arm64.dmg`
             
             ### Installation
+            
+            **Linux**:
+            ```bash
+            chmod +x Taminator-*.AppImage
+            ./Taminator-*.AppImage
+            ```
+            
             **Windows**: Run the installer and follow the prompts.
+            
             **macOS**: Open the DMG and drag Taminator to Applications.
             
             ### Requirements
             - Red Hat VPN access for KB/T3 features
             - Portal token (rh_jwt cookie) for authentication
             
+            ### Documentation
             See [README.md](https://github.com/thebyrdman-git/taminator/blob/main/README.md) for full documentation.
+          body_path: ${{ steps.release_notes.outputs.has_notes == 'true' && format('v{0}-release-notes.md', steps.version.outputs.version_num) || '' }}
           files: |
+            dist/*.AppImage
             dist/*.exe
             dist/*.dmg
           draft: false
