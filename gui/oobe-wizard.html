@@ -507,9 +507,9 @@
           </div>
 
           <div class="form-group">
-            <label for="customerAccount">Red Hat Account Number (Optional)</label>
-            <input type="text" id="customerAccount" placeholder="Example: 1234567">
-            <small>Customer's Red Hat account number (can be added later)</small>
+            <label for="customerAccount">Red Hat Account Number *</label>
+            <input type="text" id="customerAccount" placeholder="Example: 334224" required>
+            <small><strong>Required:</strong> Enterprise customers often have multiple account numbers. Specify which account this tracker is for (contracts, subscriptions, SLAs vary by account).</small>
           </div>
 
           <div class="form-group">
@@ -959,8 +959,8 @@
       const customerAccount = document.getElementById('customerAccount').value;
       const tamEmail = document.getElementById('tamEmail').value;
       
-      if (!customerName || !customerSlug) {
-        alert('Please enter customer name and slug.');
+      if (!customerName || !customerSlug || !customerAccount) {
+        alert('Please enter customer name, slug, and account number.\n\nAccount number is required because enterprise customers often have multiple Red Hat accounts.');
         return;
       }
       

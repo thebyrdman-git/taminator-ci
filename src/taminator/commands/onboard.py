@@ -154,9 +154,27 @@ We'll collect some information and create an initial tracking report.
         )
         
         customer_info['account'] = account or Prompt.ask(
-            "Red Hat account number",
-            default="TBD"
+            "Red Hat account number (REQUIRED - enterprise customers have multiple accounts)",
+            default=""
         )
+        
+        # Validate account number is provided
+        if not customer_info['account'] or customer_info['account'] == "":
+            console.print("\n⚠️  Account number is required!", style="yellow bold")
+            console.print("\nWhy this matters:", style="cyan")
+            console.print("  • Enterprise customers have multiple Red Hat account numbers")
+            console.print("  • Each account has different contracts, subscriptions, and SLAs")
+            console.print("  • You must specify which account this tracker is for")
+            console.print("\nExample: JPMC has separate accounts for OpenShift vs RHEL\n")
+            
+            customer_info['account'] = Prompt.ask(
+                "Red Hat account number (required)",
+                default=""
+            )
+            
+            if not customer_info['account'] or customer_info['account'] == "":
+                console.print("\n❌ Cannot proceed without account number", style="red bold")
+                return 1
         
         customer_info['contact'] = Prompt.ask(
             "Primary contact name",

@@ -131,7 +131,7 @@ For more help on a command:
     onboard_parser.add_argument(
         '--account',
         metavar='NUMBER',
-        help='Red Hat account number (optional)'
+        help='Red Hat account number (REQUIRED: enterprise customers have multiple accounts)'
     )
     onboard_parser.add_argument(
         '--non-interactive',
