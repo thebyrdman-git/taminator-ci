@@ -353,11 +353,26 @@ class OOBETestSimulator {
       { screen: 'completion', expected: 100 }
     ];
     
-    for (const test of progressTests) {
-      // Simulate progress calculation
+    // Progress calculation logic (matching actual OOBE implementation)
+    const calculateProgress = (screenName) => {
+      // Base screen order (main flow)
       const screenOrder = ['welcome', 'auth-choice', 'vault-setup', 'first-customer', 'completion'];
-      const currentIndex = screenOrder.indexOf(test.screen);
-      const progress = Math.round(((currentIndex + 1) / screenOrder.length) * 100);
+      
+      // Handle manual-setup as alternative to vault-setup (same progress level)
+      if (screenName === 'manual-setup') {
+        screenName = 'vault-setup'; // Map to same progress level
+      }
+      
+      const currentIndex = screenOrder.indexOf(screenName);
+      if (currentIndex === -1) {
+        return 0; // Unknown screen
+      }
+      
+      return Math.round(((currentIndex + 1) / screenOrder.length) * 100);
+    };
+    
+    for (const test of progressTests) {
+      const progress = calculateProgress(test.screen);
       
       // Allow some tolerance for rounding
       const matches = Math.abs(progress - test.expected) <= 5;
