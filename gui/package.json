@@ -11,7 +11,9 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
-    "dev": "electron . --dev"
+    "dev": "electron . --dev",
+    "test:oobe": "node test-oobe-simulator.js",
+    "test:oobe:interactive": "node test-oobe-interactive.js"
   },
   "author": "Jimmy Byrd",
   "license": "ISC",
