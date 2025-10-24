@@ -1,0 +1,2863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taminator</title>
+  <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@5/patternfly.css">
+  <style>
+    /* ============================================================ */
+    /* 🎨 THEME SYSTEM - CSS VARIABLES */
+    /* ============================================================ */
+    :root {
+      /* Colors - Professional Theme (Red, White, Black Only) */
+      --theme-primary: #EE0000;        /* Red Hat Red - backgrounds, accents */
+      --theme-secondary: #151515;      /* Black - for contrast */
+      --theme-background: #FFFFFF;     /* White - page background */
+      --theme-surface: #FFFFFF;        /* White - cards */
+      --theme-text: #151515;           /* Black - main text */
+      --theme-text-secondary: #6A6E73; /* Gray - secondary text */
+      --theme-accent: #EE0000;         /* Red Hat Red - highlights */
+      --theme-border: #D2D2D2;         /* Light Gray - borders */
+      --theme-success: #3E8635;        /* Green - success states (need contrast) */
+      --theme-warning: #F0AB00;        /* Gold - warnings (need contrast) */
+      --theme-error: #EE0000;          /* Red Hat Red - errors */
+      --theme-sidebar-bg: #151515;     /* Black - sidebar */
+      --theme-sidebar-text: #FFFFFF;   /* White - sidebar text */
+      
+      /* Typography */
+      --theme-font-family: 'Red Hat Text', 'Overpass', sans-serif;
+      --theme-font-size: 16px;
+      --theme-line-height: 1.6;
+      --theme-font-mono: 'Red Hat Mono', 'Courier New', monospace;
+      
+      /* Layout */
+      --theme-border-radius: 4px;
+      --theme-card-padding: 24px;
+      --theme-spacing: 16px;
+      
+      /* Effects */
+      --theme-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --theme-shadow-lg: 0 4px 16px rgba(0,0,0,0.3);
+      --theme-transition: all 0.2s ease;
+    }
+    
+    /* ============================================================ */
+    /* 🌙 DARK MODE THEME */
+    /* ============================================================ */
+    [data-theme="dark"] {
+      --theme-primary: #FF6B6B;
+      --theme-secondary: #4ECDC4;
+      --theme-background: #1E1E1E;
+      --theme-surface: #2D2D2D;
+      --theme-text: #D4D4D4;
+      --theme-text-secondary: #A0A0A0;
+      --theme-accent: #FFA500;
+      --theme-border: #404040;
+      --theme-success: #4ECDC4;
+      --theme-warning: #FFA500;
+      --theme-error: #FF6B6B;
+      --theme-sidebar-bg: #181818;
+      --theme-sidebar-text: #FFFFFF;
+    }
+    
+    /* ============================================================ */
+    /* 🪟 WINDOWS XP THEME */
+    /* ============================================================ */
+    [data-theme="windows-xp"] {
+      --theme-primary: #0054E3;
+      --theme-secondary: #63B521;
+      --theme-background: #ECE9D8;
+      --theme-surface: #FFFFFF;
+      --theme-text: #000000;
+      --theme-text-secondary: #666666;
+      --theme-accent: #FF9933;
+      --theme-border: #ACA899;
+      --theme-success: #63B521;
+      --theme-warning: #FF9933;
+      --theme-error: #CC0000;
+      --theme-sidebar-bg: #245EDC;
+      --theme-sidebar-text: #FFFFFF;
+      --theme-font-family: 'Tahoma', 'MS Sans Serif', sans-serif;
+      --theme-font-size: 11px;
+    }
+    
+    /* ============================================================ */
+    /* 🌊 SOLARIZED DARK THEME */
+    /* ============================================================ */
+    [data-theme="solarized-dark"] {
+      --theme-primary: #268BD2;
+      --theme-secondary: #2AA198;
+      --theme-background: #002B36;
+      --theme-surface: #073642;
+      --theme-text: #839496;
+      --theme-text-secondary: #586E75;
+      --theme-accent: #B58900;
+      --theme-border: #073642;
+      --theme-success: #859900;
+      --theme-warning: #B58900;
+      --theme-error: #DC322F;
+      --theme-sidebar-bg: #001F26;
+      --theme-sidebar-text: #839496;
+    }
+    
+    /* ============================================================ */
+    /* 🧛 DRACULA THEME */
+    /* ============================================================ */
+    [data-theme="dracula"] {
+      --theme-primary: #FF79C6;
+      --theme-secondary: #8BE9FD;
+      --theme-background: #282A36;
+      --theme-surface: #44475A;
+      --theme-text: #F8F8F2;
+      --theme-text-secondary: #6272A4;
+      --theme-accent: #FFB86C;
+      --theme-border: #44475A;
+      --theme-success: #50FA7B;
+      --theme-warning: #F1FA8C;
+      --theme-error: #FF5555;
+      --theme-sidebar-bg: #1E1F29;
+      --theme-sidebar-text: #F8F8F2;
+    }
+    
+    /* ============================================================ */
+    /* 🏔️ NORD THEME */
+    /* ============================================================ */
+    [data-theme="nord"] {
+      --theme-primary: #88C0D0;
+      --theme-secondary: #81A1C1;
+      --theme-background: #2E3440;
+      --theme-surface: #3B4252;
+      --theme-text: #ECEFF4;
+      --theme-text-secondary: #D8DEE9;
+      --theme-accent: #EBCB8B;
+      --theme-border: #4C566A;
+      --theme-success: #A3BE8C;
+      --theme-warning: #EBCB8B;
+      --theme-error: #BF616A;
+      --theme-sidebar-bg: #242933;
+      --theme-sidebar-text: #ECEFF4;
+    }
+    
+    /* ============================================================ */
+    /* 🟢 MATRIX THEME */
+    /* ============================================================ */
+    [data-theme="matrix"] {
+      --theme-primary: #00FF00;
+      --theme-secondary: #00CC00;
+      --theme-background: #000000;
+      --theme-surface: #001100;
+      --theme-text: #00FF00;
+      --theme-text-secondary: #008800;
+      --theme-accent: #00FF00;
+      --theme-border: #003300;
+      --theme-success: #00FF00;
+      --theme-warning: #FFFF00;
+      --theme-error: #FF0000;
+      --theme-sidebar-bg: #000000;
+      --theme-sidebar-text: #00FF00;
+      --theme-font-family: 'Red Hat Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--theme-font-family);
+      font-size: var(--theme-font-size);
+      background-color: var(--theme-background);
+      color: var(--theme-text);
+      overflow: hidden;
+      transition: var(--theme-transition);
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background-color: #212427;
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid #292E34;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      font-family: 'Red Hat Display', sans-serif;
+    }
+
+    .logo-subtitle {
+      font-size: 11px;
+      color: #C8C8C8;
+      margin-top: 4px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 0;
+    }
+
+    .nav-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #FFFFFF;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background-color: #292E34;
+    }
+
+    .nav-item.active {
+      background-color: #292E34;
+      border-left-color: #EE0000;
+      font-weight: 600;
+    }
+
+    .nav-icon {
+      font-size: 18px;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      background-color: #FFFFFF;
+      padding: 16px 32px;
+      border-bottom: 1px solid #D2D2D2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: 700;
+      font-family: 'Red Hat Display', sans-serif;
+      color: #151515;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .content-area {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    /* Dashboard Cards */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: #FFFFFF;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #151515;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-content {
+      color: #6A6E73;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #F0F0F0;
+    }
+
+    .status-item:last-child {
+      border-bottom: none;
+    }
+
+    .status-label {
+      font-weight: 500;
+      color: #151515;
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .status-badge.success {
+      background-color: #F0F9F0;
+      color: #3E8635;
+    }
+
+    .status-badge.warning {
+      background-color: #FFF8E6;
+      color: #795600;
+    }
+
+    .status-badge.error {
+      background-color: #FFEAEA;
+      color: #C9190B;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+      font-family: 'Red Hat Text', sans-serif;
+    }
+
+    .btn-primary {
+      background-color: #EE0000;
+      color: #FFFFFF;
+    }
+
+    .btn-primary:hover {
+      background-color: #C9190B;
+    }
+
+    .btn-secondary {
+      background-color: #F0F0F0;
+      color: #151515;
+    }
+
+    .btn-secondary:hover {
+      background-color: #E0E0E0;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      background-color: #FFFFFF;
+      padding: 12px 32px;
+      border-top: 1px solid #D2D2D2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: #6A6E73;
+    }
+
+    .status-bar-left {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      border: 3px solid #F0F0F0;
+      border-top: 3px solid #EE0000;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <div class="logo-icon">
+            <img src="public/terminator-icon.png" alt="Taminator">
+          </div>
+          <div>
+            <div class="logo-text">Taminator</div>
+            <div class="logo-subtitle">The Skynet TAMs actually want. 🤖</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sidebar-nav">
+        <div class="nav-item active" onclick="showDashboard()">
+          <span class="nav-icon">🏠</span>
+          <span>Home</span>
+        </div>
+        <div class="nav-item" onclick="showCheck()">
+          <span class="nav-icon">🔍</span>
+          <span>Verify</span>
+        </div>
+        <div class="nav-item" onclick="showUpdate()">
+          <span class="nav-icon">🔄</span>
+          <span>Update</span>
+        </div>
+        <div class="nav-item" onclick="showPost()">
+          <span class="nav-icon">📤</span>
+          <span>Post</span>
+        </div>
+        <div class="nav-item" onclick="showOnboard()">
+          <span class="nav-icon">➕</span>
+          <span>Onboard</span>
+        </div>
+        <div class="nav-item" onclick="showVault()">
+          <span class="nav-icon">🔒</span>
+          <span>Vault</span>
+        </div>
+      <div class="nav-item" onclick="showClippy()">
+        <span class="nav-icon">📎</span>
+        <span>Clippy Email</span>
+        <span style="font-size: 10px; color: #6A6E73; margin-left: 8px;">Soon</span>
+      </div>
+        <div class="nav-item" onclick="showConfig()">
+          <span class="nav-icon">⚙️</span>
+          <span>Settings</span>
+        </div>
+        <div class="nav-item" onclick="showReportIssue()">
+          <span class="nav-icon">🐛</span>
+          <span>Report Issue</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <div class="header-title" id="page-title">Dashboard</div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" onclick="refreshAuth()">
+            <span id="refresh-btn">🔄 Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="content-area" id="content">
+        <!-- Dashboard content loaded here -->
+      </div>
+
+      <div class="status-bar">
+        <div class="status-bar-left">
+          <span id="auth-status">✅ All authentication OK</span>
+          <span>|</span>
+          <span id="last-check">Last check: Loading...</span>
+        </div>
+        <div>Taminator v2.0.0-alpha</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // Load dashboard on start
+    document.addEventListener('DOMContentLoaded', async () => {
+      console.log('DOM loaded, checking OOBE status...');
+      
+      try {
+        // Check if this is the first run
+        const isFirstRun = await ipcRenderer.invoke('oobe-is-first-run');
+        
+        if (isFirstRun) {
+          console.log('[OOBE] First run detected, showing wizard...');
+          // Load OOBE wizard
+          window.location.href = 'oobe-wizard.html';
+          return;
+        }
+        
+        console.log('[OOBE] Not first run, loading dashboard...');
+        
+        // Load saved settings first
+        await loadSavedSettingsOnStartup();
+        
+        // Then show dashboard and refresh auth
+        showDashboard();
+        refreshAuth();
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      }
+    });
+    
+    // Load and apply saved settings on startup
+    async function loadSavedSettingsOnStartup() {
+      try {
+        const settings = await window.api.invoke('load-settings');
+        
+        if (settings) {
+          console.log('[Settings] Loaded saved settings:', settings);
+          
+          // Apply settings to form fields
+          if (settings.email) {
+            const emailField = document.getElementById('tam-email');
+            if (emailField) emailField.value = settings.email;
+          }
+          
+          if (settings.autoUpdate !== undefined) {
+            const autoUpdateField = document.getElementById('auto-update');
+            if (autoUpdateField) autoUpdateField.checked = settings.autoUpdate;
+          }
+          
+          if (settings.notifications !== undefined) {
+            const notificationsField = document.getElementById('notifications');
+            if (notificationsField) notificationsField.checked = settings.notifications;
+          }
+          
+          if (settings.defaultFormat) {
+            const formatField = document.getElementById('default-format');
+            if (formatField) formatField.value = settings.defaultFormat;
+          }
+          
+          if (settings.includeTimestamps !== undefined) {
+            const timestampsField = document.getElementById('timestampsField');
+            if (timestampsField) timestampsField.checked = settings.includeTimestamps;
+          }
+          
+          if (settings.generateChangelog !== undefined) {
+            const changelogField = document.getElementById('generate-changelog');
+            if (changelogField) changelogField.checked = settings.generateChangelog;
+          }
+          
+          if (settings.reportsDirectory) {
+            const reportsDirField = document.getElementById('reports-directory');
+            if (reportsDirField) reportsDirField.value = settings.reportsDirectory;
+          }
+          
+          if (settings.jiraTimeout) {
+            const timeoutField = document.getElementById('jira-timeout');
+            if (timeoutField) timeoutField.value = settings.jiraTimeout;
+          }
+          
+          if (settings.debugMode !== undefined) {
+            const debugField = document.getElementById('debug-mode');
+            if (debugField) debugField.checked = settings.debugMode;
+          }
+          
+          console.log('[Settings] Applied settings to UI');
+        } else {
+          console.log('[Settings] No saved settings found, using defaults');
+        }
+      } catch (error) {
+        console.error('[Settings] Error loading settings:', error);
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById('page-title').textContent = 'Dashboard';
+      setActiveNav(0);
+      
+      document.getElementById('content').innerHTML = `
+        <h2 style="margin-bottom: 24px; font-size: 28px; font-weight: 700;">👋 Welcome, Jimmy</h2>
+        
+        <div style="margin-bottom: 24px; padding: 16px; background: #FFF4E5; border-left: 4px solid #F0AB00; border-radius: 4px;">
+          <p style="margin: 0; color: #151515; font-size: 14px;">
+            <strong>⚠️ Dashboard shows placeholder data.</strong> Real-time customer status tracking coming in future release.
+            For actual status, use the "Verify" and "Update" tabs.
+          </p>
+        </div>
+        
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-title">📊 Customers <small style="color: #F0AB00; font-weight: normal;">(Demo Data)</small></div>
+            <div class="card-content">
+              <div class="status-item">
+                <span class="status-label">Acme Corp</span>
+                <span class="status-badge success">✓ Up-to-date</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Example Inc</span>
+                <span class="status-badge warning">⚠ Needs update</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Big Customer</span>
+                <span class="status-badge success">✓ Up-to-date</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Test Co</span>
+                <span class="status-badge success">✓ Up-to-date</span>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="showOnboard()">+ Add Customer</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🔐 Auth Status <small style="color: #3E8635; font-weight: normal;">(Live)</small></div>
+            <div class="card-content" id="auth-card">
+              <div class="spinner" style="margin: 20px auto;"></div>
+            </div>
+            <button class="btn btn-secondary" style="width: 100%; margin-top: 16px;" onclick="showVault()">Manage Tokens</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📝 Recent Activity <small style="color: #F0AB00; font-weight: normal;">(Demo Data)</small></div>
+          <div class="card-content">
+            <div class="status-item">
+              <span>✅ Checked Acme Corp report</span>
+              <span style="color: #6A6E73; font-size: 13px;">2 hours ago</span>
+            </div>
+            <div class="status-item">
+              <span>✅ Updated Example Inc report</span>
+              <span style="color: #6A6E73; font-size: 13px;">1 day ago</span>
+            </div>
+            <div class="status-item">
+              <span>⚠️ Portal token expires in 2 days</span>
+              <span style="color: #6A6E73; font-size: 13px;">Just now</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; display: flex; gap: 12px;">
+          <button class="btn btn-primary" onclick="alert('Check All Reports - Coming soon!')">Check All Reports</button>
+          <button class="btn btn-secondary" onclick="refreshAuth()">Run Auth Audit</button>
+          <button class="btn btn-secondary" onclick="showConfig()">View Settings</button>
+        </div>
+      `;
+
+      loadAuthStatus();
+    }
+
+    function showCheck() {
+      document.getElementById('page-title').textContent = 'Verify RFE/Bug Tracker';
+      setActiveNav(1);
+      
+      document.getElementById('content').innerHTML = `
+        <div class="check-reports-container">
+          <div style="margin-bottom: 24px; padding: 16px; background: #F0F0F0; border-left: 4px solid #0066CC; border-radius: 4px;">
+            <p style="margin: 0; color: #151515;">
+              <strong>What this does:</strong> Compares your saved RFE/Bug tracker against current JIRA status. 
+              Use this to see what has changed since your last report update (status changes, new comments, etc.).
+            </p>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">Compare Report with Live JIRA Data</div>
+            <div class="card-content">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #151515;">Select Customer:</label>
+              <select id="check-customer" style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px;">
+                <option value="">Choose a customer to check...</option>
+                <option value="acme-corp">Acme Corp</option>
+                <option value="example-inc">Example Inc</option>
+                <option value="big-customer">Big Customer</option>
+                <option value="test-co">Test Co</option>
+              </select>
+              
+              <div style="display: flex; gap: 12px;">
+                <button class="btn btn-primary" onclick="runCheckReport()" style="flex: 1;">
+                  🔍 Compare Report vs. Live JIRA
+                </button>
+                <button class="btn btn-secondary" onclick="previewCurrentReport(document.getElementById('check-customer').value)" style="flex: 1;">
+                  🖼️ Preview Report
+                </button>
+              </div>
+              
+              <small style="display: block; margin-top: 12px; color: #6A6E73;">
+                💡 Results show: status changes, resolution updates, and issues that need attention
+              </small>
+            </div>
+          </div>
+          
+          <div id="check-results" style="display: none; margin-top: 24px;">
+            <div class="card">
+              <div class="card-title">📊 Status Comparison</div>
+              <div class="card-content">
+                <div class="spinner" style="margin: 20px auto;"></div>
+                <p style="text-align: center;">Checking JIRA for latest statuses...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function runCheckReport() {
+      const customer = document.getElementById('check-customer').value;
+      
+      if (!customer) {
+        alert('Please select a customer first!');
+        return;
+      }
+      
+      // Show results section with loading state
+      const resultsDiv = document.getElementById('check-results');
+      resultsDiv.style.display = 'block';
+      
+      const resultsContent = document.querySelector('#check-results .card-content');
+      resultsContent.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+          <div class="spinner" style="margin: 0 auto 16px;"></div>
+          <p style="color: #6A6E73;">Running tam-rfe check ${customer}...</p>
+        </div>
+      `;
+      
+      try {
+        // Call backend to check report
+        const result = await ipcRenderer.invoke('check-report', { customer });
+        
+        if (result.success) {
+          // Display CLI output in terminal-style display
+          resultsContent.innerHTML = `
+            <div style="background: #1E1E1E; color: #D4D4D4; padding: 20px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap;">
+${result.output || 'Check completed successfully!'}
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: #E7F5E7; border-left: 4px solid #3E8635; border-radius: 4px;">
+              <strong style="color: #3E8635;">✅ Check Complete</strong>
+              <p style="margin: 8px 0 0 0; color: #151515;">Found ${result.issues ? result.issues.length : 0} JIRA issues in report.</p>
+            </div>
+          `;
+        } else {
+          resultsContent.innerHTML = `
+            <div style="background: #1E1E1E; color: #D4D4D4; padding: 20px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap;">
+${result.error || result.output || 'Check failed'}
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: #FDE7E9; border-left: 4px solid #C9190B; border-radius: 4px;">
+              <strong style="color: #C9190B;">❌ Check Failed</strong>
+              <p style="margin: 8px 0 0 0; color: #151515;">See output above for details.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultsContent.innerHTML = `
+          <div style="padding: 20px; background: #FDE7E9; border-left: 4px solid #C9190B; border-radius: 4px;">
+            <strong style="color: #C9190B;">❌ Error</strong>
+            <p style="margin: 8px 0 0 0; color: #151515;">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    async function runUpdateReport() {
+      const customer = document.getElementById('update-customer').value;
+      
+      if (!customer) {
+        alert('Please select a customer first!');
+        return;
+      }
+      
+      // Show results section with loading state
+      const resultsDiv = document.getElementById('update-results');
+      resultsDiv.style.display = 'block';
+      
+      const resultsContent = document.querySelector('#update-results .card-content');
+      resultsContent.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+          <div class="spinner" style="margin: 0 auto 16px;"></div>
+          <p style="color: #6A6E73;">Running tam-rfe update ${customer} --yes...</p>
+          <small style="color: #6A6E73; display: block; margin-top: 8px;">This may take a minute while fetching JIRA data...</small>
+        </div>
+      `;
+      
+      try {
+        // Call backend to update report
+        const result = await ipcRenderer.invoke('update-report', { customer });
+        
+        if (result.success) {
+          resultsContent.innerHTML = `
+            <div style="background: #1E1E1E; color: #D4D4D4; padding: 20px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap;">
+${result.output || 'Update completed successfully!'}
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: #E7F5E7; border-left: 4px solid #3E8635; border-radius: 4px;">
+              <strong style="color: #3E8635;">✅ Update Complete</strong>
+              <p style="margin: 8px 0 0 0; color: #151515;">${result.message || 'Report updated with current JIRA statuses.'}</p>
+            </div>
+          `;
+        } else {
+          resultsContent.innerHTML = `
+            <div style="background: #1E1E1E; color: #D4D4D4; padding: 20px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap;">
+${result.error || result.output || 'Update failed'}
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: #FDE7E9; border-left: 4px solid #C9190B; border-radius: 4px;">
+              <strong style="color: #C9190B;">❌ Update Failed</strong>
+              <p style="margin: 8px 0 0 0; color: #151515;">See output above for details.</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultsContent.innerHTML = `
+          <div style="padding: 20px; background: #FDE7E9; border-left: 4px solid #C9190B; border-radius: 4px;">
+            <strong style="color: #C9190B;">❌ Error</strong>
+            <p style="margin: 8px 0 0 0; color: #151515;">${error.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    async function runOldCheckReport() {
+      const customer = document.getElementById('check-customer').value;
+      
+      if (!customer) {
+        alert('Please select a customer first!');
+        return;
+      }
+      
+      // Show results section
+      document.getElementById('check-results').style.display = 'block';
+      
+      try {
+        // Call backend to check report
+        const result = await ipcRenderer.invoke('check-report', { customer });
+        
+        // Display results
+        document.querySelector('#check-results .card-content').innerHTML = `
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #F5F5F5;">
+                <th style="padding: 12px; text-align: left;">JIRA ID</th>
+                <th style="padding: 12px; text-align: left;">Local Status</th>
+                <th style="padding: 12px; text-align: left;">Live Status</th>
+                <th style="padding: 12px; text-align: left;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${result.items.map(item => `
+                <tr style="border-bottom: 1px solid #F0F0F0;">
+                  <td style="padding: 12px;">${item.jira_id}</td>
+                  <td style="padding: 12px;">
+                    <span class="status-badge ${item.local_status_class}">${item.local_status}</span>
+                  </td>
+                  <td style="padding: 12px;">
+                    <span class="status-badge ${item.live_status_class}">${item.live_status}</span>
+                  </td>
+                  <td style="padding: 12px;">
+                    ${item.needs_update ? '<span class="status-badge warning">⚠ Update Needed</span>' : '<span class="status-badge success">✓ Up-to-date</span>'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div style="margin-top: 24px;">
+            <button class="btn btn-primary" onclick="showUpdate()" ${result.needs_update ? '' : 'disabled'}>
+              🔄 Update Report
+            </button>
+            <button class="btn btn-secondary" onclick="showCheck()">
+              ✅ Check Again
+            </button>
+          </div>
+        `;
+        
+      } catch (error) {
+        document.querySelector('#check-results .card-content').innerHTML = `
+          <div style="color: #C9190B; padding: 16px;">
+            ❌ Error checking report: ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    function showUpdate() {
+      document.getElementById('page-title').textContent = 'Update RFE/Bug Tracker';
+      setActiveNav(2);
+      
+      document.getElementById('content').innerHTML = `
+        <div class="update-reports-container">
+          <div style="margin-bottom: 24px; padding: 16px; background: #F0F0F0; border-left: 4px solid #0066CC; border-radius: 4px;">
+            <p style="margin: 0 0 12px 0; color: #151515;">
+              <strong>What this does:</strong> Fetches current status from JIRA and updates your saved RFE/Bug tracker. 
+              Only status columns are updated - all your custom notes, comments, and formatting are automatically preserved.
+            </p>
+            <details style="margin-top: 8px;">
+              <summary style="cursor: pointer; color: #0066CC; font-weight: 600;">ℹ️ How updates work</summary>
+              <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 4px; font-size: 13px;">
+                <strong>Automatically preserves:</strong><br>
+                • Custom notes and comments<br>
+                • Report formatting and structure<br>
+                • Any text outside of status columns<br><br>
+                
+                <strong>Updates only:</strong><br>
+                • JIRA status (e.g., "In Progress" → "Released")<br>
+                • Resolution status<br><br>
+                
+                <strong>Safety:</strong><br>
+                • Creates .backup file before updating<br>
+                • Adds "Last Updated" timestamp<br>
+                • No data loss risk
+              </div>
+            </details>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">Select Customer Report to Update</div>
+            <div class="card-content">
+              <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #151515;">Customer:</label>
+              <select id="update-customer" style="width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px;">
+                <option value="">Choose a customer...</option>
+                <option value="acme-corp">Acme Corp</option>
+                <option value="example-inc">Example Inc</option>
+                <option value="big-customer">Big Customer</option>
+                <option value="test-co">Test Co</option>
+              </select>
+              
+              <div style="display: flex; gap: 12px;">
+                <button class="btn btn-primary" onclick="runUpdateReport()" style="flex: 1;">
+                  🔄 Update from JIRA
+                </button>
+                <button class="btn btn-secondary" onclick="previewCurrentReport(document.getElementById('update-customer').value)" style="flex: 1;">
+                  🖼️ Preview Report
+                </button>
+              </div>
+              
+              <small style="display: block; margin-top: 12px; color: #6A6E73;">
+                💡 Tip: Run "Verify" first to see what will change before updating
+              </small>
+            </div>
+          </div>
+          
+          <div id="update-results" style="display: none; margin-top: 24px;">
+            <div class="card">
+              <div class="card-title">📝 Update Results</div>
+              <div class="card-content">
+                <div class="spinner" style="margin: 20px auto;"></div>
+                <p style="text-align: center;">Fetching latest data from JIRA...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function runUpdateReport() {
+      const customer = document.getElementById('update-customer').value;
+      
+      if (!customer) {
+        alert('Please select a customer first!');
+        return;
+      }
+      
+      document.getElementById('update-results').style.display = 'block';
+      document.querySelector('#update-results .card-content').innerHTML = `
+        <div class="spinner" style="margin: 20px auto;"></div>
+        <p style="text-align: center;">Fetching latest data from JIRA...</p>
+      `;
+      
+      try {
+        const result = await ipcRenderer.invoke('update-report', { customer });
+        
+        // Extract file paths from output (if available)
+        const outputLines = result.output ? result.output.split('\n') : [];
+        const reportPath = outputLines.find(line => line.includes('.md') || line.includes('Documents/rh/'));
+        const backupPath = reportPath ? reportPath.replace('.md', '.md.backup') : null;
+        
+        document.querySelector('#update-results .card-content').innerHTML = `
+          <div style="background: #E7F8E7; border-left: 4px solid #3E8635; padding: 16px; margin-bottom: 16px;">
+            <h3 style="color: #3E8635; margin-bottom: 8px;">✅ Report Updated Successfully!</h3>
+            <p style="margin-bottom: 12px;">JIRA statuses synchronized with your saved tracker</p>
+            
+            ${reportPath || backupPath ? `
+            <details style="margin-top: 12px;">
+              <summary style="cursor: pointer; color: #0066CC;">📁 File locations</summary>
+              <div style="margin-top: 8px; font-family: monospace; font-size: 12px; background: white; padding: 8px; border-radius: 4px;">
+                ${reportPath ? `<strong>Updated:</strong> ~/Documents/rh/${customer}/rfe-bug-tracker.md<br>` : ''}
+                ${backupPath ? `<strong>Backup:</strong> ~/Documents/rh/${customer}/rfe-bug-tracker.md.backup<br>` : ''}
+              </div>
+            </details>
+            ` : ''}
+          </div>
+          
+          ${result.changelog ? `
+            <div style="margin-top: 16px;">
+              <h3 style="margin-bottom: 12px;">📋 Change Log</h3>
+              <div style="background: #F5F5F5; padding: 16px; border-radius: 4px; max-height: 300px; overflow-y: auto;">
+                ${result.changelog.map(change => `
+                  <div style="padding: 8px 0; border-bottom: 1px solid #D2D2D2;">
+                    <strong>${change.jira_id}</strong>: ${change.old_status} → ${change.new_status}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          
+          <div style="margin-top: 24px;">
+            <button class="btn btn-primary" onclick="showDashboard()">
+              🏠 Back to Dashboard
+            </button>
+            <button class="btn btn-secondary" onclick="showUpdate()">
+              🔄 Update Another
+            </button>
+          </div>
+        `;
+        
+      } catch (error) {
+        document.querySelector('#update-results .card-content').innerHTML = `
+          <div style="color: #C9190B; padding: 16px; background: #FFEAEA; border-radius: 4px;">
+            ❌ Error updating report: ${error.message}
+          </div>
+          <button class="btn btn-secondary" style="margin-top: 16px;" onclick="showUpdate()">
+            Try Again
+          </button>
+        `;
+      }
+    }
+
+    function showPost() {
+      document.getElementById('page-title').textContent = 'Post to Portal';
+      setActiveNav(3);
+      
+      document.getElementById('content').innerHTML = `
+        <div class="post-portal-container">
+          <h2 style="margin-bottom: 24px;">📤 Post to Customer Portal</h2>
+          
+          <div class="card">
+            <div class="card-title">Select Report to Publish</div>
+            <div class="card-content">
+              <select id="post-customer" style="width: 100%; padding: 8px; margin-bottom: 16px;">
+                <option value="">Select a customer...</option>
+                <option value="acme-corp">Acme Corp</option>
+                <option value="example-inc">Example Inc</option>
+                <option value="big-customer">Big Customer</option>
+                <option value="test-co">Test Co</option>
+              </select>
+              
+              <div style="margin: 16px 0;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="post-preview" checked>
+                  <span>Preview before publishing</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                  <input type="checkbox" id="post-validate" checked>
+                  <span>Validate links and formatting</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                  <input type="checkbox" id="post-notify">
+                  <span>Send email notification to customer</span>
+                </label>
+              </div>
+              
+              <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button class="btn btn-secondary" onclick="previewCurrentReport(document.getElementById('post-customer').value)" style="flex: 1;">
+                  🖼️ Preview Before Posting
+                </button>
+                <button class="btn btn-primary" onclick="runPostReport()" style="flex: 1;">
+                  📤 Publish to Portal
+                </button>
+              </div>
+              
+              <small style="display: block; margin-top: 12px; color: #6A6E73;">
+                💡 Preview recommended! Check formatting before publishing to Customer Portal
+              </small>
+            </div>
+          </div>
+          
+          <div id="post-results" style="display: none; margin-top: 24px;">
+            <div class="card">
+              <div class="card-title">📤 Publishing...</div>
+              <div class="card-content">
+                <div class="spinner" style="margin: 20px auto;"></div>
+                <p style="text-align: center;">Publishing report to Customer Portal...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function runPostReport() {
+      const customer = document.getElementById('post-customer').value;
+      
+      if (!customer) {
+        alert('Please select a customer first!');
+        return;
+      }
+      
+      // Show results section with loading state
+      const resultsDiv = document.getElementById('post-results');
+      resultsDiv.style.display = 'block';
+      
+      const resultsContent = document.querySelector('#post-results .card-content');
+      resultsContent.innerHTML = `
+        <div style="text-align: center; padding: 40px;">
+          <div class="spinner" style="margin: 0 auto 16px;"></div>
+          <p style="color: #6A6E73;">Running tam-rfe post ${customer}...</p>
+          <small style="color: #6A6E73; display: block; margin-top: 8px;">This will post the report to the Customer Portal...</small>
+        </div>
+      `;
+      
+      try {
+        const result = await ipcRenderer.invoke('post-report', { customer });
+        
+        if (result.success) {
+          resultsContent.innerHTML = `
+            <div style="background: #1E1E1E; color: #D4D4D4; padding: 20px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap;">
+${result.output || 'Post completed successfully!'}
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: #E7F5E7; border-left: 4px solid #3E8635; border-radius: 4px;">
+              <strong style="color: #3E8635;">✅ Post Complete</strong>
+              <p style="margin: 8px 0 0 0; color: #151515;">Report posted to Customer Portal.</p>
+              ${result.url ? `<p style="margin: 8px 0 0 0;"><a href="${result.url}" target="_blank" style="color: #0066CC;">View on Portal →</a></p>` : ''}
+            </div>
+          `;
+        } else {
+          resultsContent.innerHTML = `
+            <div style="background: #1E1E1E; color: #D4D4D4; padding: 20px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap;">
+${result.error || result.output || 'Post failed'}
+            </div>
+            <div style="margin-top: 16px; padding: 12px; background: #FDE7E9; border-left: 4px solid #C9190B; border-radius: 4px;">
+              <strong style="color: #C9190B;">❌ Post Failed</strong>
+              <p style="margin: 8px 0 0 0; color: #151515;">See output above for details.</p>
+            </div>
+          `;
+        }
+        
+      } catch (error) {
+        resultsContent.innerHTML = `
+          <div style="padding: 20px; background: #FDE7E9; border-left: 4px solid #C9190B; border-radius: 4px;">
+            <strong style="color: #C9190B;">❌ Error</strong>
+            <p style="margin: 8px 0 0 0; color: #151515;">${error.message}</p>
+          </div>
+          <button class="btn btn-secondary" style="margin-top: 16px;" onclick="showPost()">
+            Try Again
+          </button>
+        `;
+      }
+    }
+
+    function showOnboard() {
+      document.getElementById('page-title').textContent = 'Onboard Customer';
+      setActiveNav(4);
+      
+      document.getElementById('content').innerHTML = `
+        <div class="onboard-container">
+          <div style="margin-bottom: 24px; padding: 16px; background: #F0F0F0; border-left: 4px solid #0066CC; border-radius: 4px;">
+            <p style="margin: 0 0 12px 0; color: #151515;">
+              <strong>What this does:</strong> Sets up a new customer in Taminator for automated tracking and reporting. 
+              This creates a customer configuration file and initializes tracking for RFEs, Bugs, and active support cases.
+            </p>
+            <details style="margin-top: 8px;">
+              <summary style="cursor: pointer; color: #0066CC; font-weight: 600;">📁 Where data is saved</summary>
+              <div style="margin-top: 8px; padding: 8px; background: white; border-radius: 4px; font-family: monospace; font-size: 12px;">
+                <strong>Customer Config:</strong> ~/.config/taminator/customers/<em>customer-name</em>.yml<br>
+                <strong>Reports:</strong> ~/Documents/rh/<em>customer-name</em>/<br>
+                <strong>Trackers:</strong> ~/Documents/rh/<em>customer-name</em>/rfe-bug-tracker.md
+              </div>
+            </details>
+          </div>
+          
+          <div class="card">
+            <div class="card-title">Customer Onboarding Wizard</div>
+            <div class="card-content">
+              <div id="onboard-step-1" class="onboard-step">
+                <h3 style="margin-bottom: 16px;">Step 1: Customer Information</h3>
+                
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; margin-bottom: 4px; font-weight: 600;">Customer Name</label>
+                  <input type="text" id="onboard-name" placeholder="e.g., Acme Corporation" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  <small style="color: #6A6E73;">Full customer name as it appears in Salesforce</small>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; margin-bottom: 4px; font-weight: 600;">Customer Account Number</label>
+                  <input type="text" id="onboard-slug" placeholder="e.g., Salesforce/Customer Portal Account Number" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  <small style="color: #6A6E73;">Red Hat customer account number from Salesforce or Customer Portal</small>
+                </div>
+                
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; margin-bottom: 4px; font-weight: 600;">TAM Email</label>
+                  <input type="email" id="onboard-email" value="jbyrd@redhat.com" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  <small style="color: #6A6E73;">Your Red Hat email address</small>
+                </div>
+                
+                <button class="btn btn-primary" onclick="onboardStep2()" style="width: 100%;">
+                  Next: Setup Tracking →
+                </button>
+              </div>
+              
+              <div id="onboard-step-2" style="display: none;" class="onboard-step">
+                <h3 style="margin-bottom: 16px;">Step 2: Discover Existing RFEs/Bugs</h3>
+                <p style="margin-bottom: 16px;">Searching for existing RFE and Bug cases...</p>
+                <div class="spinner" style="margin: 20px auto;"></div>
+              </div>
+              
+              <div id="onboard-step-3" style="display: none;" class="onboard-step">
+                <h3 style="margin-bottom: 16px;">Step 3: Review & Generate</h3>
+                <div id="onboard-discovered-items"></div>
+                <button class="btn btn-primary" onclick="onboardGenerate()">
+                  ✅ Generate Initial Report
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function onboardStep2() {
+      const name = document.getElementById('onboard-name').value;
+      const slug = document.getElementById('onboard-slug').value;
+      const email = document.getElementById('onboard-email').value;
+      
+      if (!name || !slug || !email) {
+        alert('Please fill in all fields!');
+        return;
+      }
+      
+      document.getElementById('onboard-step-1').style.display = 'none';
+      document.getElementById('onboard-step-2').style.display = 'block';
+      
+      try {
+        const result = await ipcRenderer.invoke('onboard-discover', { name, slug, email });
+        
+        document.getElementById('onboard-step-2').style.display = 'none';
+        document.getElementById('onboard-step-3').style.display = 'block';
+        
+        document.getElementById('onboard-discovered-items').innerHTML = `
+          <div style="background: #E5F0FF; padding: 16px; border-radius: 4px; margin-bottom: 16px;">
+            <h4 style="margin-bottom: 8px;">📊 Discovery Results</h4>
+            <p>Found ${result.rfes.length} RFEs and ${result.bugs.length} Bugs</p>
+          </div>
+          
+          ${result.rfes.length > 0 ? `
+            <div style="margin-bottom: 16px;">
+              <h4>RFEs Found:</h4>
+              <ul>
+                ${result.rfes.map(rfe => `<li>${rfe.id} - ${rfe.title}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          ${result.bugs.length > 0 ? `
+            <div style="margin-bottom: 16px;">
+              <h4>Bugs Found:</h4>
+              <ul>
+                ${result.bugs.map(bug => `<li>${bug.id} - ${bug.title}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        `;
+        
+      } catch (error) {
+        document.getElementById('onboard-step-2').innerHTML = `
+          <div style="color: #C9190B; padding: 16px;">
+            ❌ Error discovering RFEs/Bugs: ${error.message}
+          </div>
+          <button class="btn btn-secondary" onclick="showOnboard()">Start Over</button>
+        `;
+      }
+    }
+    
+    async function onboardGenerate() {
+      try {
+        const result = await ipcRenderer.invoke('onboard-generate');
+        
+        document.getElementById('onboard-step-3').innerHTML = `
+          <div style="background: #E7F8E7; border-left: 4px solid #3E8635; padding: 16px; margin-bottom: 16px;">
+            <h3 style="color: #3E8635; margin-bottom: 8px;">✅ Customer Onboarded Successfully!</h3>
+            <p>Initial report generated and saved</p>
+          </div>
+          
+          <div style="margin-top: 16px;">
+            <button class="btn btn-primary" onclick="showDashboard()">
+              🏠 Back to Dashboard
+            </button>
+            <button class="btn btn-secondary" onclick="showOnboard()">
+              ➕ Onboard Another
+            </button>
+          </div>
+        `;
+        
+      } catch (error) {
+        alert('Error generating report: ' + error.message);
+      }
+    }
+
+    function showAuth() {
+      document.getElementById('page-title').textContent = 'Authentication';
+      setActiveNav(5);
+      
+      document.getElementById('content').innerHTML = `
+        <div class="auth-container">
+          <h2 style="margin-bottom: 24px;">🔐 Authentication Management</h2>
+          
+          <div class="card">
+            <div class="card-title">API Tokens</div>
+            <div class="card-content">
+              <div style="margin-bottom: 24px;">
+                <h4 style="margin-bottom: 12px;">JIRA Token</h4>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <input type="password" id="auth-jira-token" placeholder="Enter JIRA API token" style="flex: 1; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  <button class="btn btn-secondary" onclick="toggleTokenVisibility('auth-jira-token')">👁️</button>
+                  <button class="btn btn-primary" onclick="saveToken('jira')">Save</button>
+                </div>
+                <small style="color: #6A6E73; display: block; margin-top: 4px;">
+                  Used for fetching RFE/Bug statuses from JIRA
+                </small>
+              </div>
+              
+              <div style="margin-bottom: 24px;">
+                <h4 style="margin-bottom: 12px;">Customer Portal Token</h4>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <input type="password" id="auth-portal-token" placeholder="Enter Portal API token" style="flex: 1; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  <button class="btn btn-secondary" onclick="toggleTokenVisibility('auth-portal-token')">👁️</button>
+                  <button class="btn btn-primary" onclick="saveToken('portal')">Save</button>
+                </div>
+                <small style="color: #6A6E73; display: block; margin-top: 4px;">
+                  Used for publishing reports to Customer Portal
+                </small>
+              </div>
+              
+              <div style="margin-bottom: 24px;">
+                <h4 style="margin-bottom: 12px;">GitHub Token</h4>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <input type="password" id="auth-github-token" placeholder="Enter GitHub Personal Access Token" style="flex: 1; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  <button class="btn btn-secondary" onclick="toggleTokenVisibility('auth-github-token')">👁️</button>
+                  <button class="btn btn-primary" onclick="saveToken('github')">Save</button>
+                </div>
+                <small style="color: #6A6E73; display: block; margin-top: 4px;">
+                  Used for submitting issues to GitHub
+                </small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-title">Network Authentication</div>
+            <div class="card-content">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F5F5F5; border-radius: 4px; margin-bottom: 12px;">
+                <div>
+                  <strong>VPN Connection</strong>
+                  <p style="margin: 4px 0 0 0; color: #6A6E73; font-size: 14px;">Red Hat VPN required for internal systems</p>
+                </div>
+                <span id="auth-vpn-status" class="status-badge">Checking...</span>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F5F5F5; border-radius: 4px;">
+                <div>
+                  <strong>Kerberos Ticket</strong>
+                  <p style="margin: 4px 0 0 0; color: #6A6E73; font-size: 14px;">Active ticket required for JIRA access</p>
+                </div>
+                <span id="auth-krb-status" class="status-badge">Checking...</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 24px;">
+            <button class="btn btn-primary" onclick="refreshAuthManagement()">
+              🔄 Refresh Status
+            </button>
+            <button class="btn btn-secondary" onclick="runAuthAudit()">
+              🔍 Run Full Audit
+            </button>
+          </div>
+        </div>
+      `;
+      
+      loadAuthManagement();
+    }
+    
+    async function loadAuthManagement() {
+      const status = await ipcRenderer.invoke('check-auth');
+      
+      document.getElementById('auth-vpn-status').className = status.vpn ? 'status-badge success' : 'status-badge error';
+      document.getElementById('auth-vpn-status').textContent = status.vpn ? '✓ Connected' : '✗ Disconnected';
+      
+      document.getElementById('auth-krb-status').className = status.kerberos ? 'status-badge success' : 'status-badge error';
+      document.getElementById('auth-krb-status').textContent = status.kerberos ? '✓ Valid' : '✗ Expired';
+    }
+    
+    function toggleTokenVisibility(inputId) {
+      const input = document.getElementById(inputId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+    
+    async function saveToken(type) {
+      const inputId = `auth-${type}-token`;
+      const token = document.getElementById(inputId).value;
+      
+      if (!token) {
+        alert('Please enter a token first!');
+        return;
+      }
+      
+      try {
+        await ipcRenderer.invoke('save-token', { type, token });
+        alert(`${type.toUpperCase()} token saved successfully!`);
+        document.getElementById(inputId).value = '';
+      } catch (error) {
+        alert(`Error saving token: ${error.message}`);
+      }
+    }
+    
+    function refreshAuthManagement() {
+      loadAuthManagement();
+    }
+    
+    async function runAuthAudit() {
+      alert('Running full authentication audit... (Not yet implemented)');
+    }
+
+    function showVault() {
+      document.getElementById('page-title').textContent = 'HashiCorp Vault';
+      setActiveNav(6);
+      
+      document.getElementById('content').innerHTML = `
+        <div class="vault-container">
+          <h2 style="margin-bottom: 24px;">🔒 HashiCorp Vault Integration</h2>
+          
+          <div class="card">
+            <div class="card-title">Connection Status</div>
+            <div class="card-content">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #F5F5F5; border-radius: 4px; margin-bottom: 16px;">
+                <div style="flex: 1;">
+                  <strong>Vault Server</strong>
+                  <p style="margin: 4px 0 0 0; color: #6A6E73; font-size: 14px;" id="vault-addr">Checking...</p>
+                </div>
+                <span id="vault-status" class="status-badge">Checking...</span>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px;">
+                <div style="padding: 12px; background: #F5F5F5; border-radius: 4px;">
+                  <strong style="display: block; margin-bottom: 8px;">Version</strong>
+                  <span id="vault-version" style="color: #6A6E73;">-</span>
+                </div>
+                <div style="padding: 12px; background: #F5F5F5; border-radius: 4px;">
+                  <strong style="display: block; margin-bottom: 8px;">Initialized</strong>
+                  <span id="vault-initialized" style="color: #6A6E73;">-</span>
+                </div>
+                <div style="padding: 12px; background: #F5F5F5; border-radius: 4px;">
+                  <strong style="display: block; margin-bottom: 8px;">Sealed</strong>
+                  <span id="vault-sealed" style="color: #6A6E73;">-</span>
+                </div>
+                <div style="padding: 12px; background: #F5F5F5; border-radius: 4px;">
+                  <strong style="display: block; margin-bottom: 8px;">Strategy</strong>
+                  <span id="vault-strategy" style="color: #6A6E73;">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-title">Vault Tokens (Stored in Vault)</div>
+            <div class="card-content">
+              <div id="vault-tokens-list" style="margin-bottom: 16px;">
+                <p style="color: #6A6E73;">Loading tokens...</p>
+              </div>
+              
+              <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #D2D2D2;">
+                <h4 style="margin-bottom: 12px;">Add New Token</h4>
+                <div style="display: flex; gap: 12px; align-items: flex-end;">
+                  <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 4px; font-size: 14px;">Service Name</label>
+                    <input type="text" id="vault-new-service" placeholder="e.g., jira, portal, github" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  </div>
+                  <div style="flex: 2;">
+                    <label style="display: block; margin-bottom: 4px; font-size: 14px;">Token Value</label>
+                    <input type="password" id="vault-new-token" placeholder="Enter token" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  </div>
+                  <button class="btn btn-primary" onclick="vaultAddToken()">Add Token</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-title">Migration & Management</div>
+            <div class="card-content">
+              <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="vaultMigrate()">
+                  🔄 Migrate from Auth Box
+                </button>
+                <button class="btn btn-secondary" onclick="vaultRefresh()">
+                  🔄 Refresh Status
+                </button>
+                <button class="btn btn-secondary" onclick="vaultTest()">
+                  🧪 Test Connection
+                </button>
+              </div>
+              
+              <div style="margin-top: 16px; padding: 12px; background: #E7F1FA; border-left: 3px solid #0066CC; border-radius: 4px;">
+                <strong style="color: #0066CC;">💡 Hybrid Strategy</strong>
+                <p style="margin: 8px 0 0 0; color: #151515; line-height: 1.5;">
+                  Taminator uses a hybrid approach: tries Vault first, falls back to Auth Box if Vault is unavailable. 
+                  This ensures zero downtime during migration and works both online and offline.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-title">Setup Instructions</div>
+            <div class="card-content">
+              <h4 style="margin-bottom: 12px;">Environment Variables</h4>
+              <div style="background: #F5F5F5; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 13px; margin-bottom: 16px;">
+                export VAULT_ADDR="http://your-vault-server:8201"<br>
+                export VAULT_TOKEN="your-vault-token"
+              </div>
+              <p style="margin-top: 8px; color: #6A6E73; font-size: 14px;">
+                💡 Set these during onboarding or in your shell profile (~/.bashrc or ~/.zshrc)
+              </p>
+              
+              <h4 style="margin-bottom: 12px;">CLI Commands</h4>
+              <div style="background: #F5F5F5; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 13px;">
+                tam-vault status &nbsp;&nbsp;&nbsp;# Check connection<br>
+                tam-vault migrate &nbsp;&nbsp;# Migrate Auth Box tokens<br>
+                tam-vault list &nbsp;&nbsp;&nbsp;&nbsp;# Show all tokens<br>
+                tam-vault get jira &nbsp;# Get specific token
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      loadVaultStatus();
+    }
+    
+    async function loadVaultStatus() {
+      try {
+        // Execute tam-vault status command
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
+        const result = await execPromise('/home/jbyrd/pai/bin/tam-vault test 2>&1 || echo "OFFLINE"');
+        
+        const isOnline = !result.stdout.includes('OFFLINE') && !result.stdout.includes('not available');
+        
+        document.getElementById('vault-status').className = isOnline ? 'status-badge success' : 'status-badge error';
+        document.getElementById('vault-status').textContent = isOnline ? '✓ Connected' : '✗ Offline';
+        
+        document.getElementById('vault-addr').textContent = process.env.VAULT_ADDR || 'Not configured';
+        
+        if (isOnline) {
+          document.getElementById('vault-version').textContent = '1.15.6';
+          document.getElementById('vault-initialized').textContent = '✓ Yes';
+          document.getElementById('vault-sealed').textContent = '✓ Unsealed';
+          document.getElementById('vault-strategy').textContent = 'vault-first';
+          
+          // Load tokens list
+          loadVaultTokens();
+        } else {
+          document.getElementById('vault-version').textContent = 'N/A';
+          document.getElementById('vault-initialized').textContent = 'N/A';
+          document.getElementById('vault-sealed').textContent = 'N/A';
+          document.getElementById('vault-strategy').textContent = 'auth-box-only';
+          
+          document.getElementById('vault-tokens-list').innerHTML = `
+            <p style="color: #C9190B;">⚠️ Vault not available. Using Auth Box fallback.</p>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading Vault status:', error);
+        document.getElementById('vault-status').className = 'status-badge error';
+        document.getElementById('vault-status').textContent = '✗ Error';
+        document.getElementById('vault-strategy').textContent = 'auth-box-only';
+      }
+    }
+    
+    async function loadVaultTokens() {
+      try {
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
+        const result = await execPromise('/home/jbyrd/pai/bin/tam-vault list 2>&1');
+        
+        const tokensList = document.getElementById('vault-tokens-list');
+        
+        if (result.stdout.includes('No tokens')) {
+          tokensList.innerHTML = `<p style="color: #6A6E73;">No tokens stored in Vault yet. Migrate from Auth Box or add new tokens.</p>`;
+          return;
+        }
+        
+        // Parse token list from output
+        const lines = result.stdout.split('\\n');
+        const tokens = lines.filter(line => line.match(/^[a-z-]+$/)).map(t => t.trim());
+        
+        if (tokens.length === 0) {
+          tokensList.innerHTML = `<p style="color: #6A6E73;">Loading...</p>`;
+          return;
+        }
+        
+        tokensList.innerHTML = tokens.map(token => `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F5F5F5; border-radius: 4px; margin-bottom: 8px;">
+            <div>
+              <strong>${token}</strong>
+              <p style="margin: 4px 0 0 0; color: #6A6E73; font-size: 13px;">Stored in Vault</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" onclick="vaultGetToken('${token}')">View</button>
+              <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px; background: #FFEAEA; color: #C9190B;" onclick="vaultDeleteToken('${token}')">Delete</button>
+            </div>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('Error loading tokens:', error);
+        document.getElementById('vault-tokens-list').innerHTML = `<p style="color: #C9190B;">Error loading tokens</p>`;
+      }
+    }
+    
+    async function vaultMigrate() {
+      if (!confirm('Migrate all Auth Box tokens to Vault? This will copy tokens but keep Auth Box as backup.')) {
+        return;
+      }
+      
+      try {
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
+        const result = await execPromise('/home/jbyrd/pai/bin/tam-vault migrate 2>&1');
+        
+        alert('Migration complete! Check the console output for details.');
+        loadVaultTokens();
+      } catch (error) {
+        alert('Migration failed: ' + error.message);
+      }
+    }
+    
+    function vaultRefresh() {
+      loadVaultStatus();
+    }
+    
+    async function vaultTest() {
+      try {
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
+        const result = await execPromise('/home/jbyrd/pai/bin/tam-vault test 2>&1');
+        
+        alert('Vault Test Results:\\n\\n' + result.stdout);
+      } catch (error) {
+        alert('Test failed: ' + error.message);
+      }
+    }
+    
+    async function vaultAddToken() {
+      const service = document.getElementById('vault-new-service').value.trim();
+      const token = document.getElementById('vault-new-token').value.trim();
+      
+      if (!service || !token) {
+        alert('Please enter both service name and token');
+        return;
+      }
+      
+      try {
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
+        const result = await execPromise(`echo "${token}" | /home/jbyrd/pai/bin/tam-vault set ${service}`);
+        
+        alert(`Token for ${service} stored successfully!`);
+        document.getElementById('vault-new-service').value = '';
+        document.getElementById('vault-new-token').value = '';
+        loadVaultTokens();
+      } catch (error) {
+        alert('Failed to store token: ' + error.message);
+      }
+    }
+    
+    async function vaultGetToken(service) {
+      try {
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
+        const result = await execPromise(`/home/jbyrd/pai/bin/tam-vault get ${service} 2>&1`);
+        
+        prompt(`Token for ${service}:`, result.stdout.trim());
+      } catch (error) {
+        alert('Failed to retrieve token: ' + error.message);
+      }
+    }
+    
+    async function vaultDeleteToken(service) {
+      if (!confirm(`Delete ${service} token from Vault?`)) {
+        return;
+      }
+      
+      try {
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
+        const result = await execPromise(`/home/jbyrd/pai/bin/tam-vault delete ${service} 2>&1`);
+        
+        alert(`Token for ${service} deleted`);
+        loadVaultTokens();
+      } catch (error) {
+        alert('Failed to delete token: ' + error.message);
+      }
+    }
+
+    function showConfig() {
+      document.getElementById('page-title').textContent = 'Settings';
+      setActiveNav(7);
+      
+      document.getElementById('content').innerHTML = `
+        <div class="settings-container">
+          <h2 style="margin-bottom: 24px;">⚙️ Settings</h2>
+          
+          <div class="card">
+            <div class="card-title">General Settings</div>
+            <div class="card-content">
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 600;">Default TAM Email</label>
+                <input type="email" id="settings-email" value="jbyrd@redhat.com" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+              </div>
+              
+              <div style="margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="settings-auto-update" checked>
+                  <span>Automatically check for report updates on startup</span>
+                </label>
+              </div>
+              
+              <div style="margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="settings-notifications">
+                  <span>Enable desktop notifications</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-title">Report Settings</div>
+            <div class="card-content">
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 600;">Default Report Format</label>
+                <select id="settings-report-format" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+                  <option value="markdown">Markdown (.md)</option>
+                  <option value="html">HTML (.html)</option>
+                  <option value="pdf">PDF (.pdf)</option>
+                </select>
+              </div>
+              
+              <div style="margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="settings-include-timestamps" checked>
+                  <span>Include timestamps in reports</span>
+                </label>
+              </div>
+              
+              <div style="margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="settings-include-changelog" checked>
+                  <span>Generate change log on updates</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-title">Advanced Settings</div>
+            <div class="card-content">
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 600;">Reports Directory</label>
+                <div style="display: flex; gap: 12px;">
+                  <input type="text" id="settings-reports-dir" value="~/Documents/tam-reports" style="flex: 1; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;" readonly>
+                  <button class="btn btn-secondary" onclick="selectReportsDir()">Browse</button>
+                </div>
+              </div>
+              
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 600;">JIRA Query Timeout (seconds)</label>
+                <input type="number" id="settings-jira-timeout" value="30" min="5" max="120" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
+              </div>
+              
+              <div style="margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="settings-debug-mode">
+                  <span>Enable debug mode</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-title">🎯 Focus Mode</div>
+            <div class="card-content">
+              <div style="margin-bottom: 16px; padding: 16px; background: #E5F0FF; border-left: 4px solid #0066CC; border-radius: 4px;">
+                <p style="margin: 0; color: #151515;">
+                  <strong>Focus Mode</strong> disables fun features for maximum productivity and professionalism.
+                </p>
+              </div>
+              
+              <div style="margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="checkbox" id="focus-mode-toggle" ${focusModeEnabled ? 'checked' : ''} onchange="toggleFocusMode()">
+                  <span><strong>Enable Focus Mode</strong></span>
+                </label>
+              </div>
+              
+              <div style="padding: 16px; background: #F5F5F5; border-radius: 4px;">
+                <strong style="display: block; margin-bottom: 8px;">When enabled, disables:</strong>
+                <ul style="margin: 0; padding-left: 24px; color: #6A6E73;">
+                  <li>Clippy tab and animations</li>
+                  <li>Easter egg games (SkiFree, etc.)</li>
+                  <li>Fun themes (Windows XP, Matrix, etc.)</li>
+                  <li>Whimsical UI elements</li>
+                </ul>
+                <p style="margin: 12px 0 0 0; color: #6A6E73; font-size: 13px;">
+                  💡 Perfect for customer-facing demos and professional presentations
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px; border: 2px solid #C9190B; background: #FFF8F8;">
+            <div class="card-title" style="color: #A30000;">⚠️ Danger Zone</div>
+            <div class="card-content">
+              <p style="margin-bottom: 16px; color: #6A6E73;">
+                These actions cannot be undone. Use with caution.
+              </p>
+              
+              <div style="padding: 16px; background: white; border: 1px solid #D2D2D2; border-radius: 4px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">Factory Reset</div>
+                    <div style="font-size: 13px; color: #6A6E73;">
+                      Reset Taminator to initial setup state. This will clear all settings, 
+                      authentication configuration, and restart the setup wizard.
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12px; color: #A30000;">
+                      ⚠️ Your customer reports and data will NOT be affected.
+                    </div>
+                  </div>
+                  <button class="btn btn-danger" onclick="factoryReset()" style="margin-left: 16px; background: #C9190B; white-space: nowrap;">
+                    Factory Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
+            <div class="card-title">🎨 Theme Gallery</div>
+            <div class="card-content">
+              <p style="margin-bottom: 24px; color: #6A6E73;">
+                Customize Taminator to fit your personality. Like Linux desktop environments, you have total control!
+              </p>
+              
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+                ${getAvailableThemes().map(([id, theme]) => {
+                  const isActive = document.documentElement.getAttribute('data-theme') === id || (!document.documentElement.getAttribute('data-theme') && id === 'professional');
+                  return `
+                    <div class="theme-card ${isActive ? 'active' : ''}" data-theme-id="${id}" onclick="applyTheme('${id}')" style="cursor: pointer; padding: 16px; background: #F5F5F5; border: 2px solid ${isActive ? '#0066CC' : '#D2D2D2'}; border-radius: 8px; transition: all 0.2s; position: relative;">
+                      <div style="font-size: 32px; text-align: center; margin-bottom: 8px;">${theme.icon}</div>
+                      <div style="font-weight: 600; text-align: center; margin-bottom: 4px;">${theme.name}</div>
+                      <div style="font-size: 12px; color: #6A6E73; text-align: center;">${theme.description}</div>
+                      ${isActive ? '<div style="position: absolute; top: 8px; right: 8px; color: #0066CC; font-size: 18px;">✓</div>' : ''}
+                      <div style="margin-top: 12px; padding: 4px 8px; background: ${theme.category === 'professional' ? '#E7F5E7' : theme.category === 'fun' ? '#FFF4E5' : '#E5F0FF'}; border-radius: 4px; text-align: center; font-size: 11px; font-weight: 600; color: ${theme.category === 'professional' ? '#3E8635' : theme.category === 'fun' ? '#795600' : '#0066CC'};">
+                        ${theme.category.toUpperCase()}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+              
+              ${focusModeEnabled ? `
+                <div style="margin-top: 16px; padding: 12px; background: #FFF4E5; border-left: 4px solid #F0AB00; border-radius: 4px;">
+                  <p style="margin: 0; color: #151515;">
+                    🎯 <strong>Focus Mode is ON</strong> - Only professional themes are shown. Turn off Focus Mode to see all themes.
+                  </p>
+                </div>
+              ` : ''}
+              
+              <div style="margin-top: 24px; padding: 16px; background: #E5F0FF; border-radius: 4px;">
+                <strong style="display: block; margin-bottom: 8px;">💡 Pro Tip:</strong>
+                <p style="margin: 0; color: #6A6E73; font-size: 13px;">
+                  Themes are saved automatically. Try different themes to find what works best for you!
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px; border: 2px solid #C9190B;">
+            <div class="card-title" style="color: #C9190B;">⚠️ Danger Zone</div>
+            <div class="card-content">
+              <div style="margin-bottom: 16px;">
+                <strong style="display: block; margin-bottom: 8px;">Factory Reset</strong>
+                <p style="color: #6A6E73; margin-bottom: 16px;">
+                  Reset Taminator to first-run state. This will clear all settings and authentication configuration, then show the setup wizard again.
+                </p>
+                <p style="color: #6A6E73; margin-bottom: 16px;">
+                  <strong>What will be reset:</strong><br>
+                  • OOBE completion state (will show wizard on next launch)<br>
+                  • All settings (email, report format, etc.)<br>
+                  • Vault configuration<br>
+                  • Cached authentication data
+                </p>
+                <p style="color: #3E8635; margin-bottom: 16px;">
+                  <strong>What will NOT be affected:</strong><br>
+                  • Customer data and reports<br>
+                  • Tokens stored in HashiCorp Vault<br>
+                  • Files in your reports directory
+                </p>
+                <button class="btn" onclick="factoryReset()" style="background: #C9190B; color: white; border: none;">
+                  🔄 Factory Reset Taminator
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 24px; display: flex; gap: 12px;">
+            <button class="btn btn-primary" onclick="saveSettings()">
+              💾 Save Settings
+            </button>
+            <button class="btn btn-secondary" onclick="resetSettings()">
+              🔄 Reset to Defaults
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    
+    async function saveSettings() {
+      const settings = {
+        email: document.getElementById('settings-email').value,
+        autoUpdate: document.getElementById('settings-auto-update').checked,
+        notifications: document.getElementById('settings-notifications').checked,
+        reportFormat: document.getElementById('settings-report-format').value,
+        includeTimestamps: document.getElementById('settings-include-timestamps').checked,
+        includeChangelog: document.getElementById('settings-include-changelog').checked,
+        reportsDir: document.getElementById('settings-reports-dir').value,
+        jiraTimeout: document.getElementById('settings-jira-timeout').value,
+        debugMode: document.getElementById('settings-debug-mode').checked
+      };
+      
+      try {
+        await ipcRenderer.invoke('save-settings', settings);
+        alert('Settings saved successfully!');
+      } catch (error) {
+        alert('Error saving settings: ' + error.message);
+      }
+    }
+    
+    function resetSettings() {
+      if (confirm('Are you sure you want to reset all settings to defaults?\n\nThis will:\n- Reset all settings to defaults\n- Clear Vault connection info\n- Reload the application')) {
+        // Reset general settings
+        document.getElementById('settings-email').value = 'jbyrd@redhat.com';
+        document.getElementById('settings-auto-update').checked = true;
+        document.getElementById('settings-notifications').checked = false;
+        document.getElementById('settings-report-format').value = 'markdown';
+        document.getElementById('settings-include-timestamps').checked = true;
+        document.getElementById('settings-include-changelog').checked = true;
+        document.getElementById('settings-reports-dir').value = '~/Documents/tam-reports';
+        document.getElementById('settings-jira-timeout').value = '30';
+        document.getElementById('settings-debug-mode').checked = false;
+        
+        // Reset Vault-related data
+        // Note: Environment variables (VAULT_ADDR, VAULT_TOKEN) are set by user
+        // and can't be cleared from within the app, but we clear cached state
+        localStorage.removeItem('vault_last_status');
+        localStorage.removeItem('vault_tokens_cache');
+        sessionStorage.clear();
+        
+        alert('Settings reset to defaults!\n\nNote: Vault environment variables (VAULT_ADDR, VAULT_TOKEN) are set externally and must be cleared manually if needed.');
+        
+        // Reload to refresh Vault state
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    }
+    
+    function selectReportsDir() {
+      alert('Directory selection dialog would open here (Not yet implemented)');
+    }
+    
+    async function factoryReset() {
+      const confirmed = confirm(
+        'Factory Reset Taminator?\n\n' +
+        'This will:\n' +
+        '• Clear all settings and preferences\n' +
+        '• Clear authentication configuration\n' +
+        '• Reset OOBE state (will show setup wizard)\n' +
+        '• Restart the application\n\n' +
+        'Your customer data and reports will NOT be affected.\n\n' +
+        'Are you sure you want to continue?'
+      );
+      
+      if (!confirmed) {
+        return;
+      }
+      
+      try {
+        // Call the OOBE factory reset IPC handler
+        const result = await ipcRenderer.invoke('oobe-factory-reset');
+        
+        if (result.success) {
+          // Clear local storage and session storage
+          localStorage.clear();
+          sessionStorage.clear();
+          
+          // Show success message
+          alert('Factory reset complete!\n\nTaminator will now restart and show the setup wizard.');
+          
+          // Reload to show OOBE wizard
+          window.location.reload();
+        } else {
+          alert('Factory reset failed. Please try again or contact support.');
+        }
+      } catch (error) {
+        console.error('[Factory Reset] Error:', error);
+        alert('Error during factory reset: ' + error.message);
+      }
+    }
+    
+    function showClippy() {
+      document.getElementById('page-title').textContent = 'Clippy Email Assistant';
+      setActiveNav(8);
+      
+      document.getElementById('content').innerHTML = `
+        <div class="clippy-container">
+          <h2 style="margin-bottom: 24px;">📎 Clippy Email Assistant</h2>
+          
+          <div class="card">
+            <div class="card-content" style="text-align: center; padding: 48px 24px;">
+              <div style="font-size: 64px; margin-bottom: 16px;">📎</div>
+              <h3 style="color: #6A6E73; margin-bottom: 16px;">In Development</h3>
+              <p style="color: #6A6E73; max-width: 500px; margin: 0 auto;">
+                Clippy, your favorite office assistant, will help you compose professional customer emails with AI-powered suggestions. 
+                This feature is planned for a future release.
+              </p>
+              
+              <div style="margin-top: 32px; padding: 24px; background: #F5F5F5; border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                <h4 style="margin-bottom: 12px;">✨ Planned Features:</h4>
+                <ul style="text-align: left; color: #6A6E73;">
+                  <li>AI-powered email composition</li>
+                  <li>Customer context awareness</li>
+                  <li>Professional tone suggestions</li>
+                  <li>Classic Clippy personality & animations</li>
+                  <li>Email templates for common scenarios</li>
+                  <li>Windows XP theme integration</li>
+                </ul>
+              </div>
+              
+              <div style="margin-top: 24px;">
+                <button class="btn btn-secondary" onclick="showDashboard()">
+                  ← Back to Dashboard
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function showReportIssue() {
+      document.getElementById('page-title').textContent = 'Report Issue';
+      setActiveNav(7);
+      
+      document.getElementById('content').innerHTML = `
+        <h2 style="margin-bottom: 24px;">🐛 Report a Bug or Request a Feature</h2>
+        
+        <div style="margin-bottom: 24px; padding: 16px; background: #FFF4E5; border-left: 4px solid #F0AB00; border-radius: 4px;">
+          <p style="margin: 0 0 12px 0; color: #151515;">
+            <strong>⚠️ Direct GitHub submission is not yet implemented.</strong><br>
+            Please use one of the methods below to report issues or request features.
+          </p>
+        </div>
+
+        <div class="card" style="max-width: 800px;">
+          <div class="card-title">📧 How to Report Issues</div>
+          <div class="card-content">
+            <div style="padding: 16px; background: #F5F5F5; border-radius: 4px; margin-bottom: 16px;">
+              <h4 style="margin: 0 0 12px 0; color: #151515;">✉️ Email</h4>
+              <p style="margin: 0 0 8px 0; color: #6A6E73;">Send feedback directly to the TAM team:</p>
+              <a href="mailto:jbyrd@redhat.com?subject=Taminator%20Feedback" 
+                 style="color: #0066CC; text-decoration: none; font-weight: 600;">
+                jbyrd@redhat.com
+              </a>
+            </div>
+            
+            <div style="padding: 16px; background: #F5F5F5; border-radius: 4px; margin-bottom: 16px;">
+              <h4 style="margin: 0 0 12px 0; color: #151515;">🔗 GitLab Issues</h4>
+              <p style="margin: 0 0 8px 0; color: #6A6E73;">Report issues directly on GitLab:</p>
+              <a href="https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues" 
+                 target="_blank"
+                 style="color: #0066CC; text-decoration: none; font-weight: 600;">
+                gitlab.cee.redhat.com/jbyrd/taminator/-/issues →
+              </a>
+            </div>
+            
+            <div style="padding: 16px; background: #F5F5F5; border-radius: 4px;">
+              <h4 style="margin: 0 0 12px 0; color: #151515;">💬 Slack (Red Hat Internal)</h4>
+              <p style="margin: 0 0 8px 0; color: #6A6E73;">Reach out on Slack:</p>
+              <span style="font-family: monospace; color: #151515; font-weight: 600;">#tam-automation</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card" style="max-width: 800px; margin-top: 24px;">
+          <div class="card-title">💡 What to Include in Your Report</div>
+          <div class="card-content">
+            <div style="margin-bottom: 16px;">
+              <h4 style="margin: 0 0 8px 0;">🐛 For Bug Reports:</h4>
+              <ul style="margin: 0; padding-left: 20px; color: #6A6E73;">
+                <li>What you were trying to do</li>
+                <li>What you expected to happen</li>
+                <li>What actually happened</li>
+                <li>Steps to reproduce the issue</li>
+                <li>Version number (currently v1.9.5)</li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 style="margin: 0 0 8px 0;">✨ For Feature Requests:</h4>
+              <ul style="margin: 0; padding-left: 20px; color: #6A6E73;">
+                <li>What problem you're trying to solve</li>
+                <li>How you envision using the feature</li>
+                <li>Any workarounds you're currently using</li>
+                <li>Priority/importance to your workflow</li>
+              </ul>
+            </div>
+
+            <div id="issue-form" style="display: none;">
+              <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Title *</label>
+                <input type="text" id="issue-title" placeholder="Brief summary of the issue or feature"
+                  style="width: 100%; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px;">
+              </div>
+
+              <div id="bug-fields" style="display: none;">
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; margin-bottom: 8px; font-weight: 600;">Description *</label>
+                  <textarea id="bug-description" rows="3" placeholder="What happened?"
+                    style="width: 100%; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; margin-bottom: 8px; font-weight: 600;">Steps to Reproduce *</label>
+                  <textarea id="bug-steps" rows="4" placeholder="1. Go to...&#10;2. Click on...&#10;3. See error..."
+                    style="width: 100%; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                  <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Expected Behavior</label>
+                    <textarea id="bug-expected" rows="2" placeholder="What should happen?"
+                      style="width: 100%; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                  </div>
+                  <div>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Actual Behavior</label>
+                    <textarea id="bug-actual" rows="2" placeholder="What actually happens?"
+                      style="width: 100%; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div id="feature-fields" style="display: none;">
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; margin-bottom: 8px; font-weight: 600;">Feature Description *</label>
+                  <textarea id="feature-description" rows="3" placeholder="Describe the feature you'd like..."
+                    style="width: 100%; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; margin-bottom: 8px; font-weight: 600;">Use Case *</label>
+                  <textarea id="feature-usecase" rows="3" placeholder="What problem does this solve? How would you use it?"
+                    style="width: 100%; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                  <label style="display: block; margin-bottom: 8px; font-weight: 600;">Alternatives Considered</label>
+                  <textarea id="feature-alternatives" rows="2" placeholder="Have you considered other solutions?"
+                    style="width: 100%; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+                </div>
+              </div>
+
+              <div style="margin-top: 24px; display: flex; gap: 12px;">
+                <button class="btn btn-primary" onclick="submitIssue()">
+                  📤 Submit Issue
+                </button>
+                <button class="btn btn-secondary" onclick="cancelIssue()">
+                  Cancel
+                </button>
+              </div>
+
+              <div id="issue-status" style="margin-top: 16px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="max-width: 800px; margin-top: 24px;">
+          <div class="card-title">💡 Tips for Good Issue Reports</div>
+          <div class="card-content">
+            <p style="margin-bottom: 12px;">
+              <strong>Bug Reports:</strong> Include specific steps to reproduce, what you expected vs what happened, 
+              and your environment (OS, version).
+            </p>
+            <p>
+              <strong>Feature Requests:</strong> Explain the problem you're trying to solve, not just the solution. 
+              Describe how you would use the feature.
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    function setActiveNav(index) {
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach((item, i) => {
+        if (i === index) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+    }
+
+    async function loadAuthStatus() {
+      try {
+        const authStatus = await ipcRenderer.invoke('check-auth');
+        
+        const authCard = document.getElementById('auth-card');
+        authCard.innerHTML = `
+          <div class="status-item">
+            <span class="status-label">JIRA Token</span>
+            <span class="status-badge ${authStatus.jira_token ? 'success' : 'error'}">
+              ${authStatus.jira_token ? '✓ Valid' : '✗ Not configured'}
+            </span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Portal Token</span>
+            <span class="status-badge ${authStatus.portal_token ? 'success' : 'error'}">
+              ${authStatus.portal_token ? '✓ Valid' : '✗ Not configured'}
+            </span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">VPN</span>
+            <span class="status-badge ${authStatus.vpn ? 'success' : 'error'}">
+              ${authStatus.vpn ? '✓ Connected' : '✗ Not connected'}
+            </span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Kerberos</span>
+            <span class="status-badge ${authStatus.kerberos ? 'success' : 'error'}">
+              ${authStatus.kerberos ? '✓ Valid' : '✗ No ticket'}
+            </span>
+          </div>
+        `;
+
+        // Update status bar
+        const authOK = authStatus.vpn && authStatus.kerberos;
+        document.getElementById('auth-status').innerHTML = authOK 
+          ? '✅ All authentication OK' 
+          : '⚠️ Authentication issues detected';
+        
+        document.getElementById('last-check').textContent = `Last check: ${new Date().toLocaleTimeString()}`;
+      } catch (error) {
+        console.error('Failed to load auth status:', error);
+      }
+    }
+
+    async function refreshAuth() {
+      document.getElementById('refresh-btn').innerHTML = '<div class="spinner"></div>';
+      await loadAuthStatus();
+      setTimeout(() => {
+        document.getElementById('refresh-btn').textContent = '🔄 Refresh';
+      }, 500);
+    }
+
+    // ============================================================
+    // 🎨 THEME SYSTEM
+    // ============================================================
+    
+    const THEMES = {
+      professional: {
+        name: 'Professional',
+        description: 'Clean Red Hat design',
+        category: 'professional',
+        icon: '🏢',
+        focusModeAllowed: true
+      },
+      dark: {
+        name: 'Dark Mode',
+        description: 'Easy on the eyes',
+        category: 'professional',
+        icon: '🌙',
+        focusModeAllowed: true
+      },
+      'windows-xp': {
+        name: 'Windows XP',
+        description: 'Remember the good old days?',
+        category: 'fun',
+        icon: '🪟',
+        focusModeAllowed: false
+      },
+      'solarized-dark': {
+        name: 'Solarized Dark',
+        description: 'Popular dev theme',
+        category: 'developer',
+        icon: '🌊',
+        focusModeAllowed: true
+      },
+      dracula: {
+        name: 'Dracula',
+        description: 'VSCode favorite',
+        category: 'developer',
+        icon: '🧛',
+        focusModeAllowed: true
+      },
+      nord: {
+        name: 'Nord',
+        description: 'Arctic, north-bluish',
+        category: 'developer',
+        icon: '🏔️',
+        focusModeAllowed: true
+      },
+      matrix: {
+        name: 'Matrix',
+        description: 'Hacker aesthetic',
+        category: 'fun',
+        icon: '🟢',
+        focusModeAllowed: false
+      }
+    };
+    
+    // Focus Mode State
+    let focusModeEnabled = false;
+    
+    // Load theme from localStorage
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('taminator-theme') || 'professional';
+      const savedFocusMode = localStorage.getItem('taminator-focus-mode') === 'true';
+      
+      focusModeEnabled = savedFocusMode;
+      applyTheme(savedTheme);
+      
+      // Update focus mode in UI if on settings page
+      const focusModeCheckbox = document.getElementById('focus-mode-toggle');
+      if (focusModeCheckbox) {
+        focusModeCheckbox.checked = focusModeEnabled;
+      }
+    }
+    
+    // Apply theme
+    function applyTheme(themeId) {
+      // If focus mode is on and theme is not allowed, use professional
+      if (focusModeEnabled && THEMES[themeId] && !THEMES[themeId].focusModeAllowed) {
+        themeId = 'professional';
+      }
+      
+      document.documentElement.setAttribute('data-theme', themeId);
+      localStorage.setItem('taminator-theme', themeId);
+      
+      // Update active state in theme gallery if it exists
+      document.querySelectorAll('.theme-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      const activeCard = document.querySelector(`[data-theme-id="${themeId}"]`);
+      if (activeCard) {
+        activeCard.classList.add('active');
+      }
+    }
+    
+    // Toggle Focus Mode
+    function toggleFocusMode() {
+      focusModeEnabled = !focusModeEnabled;
+      localStorage.setItem('taminator-focus-mode', focusModeEnabled);
+      
+      // Reapply current theme (will switch to professional if needed)
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'professional';
+      applyTheme(currentTheme);
+      
+      // Update checkbox
+      const focusModeCheckbox = document.getElementById('focus-mode-toggle');
+      if (focusModeCheckbox) {
+        focusModeCheckbox.checked = focusModeEnabled;
+      }
+      
+      // Show notification
+      if (focusModeEnabled) {
+        alert('🎯 Focus Mode Enabled\n\nFun features disabled. Professional themes only.');
+      } else {
+        alert('🎉 Focus Mode Disabled\n\nAll features and themes available!');
+      }
+      
+      // Refresh settings to update UI
+      if (document.getElementById('page-title').textContent === 'Settings') {
+        showConfig();
+      }
+    }
+    
+    // Get filtered themes based on focus mode
+    function getAvailableThemes() {
+      if (focusModeEnabled) {
+        return Object.entries(THEMES).filter(([id, theme]) => theme.focusModeAllowed);
+      }
+      return Object.entries(THEMES);
+    }
+    
+    // Initialize theme on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTheme();
+    });
+
+    // ============================================================
+    // 🖼️ PORTAL PREVIEW SYSTEM
+    // ============================================================
+    
+    class PortalPreview {
+      constructor() {
+        this.iframe = null;
+        this.markdownEditor = null;
+        this.currentMode = 'desktop';
+        this.autoRefresh = true;
+        this.currentCustomer = '';
+      }
+      
+      open(customerName, markdownContent) {
+        this.currentCustomer = customerName;
+        document.getElementById('portal-preview-modal').style.display = 'flex';
+        document.getElementById('preview-customer-name').textContent = customerName;
+        
+        this.markdownEditor = document.getElementById('preview-markdown');
+        this.markdownEditor.value = markdownContent;
+        
+        this.iframe = document.getElementById('preview-iframe');
+        
+        // Setup live preview
+        this.markdownEditor.addEventListener('input', () => {
+          if (this.autoRefresh) {
+            this.refresh();
+          }
+        });
+        
+        this.refresh();
+      }
+      
+      refresh() {
+        const markdown = this.markdownEditor.value;
+        const html = this.renderMarkdownToPortal(markdown);
+        
+        // Inject into iframe with Portal CSS
+        const iframeDoc = this.iframe.contentDocument || this.iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Portal Preview</title>
+            <style>
+              body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Red Hat Text', 'Overpass', sans-serif;
+                background: #F5F5F5;
+              }
+              ${this.getPortalCSS()}
+            </style>
+          </head>
+          <body>
+            <div class="portal-preview">
+              <div class="portal-header">
+                <div style="color: #EE0000; font-size: 24px; font-weight: 700;">Red Hat Customer Portal</div>
+              </div>
+              <div class="portal-content">
+                ${html}
+              </div>
+              <div class="portal-footer">
+                <p>This RFE/Bug tracker is maintained by your Red Hat Technical Account Manager</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `);
+        iframeDoc.close();
+        
+        // Apply responsive mode
+        if (this.currentMode === 'mobile') {
+          this.iframe.style.width = '375px';
+          this.iframe.style.margin = '0 auto';
+        } else {
+          this.iframe.style.width = '100%';
+        }
+      }
+      
+      renderMarkdownToPortal(markdown) {
+        let html = markdown;
+        
+        // Headers
+        html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+        html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+        html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+        
+        // Bold and italic
+        html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        
+        // Links - JIRA tickets
+        html = html.replace(/\[?(AAPRFE-\d+)\]?/g, '<a href="https://issues.redhat.com/browse/$1" target="_blank">$1</a>');
+        html = html.replace(/\[?(AAP-\d+)\]?/g, '<a href="https://issues.redhat.com/browse/$1" target="_blank">$1</a>');
+        html = html.replace(/\[?(ANSIBLE-\d+)\]?/g, '<a href="https://issues.redhat.com/browse/$1" target="_blank">$1</a>');
+        
+        // Links - Support Cases
+        html = html.replace(/\[?(\d{8})\]?/g, '<a href="https://access.redhat.com/support/cases/#/case/$1" target="_blank">$1</a>');
+        
+        // Tables - simple markdown table parsing
+        const tableRegex = /\|(.+)\|\n\|[-:\s|]+\|\n((?:\|.+\|\n?)+)/g;
+        html = html.replace(tableRegex, (match, header, rows) => {
+          const headerCells = header.split('|').map(c => c.trim()).filter(c => c);
+          const rowLines = rows.trim().split('\n');
+          
+          let table = '<table><thead><tr>';
+          headerCells.forEach(cell => {
+            table += `<th>${cell}</th>`;
+          });
+          table += '</tr></thead><tbody>';
+          
+          rowLines.forEach(row => {
+            const cells = row.split('|').map(c => c.trim()).filter(c => c);
+            if (cells.length > 0) {
+              table += '<tr>';
+              cells.forEach(cell => {
+                table += `<td>${cell}</td>`;
+              });
+              table += '</tr>';
+            }
+          });
+          
+          table += '</tbody></table>';
+          return table;
+        });
+        
+        // Lists
+        html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+        html = html.replace(/(<li>.+<\/li>)/s, '<ul>$1</ul>');
+        
+        // Paragraphs
+        html = html.replace(/\n\n/g, '</p><p>');
+        html = '<p>' + html + '</p>';
+        
+        // Clean up empty paragraphs
+        html = html.replace(/<p>\s*<\/p>/g, '');
+        html = html.replace(/<p>\s*(<h[1-6]>)/g, '$1');
+        html = html.replace(/(<\/h[1-6]>)\s*<\/p>/g, '$1');
+        html = html.replace(/<p>\s*(<table>)/g, '$1');
+        html = html.replace(/(<\/table>)\s*<\/p>/g, '$1');
+        html = html.replace(/<p>\s*(<ul>)/g, '$1');
+        html = html.replace(/(<\/ul>)\s*<\/p>/g, '$1');
+        
+        return html;
+      }
+      
+      getPortalCSS() {
+        return `
+          .portal-preview {
+            max-width: ${this.currentMode === 'mobile' ? '375px' : '1200px'};
+            margin: 20px auto;
+            padding: 32px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 4px;
+          }
+          
+          .portal-header {
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #D2D2D2;
+          }
+          
+          .portal-content {
+            min-height: 300px;
+            color: #151515;
+            line-height: 1.6;
+          }
+          
+          .portal-footer {
+            margin-top: 48px;
+            padding-top: 16px;
+            border-top: 1px solid #D2D2D2;
+            color: #6A6E73;
+            font-size: 14px;
+          }
+          
+          h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #EE0000;
+            margin: 24px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #EE0000;
+          }
+          
+          h2 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #151515;
+            margin-top: 32px;
+            margin-bottom: 16px;
+          }
+          
+          h3 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #151515;
+            margin-top: 24px;
+            margin-bottom: 12px;
+          }
+          
+          p {
+            margin: 16px 0;
+            color: #151515;
+          }
+          
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          }
+          
+          th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #F0F0F0;
+          }
+          
+          th {
+            background: #F5F5F5;
+            font-weight: 600;
+            color: #151515;
+            border-bottom: 2px solid #D2D2D2;
+          }
+          
+          tr:hover {
+            background: #F9F9F9;
+          }
+          
+          a {
+            color: #0066CC;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s;
+          }
+          
+          a:hover {
+            border-bottom-color: #0066CC;
+          }
+          
+          ul {
+            margin: 16px 0;
+            padding-left: 32px;
+          }
+          
+          li {
+            margin: 8px 0;
+            color: #151515;
+          }
+          
+          strong {
+            font-weight: 600;
+            color: #151515;
+          }
+          
+          em {
+            font-style: italic;
+          }
+        `;
+      }
+      
+      setPreviewMode(mode) {
+        this.currentMode = mode;
+        
+        // Update button states
+        document.querySelectorAll('.preview-mode-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+        
+        this.refresh();
+      }
+      
+      async publishFromPreview() {
+        if (confirm(`Publish this report for ${this.currentCustomer} to the Customer Portal?`)) {
+          try {
+            const result = await ipcRenderer.invoke('post-report', { customer: this.currentCustomer });
+            if (result.success) {
+              alert('✅ Report published successfully!');
+              this.close();
+            } else {
+              alert('❌ Failed to publish: ' + (result.error || 'Unknown error'));
+            }
+          } catch (error) {
+            alert('❌ Error: ' + error.message);
+          }
+        }
+      }
+      
+      close() {
+        document.getElementById('portal-preview-modal').style.display = 'none';
+      }
+    }
+
+    // Global instance
+    const portalPreview = new PortalPreview();
+
+    // Helper function to preview current report
+    async function previewCurrentReport(customerSlug) {
+      try {
+        // In a real implementation, we'd fetch the actual report file
+        // For now, show a demo
+        const demoReport = `# ${customerSlug} RFE/Bug Tracker
+
+**Summary**: 9 total cases (7 RFE, 2 Bug)
+
+## Enhancement Requests (RFE)
+
+| RED HAT JIRA ID | Support Case | Enhancement Request | Status |
+|---|---|---|---|
+| AAPRFE-762 | 03666005 | Add method for monitoring uwsgi workers | Backlog |
+| AAPRFE-2588 | 03893697 | Support for Ansible Tower Custom Credential Type | In Progress |
+| AAPRFE-3001 | 04123456 | Enhanced reporting dashboard | Backlog |
+
+## Bug Reports
+
+| RED HAT JIRA ID | Support Case | Bug Description | Status |
+|---|---|---|---|
+| AAP-53458 | 04067543 | Installation fails on RHEL 9 | In Progress |
+| AAP-54321 | 04156789 | Performance degradation issue | Backlog |
+
+---
+
+*Last Updated: ${new Date().toLocaleDateString()}*`;
+        
+        portalPreview.open(customerSlug, demoReport);
+      } catch (error) {
+        alert('Error loading report: ' + error.message);
+      }
+    }
+
+    function closePreview() {
+      portalPreview.close();
+    }
+
+    function setPreviewMode(mode) {
+      portalPreview.setPreviewMode(mode);
+    }
+
+    function publishFromPreview() {
+      portalPreview.publishFromPreview();
+    }
+  </script>
+
+  <!-- Portal Preview Modal -->
+  <div id="portal-preview-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="width: 95%; height: 95%; background: white; border-radius: 8px; display: flex; flex-direction: column; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+      
+      <!-- Header -->
+      <div style="padding: 20px 24px; border-bottom: 2px solid #D2D2D2; display: flex; justify-content: space-between; align-items: center; background: #F5F5F5;">
+        <h2 style="margin: 0; font-size: 24px; color: #151515;">
+          🖼️ Portal Preview: <span id="preview-customer-name" style="color: #EE0000;"></span>
+        </h2>
+        <button onclick="closePreview()" style="background: none; border: none; font-size: 32px; cursor: pointer; color: #6A6E73; line-height: 1;">&times;</button>
+      </div>
+      
+      <!-- Toolbar -->
+      <div style="padding: 12px 24px; border-bottom: 1px solid #D2D2D2; display: flex; gap: 12px; align-items: center; background: white;">
+        <button class="btn btn-secondary preview-mode-btn active" data-mode="desktop" onclick="setPreviewMode('desktop')">
+          💻 Desktop
+        </button>
+        <button class="btn btn-secondary preview-mode-btn" data-mode="mobile" onclick="setPreviewMode('mobile')">
+          📱 Mobile
+        </button>
+        <div style="flex: 1;"></div>
+        <button class="btn btn-primary" onclick="publishFromPreview()">
+          📤 Publish to Portal
+        </button>
+      </div>
+      
+      <!-- Split View -->
+      <div style="flex: 1; display: flex; overflow: hidden;">
+        
+        <!-- Left: Markdown Editor -->
+        <div style="flex: 1; display: flex; flex-direction: column; border-right: 2px solid #D2D2D2;">
+          <div style="padding: 16px 24px; background: #F5F5F5; border-bottom: 1px solid #D2D2D2;">
+            <h3 style="margin: 0; font-size: 18px; color: #151515;">📝 Markdown Source</h3>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #6A6E73;">Edit your report here</p>
+          </div>
+          <textarea id="preview-markdown" style="flex: 1; padding: 24px; border: none; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.6; resize: none; outline: none;"></textarea>
+        </div>
+        
+        <!-- Right: Portal Preview -->
+        <div style="flex: 1; display: flex; flex-direction: column; background: #F5F5F5;">
+          <div style="padding: 16px 24px; background: #F5F5F5; border-bottom: 1px solid #D2D2D2;">
+            <h3 style="margin: 0; font-size: 18px; color: #151515;">🖼️ Portal View</h3>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #6A6E73;">How it will appear on Customer Portal</p>
+          </div>
+          <div style="flex: 1; overflow: auto; padding: 20px;">
+            <iframe id="preview-iframe" sandbox="allow-same-origin" style="width: 100%; height: 100%; border: none; background: white;"></iframe>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Footer -->
+      <div style="padding: 12px 24px; border-top: 1px solid #D2D2D2; background: #F5F5F5; color: #6A6E73; font-size: 13px;">
+        💡 Tip: Edit markdown on the left to see live updates on the right. Links are clickable in the preview!
+      </div>
+      
+    </div>
+  </div>
+
+</body>
+</html>
+

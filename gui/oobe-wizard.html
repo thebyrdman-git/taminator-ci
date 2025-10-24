@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Taminator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Red Hat Display', 'Red Hat Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #EE0000 0%, #A30000 100%);
+      color: #151515;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wizard-container {
+      width: 90%;
+      max-width: 800px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      max-height: 700px;
+    }
+
+    .wizard-header {
+      background: #EE0000;
+      color: white;
+      padding: 24px 32px;
+      text-align: center;
+    }
+
+    .wizard-header h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .wizard-header p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .progress-bar {
+      background: rgba(255, 255, 255, 0.2);
+      height: 4px;
+      margin-top: 16px;
+    }
+
+    .progress-fill {
+      background: white;
+      height: 100%;
+      width: 20%;
+      transition: width 0.3s ease;
+    }
+
+    .wizard-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px 48px;
+    }
+
+    .screen {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 16px;
+      color: #151515;
+      font-weight: 700;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #6A6E73;
+      margin-bottom: 24px;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 24px 0;
+    }
+
+    .feature-list li {
+      padding: 16px;
+      margin-bottom: 12px;
+      background: #F5F5F5;
+      border-left: 4px solid #EE0000;
+      border-radius: 4px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .feature-list li::before {
+      content: "✅";
+      margin-right: 12px;
+      font-size: 20px;
+    }
+
+    .info-box {
+      background: #FDE7E7;
+      border-left: 4px solid #EE0000;
+      padding: 16px;
+      border-radius: 4px;
+      margin: 24px 0;
+    }
+
+    .info-box strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #A30000;
+    }
+
+    .wizard-footer {
+      padding: 24px 48px;
+      background: #F5F5F5;
+      border-top: 1px solid #D2D2D2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: #EE0000;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #A30000;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #151515;
+      border: 1px solid #D2D2D2;
+    }
+
+    .btn-secondary:hover {
+      background: #F5F5F5;
+    }
+
+    .btn-skip {
+      background: transparent;
+      color: #6A6E73;
+      border: none;
+      padding: 12px 24px;
+    }
+
+    .btn-skip:hover {
+      color: #151515;
+      text-decoration: underline;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .choice-card {
+      background: white;
+      border: 2px solid #D2D2D2;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .choice-card:hover {
+      border-color: #EE0000;
+      box-shadow: 0 4px 12px rgba(238, 0, 0, 0.1);
+    }
+
+    .choice-card.selected {
+      border-color: #EE0000;
+      background: #FDE7E7;
+    }
+
+    .choice-card h3 {
+      margin-bottom: 12px;
+      color: #151515;
+      font-size: 20px;
+    }
+
+    .choice-card ul {
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    .choice-card ul li {
+      padding: 4px 0;
+      color: #6A6E73;
+      font-size: 14px;
+    }
+
+    .choice-card ul li::before {
+      content: "•";
+      color: #EE0000;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .recommended-badge {
+      display: inline-block;
+      background: #3E8635;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #151515;
+      font-size: 15px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #D2D2D2;
+      border-radius: 4px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #EE0000;
+    }
+
+    .form-group small {
+      display: block;
+      margin-top: 6px;
+      color: #6A6E73;
+      font-size: 13px;
+    }
+
+    .test-result {
+      padding: 16px;
+      border-radius: 4px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .test-result.success {
+      background: #E7F5E7;
+      color: #3E8635;
+      border: 1px solid #3E8635;
+    }
+
+    .test-result.error {
+      background: #FDE7E9;
+      color: #C9190B;
+      border: 1px solid #C9190B;
+    }
+
+    .test-result.testing {
+      background: #FDE7E7;
+      color: #EE0000;
+      border: 1px solid #EE0000;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(238, 0, 0, 0.3);
+      border-top-color: #EE0000;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wizard-container">
+    <!-- Header -->
+    <div class="wizard-header">
+      <h1>🎯 Welcome to Taminator!</h1>
+      <p>TAM Workflow Automation Made Simple</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressBar"></div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="wizard-content">
+      <!-- Screen 1: Welcome -->
+      <div id="screen-welcome" class="screen active">
+        <h2>Let's Get You Set Up</h2>
+        <p>Taminator helps Red Hat TAMs automate their workflow by tracking RFEs and Bugs, keeping customer reports up-to-date, and publishing to the portal in one click.</p>
+        
+        <ul class="feature-list">
+          <li>Track RFEs and Bugs automatically</li>
+          <li>Keep customer reports always up-to-date</li>
+          <li>Publish reports to portal in one click</li>
+          <li>Save hours of manual JIRA work each week</li>
+        </ul>
+
+        <div class="info-box">
+          <strong>📋 This setup takes about 5 minutes</strong>
+          <p style="color: #6A6E73; margin-bottom: 0;">You'll need a JIRA API token (we'll show you how to get one)</p>
+        </div>
+      </div>
+
+      <!-- Screen 2: Authentication Choice -->
+      <div id="screen-auth-choice" class="screen">
+        <h2>Choose Your Authentication Method</h2>
+        <p>Taminator needs to connect to JIRA and the Customer Portal. Choose how you'd like to manage your authentication tokens:</p>
+
+        <div class="choice-card" id="choice-vault">
+          <h3>🏢 Team Setup <span class="recommended-badge">Recommended</span></h3>
+          <p style="color: #6A6E73;">Use HashiCorp Vault for centralized token management</p>
+          <ul>
+            <li>Centralized token management</li>
+            <li>Share tokens with your team</li>
+            <li>No token expiration issues</li>
+            <li>Requires Vault server access</li>
+          </ul>
+        </div>
+
+        <div class="choice-card" id="choice-manual">
+          <h3>👤 Personal Setup</h3>
+          <p style="color: #6A6E73;">Configure tokens directly in Taminator</p>
+          <ul>
+            <li>Quick to set up</li>
+            <li>No external dependencies</li>
+            <li>Tokens stored locally on this computer</li>
+            <li>Need to update tokens when they expire</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Screen 3a: Vault Setup -->
+      <div id="screen-vault-setup" class="screen">
+        <h2>🏢 Connect to HashiCorp Vault</h2>
+        <p>Enter your Vault server details below. Taminator will use Vault to securely retrieve JIRA and Portal tokens.</p>
+
+        <div class="info-box">
+          <strong>🔐 What is Vault?</strong>
+          <p style="color: #6A6E73; margin-bottom: 0;">HashiCorp Vault is a centralized secrets management system. Your team admin should provide these connection details.</p>
+        </div>
+
+        <form id="vault-form" style="margin-top: 32px;">
+          <div class="form-group">
+            <label for="vaultUrl">Vault Server URL</label>
+            <input type="url" id="vaultUrl" placeholder="https://vault.example.com:8200" required>
+            <small>Example: https://vault.mycompany.com:8200</small>
+          </div>
+
+          <div class="form-group">
+            <label for="vaultToken">Vault Token</label>
+            <input type="password" id="vaultToken" placeholder="hvs.XXXXXXXXXX" required>
+            <small>Your personal Vault access token</small>
+          </div>
+
+          <div class="form-group">
+            <label for="vaultMount">KV Mount Path</label>
+            <input type="text" id="vaultMount" placeholder="secret" value="secret" required>
+            <small>The KV secrets engine mount path (usually "secret")</small>
+          </div>
+
+          <div class="form-group">
+            <label for="vaultPath">Secret Path</label>
+            <input type="text" id="vaultPath" placeholder="taminator/tokens" required>
+            <small>Path where your tokens are stored (e.g., taminator/tokens)</small>
+          </div>
+
+          <div id="vault-test-result" style="display: none; margin-top: 24px;"></div>
+        </form>
+
+        <div style="margin-top: 32px;">
+          <button class="btn btn-secondary" id="btnTestVault" style="width: 100%;">
+            🔍 Test Connection
+          </button>
+        </div>
+      </div>
+
+      <!-- Screen 3b: Manual Setup -->
+      <div id="screen-manual-setup" class="screen">
+        <h2>👤 Configure API Tokens</h2>
+        <p>Enter your JIRA and Customer Portal API tokens. You'll need to generate these from each service.</p>
+
+        <div class="info-box">
+          <strong>🔑 How to Get Tokens</strong>
+          <p style="color: #6A6E73; margin-bottom: 12px; line-height: 1.6;">
+            <strong>JIRA Personal Access Token:</strong><br>
+            1. Go to <a href="https://issues.redhat.com" target="_blank">issues.redhat.com</a><br>
+            2. Click your avatar (top right) → Profile → Personal Access Tokens<br>
+            3. Click "Create token" → Name it (e.g., "Taminator Integration")<br>
+            4. Set expiry date → Create → Copy immediately (won't be shown again!)
+          </p>
+          <p style="color: #6A6E73; margin-bottom: 0; line-height: 1.6;">
+            <strong>Customer Portal Offline Token:</strong><br>
+            Go to <a href="https://access.redhat.com/management/api" target="_blank">access.redhat.com/management/api</a> → Generate offline token
+          </p>
+        </div>
+
+        <form id="manual-form" style="margin-top: 32px;">
+          <div class="form-group">
+            <label for="jiraToken">JIRA API Token</label>
+            <input type="password" id="jiraToken" placeholder="Enter your JIRA Personal Access Token" required>
+            <small>Create at <a href="https://issues.redhat.com" target="_blank" style="color: #EE0000;">issues.redhat.com</a> → Profile → Personal Access Tokens</small>
+          </div>
+
+          <div id="jira-test-result" style="display: none; margin-top: 16px; margin-bottom: 24px;"></div>
+
+          <div style="margin-bottom: 24px;">
+            <button type="button" class="btn btn-secondary" id="btnTestJira" style="width: 100%;">
+              🔍 Test JIRA Connection
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label for="portalToken">Customer Portal API Token</label>
+            <input type="password" id="portalToken" placeholder="Enter your Portal token" required>
+            <small>Generate an offline token at <a href="https://access.redhat.com/management/api" target="_blank" style="color: #EE0000;">access.redhat.com/management/api</a></small>
+          </div>
+
+          <div id="portal-test-result" style="display: none; margin-top: 16px; margin-bottom: 24px;"></div>
+
+          <div>
+            <button type="button" class="btn btn-secondary" id="btnTestPortal" style="width: 100%;">
+              🔍 Test Portal Connection
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Screen 4: First Customer Onboarding (Optional) -->
+      <div id="screen-first-customer" class="screen">
+        <h2>👥 Add Your First Customer (Optional)</h2>
+        <p>Let's set up tracking for one of your customers. This is optional - you can skip and add customers later from the main app.</p>
+
+        <form id="customer-form" style="margin-top: 32px;">
+          <div class="form-group">
+            <label for="customerName">Customer Name</label>
+            <input type="text" id="customerName" placeholder="Example: Acme Corp, Wells Fargo">
+            <small>The name of your TAM customer account</small>
+          </div>
+
+          <div class="form-group">
+            <label for="customerSlug">Short Name (Slug)</label>
+            <input type="text" id="customerSlug" placeholder="Example: acmecorp, wellsfargo">
+            <small>Used for file names and directories (lowercase, no spaces)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="tamEmail">Your Email</label>
+            <input type="email" id="tamEmail" placeholder="you@redhat.com">
+            <small>Your Red Hat email address</small>
+          </div>
+
+          <div id="customer-discovery-result" style="display: none; margin-top: 24px;"></div>
+
+          <div style="margin-top: 24px;">
+            <button type="button" class="btn btn-secondary" id="btnDiscoverCustomer" style="width: 100%;">
+              🔍 Discover RFEs & Bugs
+            </button>
+          </div>
+        </form>
+
+        <div class="info-box" style="margin-top: 32px;">
+          <strong>💡 Quick Start</strong>
+          <p style="color: #6A6E73; margin-bottom: 0;">Click "Discover RFEs & Bugs" to automatically search JIRA for existing issues related to your customer. This creates your first tracker file.</p>
+        </div>
+      </div>
+
+      <!-- Screen 5: Completion -->
+      <div id="screen-completion" class="screen">
+        <div style="text-align: center; padding: 40px 0;">
+          <div style="font-size: 64px; margin-bottom: 24px;">🎉</div>
+          <h2 style="font-size: 36px; margin-bottom: 16px;">You're All Set!</h2>
+          <p style="font-size: 18px; margin-bottom: 40px;">Taminator is ready to automate your TAM workflows.</p>
+        </div>
+
+        <div style="background: #F5F5F5; border-radius: 8px; padding: 32px; margin-bottom: 32px;">
+          <h3 style="font-size: 20px; margin-bottom: 16px; color: #151515;">What You've Completed:</h3>
+          <ul class="feature-list" style="margin: 0;">
+            <li id="completion-auth-status">Authentication configured</li>
+            <li id="completion-customer-status" style="display: none;">First customer added</li>
+          </ul>
+        </div>
+
+        <div style="background: #FDE7E7; border-radius: 8px; padding: 32px; margin-bottom: 32px;">
+          <h3 style="font-size: 20px; margin-bottom: 16px; color: #EE0000;">What You Can Do Now:</h3>
+          <p style="margin-bottom: 16px; line-height: 1.8; color: #6A6E73;">
+            <strong style="color: #151515;">🔍 Verify</strong> - Check for RFE/Bug status changes<br>
+            <strong style="color: #151515;">🔄 Update</strong> - Refresh tracker with latest data<br>
+            <strong style="color: #151515;">📤 Post</strong> - Publish reports to customer portal<br>
+            <strong style="color: #151515;">➕ Onboard</strong> - Add more customers
+          </p>
+        </div>
+
+        <div class="info-box">
+          <strong>📚 Quick Tips</strong>
+          <p style="color: #6A6E73; margin-bottom: 12px;">
+            • Run "Verify" daily to check for changes<br>
+            • Use "Update" before customer meetings<br>
+            • Configure additional tokens in the Vault tab
+          </p>
+          <p style="color: #6A6E73; margin-bottom: 0;">
+            <strong>Need help?</strong> Check the Help tab or contact your TAM lead.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+          <button class="btn btn-primary" id="btnFinish" style="padding: 16px 48px; font-size: 18px;">
+            🚀 Start Using Taminator
+          </button>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- Footer -->
+    <div class="wizard-footer">
+      <div>
+        <button class="btn btn-skip" id="btnSkip">I'll Do This Later</button>
+      </div>
+      <div>
+        <button class="btn btn-secondary" id="btnBack" style="display: none;">← Back</button>
+        <button class="btn btn-primary" id="btnNext">Let's Get Started →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    
+    // Current screen index
+    let currentScreen = 0;
+    const screens = ['welcome', 'auth-choice', 'vault-setup', 'manual-setup', 'first-customer', 'completion'];
+    let vaultConnectionTested = false;
+    let jiraTokenTested = false;
+    let portalTokenTested = false;
+    let selectedAuthMethod = null;
+    let customerDiscovered = false;
+    
+    // Update progress bar
+    function updateProgress() {
+      const progress = ((currentScreen + 1) / screens.length) * 100;
+      document.getElementById('progressBar').style.width = progress + '%';
+    }
+
+    // Show screen
+    function showScreen(screenName) {
+      // Hide all screens
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      
+      // Show target screen
+      document.getElementById(`screen-${screenName}`).classList.add('active');
+      
+      // Update buttons
+      currentScreen = screens.indexOf(screenName);
+      updateButtons();
+      updateProgress();
+      
+      // Save state
+      ipcRenderer.invoke('oobe-update-last-screen', screenName);
+    }
+
+    // Update button states
+    function updateButtons() {
+      const btnBack = document.getElementById('btnBack');
+      const btnNext = document.getElementById('btnNext');
+      const btnSkip = document.getElementById('btnSkip');
+      const currentScreenName = screens[currentScreen];
+      
+      // Back button
+      if (currentScreen === 0 || currentScreenName === 'completion') {
+        btnBack.style.display = 'none';
+      } else {
+        btnBack.style.display = 'inline-block';
+      }
+      
+      // Next button visibility and text
+      if (currentScreenName === 'completion') {
+        btnNext.style.display = 'none';
+        btnSkip.style.display = 'none';
+      } else {
+        btnNext.style.display = 'inline-block';
+        btnSkip.style.display = 'inline-block';
+        
+        if (currentScreenName === 'first-customer') {
+          btnNext.textContent = 'Skip & Continue →';
+        } else if (currentScreen === 0) {
+          btnNext.textContent = "Let's Get Started →";
+        } else {
+          btnNext.textContent = 'Next →';
+        }
+      }
+    }
+
+    // Navigation handlers
+    document.getElementById('btnNext').addEventListener('click', async () => {
+      const currentScreenName = screens[currentScreen];
+      
+      // Handle screen-specific validation and navigation
+      if (currentScreenName === 'auth-choice') {
+        const authMethod = document.querySelector('.choice-card.selected');
+        if (!authMethod) {
+          alert('Please select an authentication method.');
+          return;
+        }
+        
+        selectedAuthMethod = authMethod.id === 'choice-vault' ? 'vault' : 'manual';
+        await ipcRenderer.invoke('oobe-set-auth-method', selectedAuthMethod);
+        
+        // Navigate to appropriate setup screen
+        if (selectedAuthMethod === 'vault') {
+          showScreen('vault-setup');
+        } else {
+          showScreen('manual-setup');
+        }
+        return;
+      }
+      
+      if (currentScreenName === 'vault-setup') {
+        // Validate vault connection was tested
+        if (!vaultConnectionTested) {
+          alert('Please test your Vault connection before continuing.');
+          return;
+        }
+        
+        // Save vault configuration
+        const vaultConfig = {
+          url: document.getElementById('vaultUrl').value,
+          token: document.getElementById('vaultToken').value,
+          mount: document.getElementById('vaultMount').value,
+          path: document.getElementById('vaultPath').value
+        };
+        
+        await ipcRenderer.invoke('oobe-save-vault-config', vaultConfig);
+        await ipcRenderer.invoke('oobe-complete-step', 'vaultSetup');
+        
+        // Navigate to first customer screen
+        showScreen('first-customer');
+        return;
+      }
+      
+      if (currentScreenName === 'manual-setup') {
+        // Validate both tokens were tested
+        if (!jiraTokenTested) {
+          alert('Please test your JIRA token before continuing.');
+          return;
+        }
+        if (!portalTokenTested) {
+          alert('Please test your Portal token before continuing.');
+          return;
+        }
+        
+        // Save manual tokens
+        const manualConfig = {
+          jiraToken: document.getElementById('jiraToken').value,
+          portalToken: document.getElementById('portalToken').value
+        };
+        
+        await ipcRenderer.invoke('oobe-save-manual-tokens', manualConfig);
+        await ipcRenderer.invoke('oobe-complete-step', 'manualSetup');
+        
+        // Navigate to first customer screen
+        showScreen('first-customer');
+        return;
+      }
+      
+      if (currentScreenName === 'first-customer') {
+        // This screen is optional - allow proceeding without discovery
+        await ipcRenderer.invoke('oobe-complete-step', 'firstCustomer');
+        showScreen('completion');
+        return;
+      }
+      
+      if (currentScreenName === 'completion') {
+        // Should not be able to click Next on completion screen
+        // The "Finish" button handles this
+        return;
+      }
+      
+      // Default: move to next screen
+      if (currentScreen < screens.length - 1) {
+        currentScreen++;
+        showScreen(screens[currentScreen]);
+      }
+    });
+
+    document.getElementById('btnBack').addEventListener('click', () => {
+      const currentScreenName = screens[currentScreen];
+      
+      // Handle special back navigation for branching screens
+      if (currentScreenName === 'vault-setup' || currentScreenName === 'manual-setup') {
+        // Go back to auth choice
+        showScreen('auth-choice');
+        return;
+      }
+      
+      if (currentScreenName === 'first-customer') {
+        // Go back to the auth setup screen that was used
+        if (selectedAuthMethod === 'vault') {
+          showScreen('vault-setup');
+        } else {
+          showScreen('manual-setup');
+        }
+        return;
+      }
+      
+      // Default: go to previous screen
+      if (currentScreen > 0) {
+        currentScreen--;
+        showScreen(screens[currentScreen]);
+      }
+    });
+
+    document.getElementById('btnSkip').addEventListener('click', async () => {
+      if (confirm('Skip setup?\n\nYou can configure Taminator later from the Settings tab.')) {
+        await ipcRenderer.invoke('oobe-skip-setup');
+        // Redirect to main app
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Choice card selection
+    document.querySelectorAll('.choice-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+      });
+    });
+
+    // Vault connection test handler
+    document.getElementById('btnTestVault').addEventListener('click', async () => {
+      const form = document.getElementById('vault-form');
+      
+      // Validate form
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      
+      const resultDiv = document.getElementById('vault-test-result');
+      const btnTest = document.getElementById('btnTestVault');
+      
+      // Show testing state
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'test-result testing';
+      resultDiv.innerHTML = '<div class="spinner"></div><span>Testing connection to Vault...</span>';
+      btnTest.disabled = true;
+      vaultConnectionTested = false;
+      
+      // Collect form data
+      const vaultConfig = {
+        url: document.getElementById('vaultUrl').value,
+        token: document.getElementById('vaultToken').value,
+        mount: document.getElementById('vaultMount').value,
+        path: document.getElementById('vaultPath').value
+      };
+      
+      try {
+        // Test connection via IPC
+        const result = await ipcRenderer.invoke('oobe-test-vault-connection', vaultConfig);
+        
+        if (result.success) {
+          resultDiv.className = 'test-result success';
+          resultDiv.innerHTML = '✅ <span><strong>Connection successful!</strong><br>Vault is configured correctly.</span>';
+          vaultConnectionTested = true;
+        } else {
+          resultDiv.className = 'test-result error';
+          resultDiv.innerHTML = `❌ <span><strong>Connection failed</strong><br>${result.error}</span>`;
+          vaultConnectionTested = false;
+        }
+      } catch (error) {
+        resultDiv.className = 'test-result error';
+        resultDiv.innerHTML = `❌ <span><strong>Connection failed</strong><br>${error.message}</span>`;
+        vaultConnectionTested = false;
+      } finally {
+        btnTest.disabled = false;
+      }
+    });
+
+    // Reset vault test state when form inputs change
+    document.querySelectorAll('#vault-form input').forEach(input => {
+      input.addEventListener('input', () => {
+        vaultConnectionTested = false;
+        const resultDiv = document.getElementById('vault-test-result');
+        if (resultDiv.style.display !== 'none') {
+          resultDiv.style.display = 'none';
+        }
+      });
+    });
+
+    // JIRA token test handler
+    document.getElementById('btnTestJira').addEventListener('click', async () => {
+      const jiraToken = document.getElementById('jiraToken').value;
+      
+      if (!jiraToken) {
+        alert('Please enter your JIRA token first.');
+        return;
+      }
+      
+      const resultDiv = document.getElementById('jira-test-result');
+      const btnTest = document.getElementById('btnTestJira');
+      
+      // Show testing state
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'test-result testing';
+      resultDiv.innerHTML = '<div class="spinner"></div><span>Testing JIRA connection...</span>';
+      btnTest.disabled = true;
+      jiraTokenTested = false;
+      
+      try {
+        const result = await ipcRenderer.invoke('oobe-test-jira-token', { token: jiraToken });
+        
+        if (result.success) {
+          resultDiv.className = 'test-result success';
+          resultDiv.innerHTML = '✅ <span><strong>JIRA connection successful!</strong><br>Token is valid.</span>';
+          jiraTokenTested = true;
+        } else {
+          resultDiv.className = 'test-result error';
+          resultDiv.innerHTML = `❌ <span><strong>JIRA connection failed</strong><br>${result.error}</span>`;
+          jiraTokenTested = false;
+        }
+      } catch (error) {
+        resultDiv.className = 'test-result error';
+        resultDiv.innerHTML = `❌ <span><strong>Connection failed</strong><br>${error.message}</span>`;
+        jiraTokenTested = false;
+      } finally {
+        btnTest.disabled = false;
+      }
+    });
+
+    // Portal token test handler
+    document.getElementById('btnTestPortal').addEventListener('click', async () => {
+      const portalToken = document.getElementById('portalToken').value;
+      
+      if (!portalToken) {
+        alert('Please enter your Portal token first.');
+        return;
+      }
+      
+      const resultDiv = document.getElementById('portal-test-result');
+      const btnTest = document.getElementById('btnTestPortal');
+      
+      // Show testing state
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'test-result testing';
+      resultDiv.innerHTML = '<div class="spinner"></div><span>Testing Portal connection...</span>';
+      btnTest.disabled = true;
+      portalTokenTested = false;
+      
+      try {
+        const result = await ipcRenderer.invoke('oobe-test-portal-token', { token: portalToken });
+        
+        if (result.success) {
+          resultDiv.className = 'test-result success';
+          resultDiv.innerHTML = '✅ <span><strong>Portal connection successful!</strong><br>Token is valid.</span>';
+          portalTokenTested = true;
+        } else {
+          resultDiv.className = 'test-result error';
+          resultDiv.innerHTML = `❌ <span><strong>Portal connection failed</strong><br>${result.error}</span>`;
+          portalTokenTested = false;
+        }
+      } catch (error) {
+        resultDiv.className = 'test-result error';
+        resultDiv.innerHTML = `❌ <span><strong>Connection failed</strong><br>${error.message}</span>`;
+        portalTokenTested = false;
+      } finally {
+        btnTest.disabled = false;
+      }
+    });
+
+    // Reset manual test states when tokens change
+    document.getElementById('jiraToken').addEventListener('input', () => {
+      jiraTokenTested = false;
+      const resultDiv = document.getElementById('jira-test-result');
+      if (resultDiv.style.display !== 'none') {
+        resultDiv.style.display = 'none';
+      }
+    });
+
+    document.getElementById('portalToken').addEventListener('input', () => {
+      portalTokenTested = false;
+      const resultDiv = document.getElementById('portal-test-result');
+      if (resultDiv.style.display !== 'none') {
+        resultDiv.style.display = 'none';
+      }
+    });
+
+    // Customer discovery button handler
+    document.getElementById('btnDiscoverCustomer').addEventListener('click', async () => {
+      const customerName = document.getElementById('customerName').value;
+      const customerSlug = document.getElementById('customerSlug').value;
+      const tamEmail = document.getElementById('tamEmail').value;
+      
+      if (!customerName || !customerSlug) {
+        alert('Please enter customer name and slug.');
+        return;
+      }
+      
+      const resultDiv = document.getElementById('customer-discovery-result');
+      const btnDiscover = document.getElementById('btnDiscoverCustomer');
+      
+      // Show testing state
+      resultDiv.style.display = 'block';
+      resultDiv.className = 'test-result testing';
+      resultDiv.innerHTML = '<div class="spinner"></div><span>Discovering RFEs and Bugs for ' + customerName + '...</span>';
+      btnDiscover.disabled = true;
+      
+      try {
+        // Call IPC handler to discover customer
+        const result = await ipcRenderer.invoke('onboard-discover', {
+          name: customerName,
+          slug: customerSlug,
+          email: tamEmail
+        });
+        
+        if (result.success) {
+          resultDiv.className = 'test-result success';
+          const account = result.customer.account || 'Unknown';
+          const sbr = result.customer.sbr_groups.length > 0 ? result.customer.sbr_groups.join(', ') : 'Unknown';
+          resultDiv.innerHTML = `✅ <span><strong>Customer discovered!</strong><br>Account: ${account}<br>SBR: ${sbr}</span>`;
+          customerDiscovered = true;
+          
+          // Update completion screen to show customer was added
+          document.getElementById('completion-customer-status').style.display = 'block';
+          document.getElementById('completion-customer-status').innerHTML = 'First customer added: ' + customerName;
+        } else {
+          resultDiv.className = 'test-result error';
+          resultDiv.innerHTML = `❌ <span><strong>Discovery failed</strong><br>${result.error}</span>`;
+          customerDiscovered = false;
+        }
+      } catch (error) {
+        resultDiv.className = 'test-result error';
+        resultDiv.innerHTML = `❌ <span><strong>Discovery failed</strong><br>${error.message}</span>`;
+        customerDiscovered = false;
+      } finally {
+        btnDiscover.disabled = false;
+      }
+    });
+
+    // Finish button handler (on completion screen)
+    document.getElementById('btnFinish').addEventListener('click', async () => {
+      console.log('[OOBE] Completing OOBE and launching main app...');
+      
+      // Mark OOBE as complete
+      await ipcRenderer.invoke('oobe-complete');
+      
+      // Close wizard window and open main app
+      // For now, just redirect to index.html
+      window.location.href = 'index.html';
+    });
+
+    // Initialize
+    updateProgress();
+    updateButtons();
+  </script>
+</body>
+</html>
+
+
