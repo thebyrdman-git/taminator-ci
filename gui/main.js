@@ -58,6 +58,24 @@ function createWindow() {
   if (process.argv.includes('--dev') || process.env.NODE_ENV === 'development') {
     mainWindow.webContents.openDevTools();
   }
+
+  // Handle external links - open in default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Open external links in default browser (new tab in existing session)
+    require('electron').shell.openExternal(url);
+    return { action: 'deny' }; // Prevent Electron from opening the link
+  });
+
+  // Also handle navigation to external links
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    // Allow navigation within the app
+    if (url.startsWith('file://')) {
+      return;
+    }
+    // Open external URLs in default browser
+    event.preventDefault();
+    require('electron').shell.openExternal(url);
+  });
   
   // Log console messages from renderer (in dev mode)
   mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
