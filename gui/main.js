@@ -1007,13 +1007,21 @@ ipcMain.handle('post-report', async (event, data) => {
   });
 });
 
-// Onboard discover handler - calls tam-rfe onboard with discovery
+// Onboard discover handler - calls tam-rfe onboard in non-interactive mode (Red Hat pattern)
 ipcMain.handle('onboard-discover', async (event, data) => {
-  console.log('[Onboard Discover] Discovering customer:', data.name);
+  console.log('[Onboard Discover] Onboarding customer:', data.name);
   
   return new Promise((resolve, reject) => {
-    const args = ['onboard', '--discover', data.name];
-    // Use system PATH to find tam-rfe (works for any user)
+    // Red Hat CLI pattern: non-interactive + JSON output
+    const args = [
+      'onboard',
+      data.slug || data.name,
+      '--email', data.email || 'jbyrd@redhat.com',
+      '--display-name', data.name,
+      '--non-interactive',
+      '--json'
+    ];
+    
     const cliPath = 'tam-rfe';
     
     const cliProcess = spawn(cliPath, args, {
@@ -1034,21 +1042,34 @@ ipcMain.handle('onboard-discover', async (event, data) => {
 
     cliProcess.on('close', (code) => {
       if (code === 0) {
-        // Parse discovery output
-        // Look for patterns like "Account: 123456", "SBR: OpenShift,Ansible"
-        const accountMatch = stdout.match(/Account[:\s]+(\d+)/i);
-        const sbrMatch = stdout.match(/SBR[:\s]+([^\n]+)/i);
-        
-        resolve({ 
-          success: true,
-          customer: {
-            name: data.name,
-            slug: data.slug,
-            account: accountMatch ? accountMatch[1] : null,
-            sbr_groups: sbrMatch ? sbrMatch[1].split(',').map(s => s.trim()) : []
-          },
-          output: stdout 
-        });
+        try {
+          // Parse JSON output (Red Hat automation pattern)
+          const jsonMatch = stdout.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const result = JSON.parse(jsonMatch[0]);
+            resolve({
+              success: true,
+              customer: result.customer,
+              output: `✅ Customer onboarded successfully!\n\nReport: ${result.report.path}`
+            });
+          } else {
+            // Fallback if JSON parsing fails
+            resolve({
+              success: true,
+              customer: {
+                name: data.slug || data.name,
+                display_name: data.name,
+                slug: data.slug || data.name
+              },
+              output: stdout
+            });
+          }
+        } catch (e) {
+          resolve({
+            success: false,
+            error: `Failed to parse output: ${e.message}\n\nOutput: ${stdout}`
+          });
+        }
       } else {
         resolve({ 
           success: false, 

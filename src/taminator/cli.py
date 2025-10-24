@@ -111,22 +111,43 @@ For more help on a command:
     onboard_parser = subparsers.add_parser(
         'onboard',
         help='Onboard new customer',
-        description='Interactive wizard to set up new customer'
+        description='Interactive or automated customer onboarding (Red Hat CLI pattern)'
     )
     onboard_parser.add_argument(
         'customer',
         nargs='?',
-        help='Customer name'
+        help='Customer name (e.g., acmecorp, jpmc)'
+    )
+    onboard_parser.add_argument(
+        '--email',
+        metavar='EMAIL',
+        help='TAM email address (required for --non-interactive)'
+    )
+    onboard_parser.add_argument(
+        '--display-name',
+        metavar='NAME',
+        help='Customer display name (required for --non-interactive)'
+    )
+    onboard_parser.add_argument(
+        '--non-interactive',
+        action='store_true',
+        help='Run without prompts (automation mode)'
+    )
+    onboard_parser.add_argument(
+        '--json',
+        action='store_true',
+        dest='json_output',
+        help='Output structured JSON for machine parsing'
     )
     onboard_parser.add_argument(
         '--discover',
         metavar='NAME',
-        help='Auto-discover customer information'
+        help='Auto-discover customer information (deprecated, use --non-interactive)'
     )
     onboard_parser.add_argument(
         '--generate',
         action='store_true',
-        help='Generate customer configuration'
+        help='Generate customer configuration (not yet implemented)'
     )
     
     # ========================================
@@ -184,19 +205,38 @@ For more help on a command:
             from taminator.commands.onboard import main as onboard_main
             
             # Handle special flags
-            if args.discover:
-                # Discovery mode - pass discover name as customer
-                onboard_main(customer=args.discover)
-            elif args.generate:
+            if args.generate:
                 # Generate mode - need to implement this feature
                 from rich.console import Console
                 console = Console()
                 console.print("\n⚠️  --generate flag not yet implemented", style="yellow bold")
                 console.print("Use: tam-rfe onboard <customer>  (interactive wizard)\n")
                 sys.exit(1)
+            elif args.discover:
+                # Discovery mode (deprecated) - treat as --non-interactive
+                from rich.console import Console
+                console = Console()
+                if not args.email or not args.display_name:
+                    console.print("\n⚠️  --discover is deprecated. Use --non-interactive with --email and --display-name", style="yellow bold")
+                    console.print("\nExample:", style="cyan")
+                    console.print(f"  tam-rfe onboard {args.discover} --email user@redhat.com --display-name 'Customer Name' --non-interactive\n")
+                    sys.exit(1)
+                onboard_main(
+                    customer=args.discover,
+                    email=args.email,
+                    display_name=args.display_name,
+                    non_interactive=True,
+                    json_output=args.json_output
+                )
             else:
-                # Normal onboarding
-                onboard_main(customer=args.customer)
+                # Normal onboarding (interactive or non-interactive)
+                onboard_main(
+                    customer=args.customer,
+                    email=args.email,
+                    display_name=args.display_name,
+                    non_interactive=args.non_interactive,
+                    json_output=args.json_output
+                )
         
         elif args.command == 'config':
             from taminator.commands.config import main as config_main
