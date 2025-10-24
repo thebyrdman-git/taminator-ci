@@ -507,6 +507,12 @@
           </div>
 
           <div class="form-group">
+            <label for="customerAccount">Red Hat Account Number (Optional)</label>
+            <input type="text" id="customerAccount" placeholder="Example: 1234567">
+            <small>Customer's Red Hat account number (can be added later)</small>
+          </div>
+
+          <div class="form-group">
             <label for="tamEmail">Your Email</label>
             <input type="email" id="tamEmail" placeholder="you@redhat.com">
             <small>Your Red Hat email address</small>
@@ -950,6 +956,7 @@
     document.getElementById('btnDiscoverCustomer').addEventListener('click', async () => {
       const customerName = document.getElementById('customerName').value;
       const customerSlug = document.getElementById('customerSlug').value;
+      const customerAccount = document.getElementById('customerAccount').value;
       const tamEmail = document.getElementById('tamEmail').value;
       
       if (!customerName || !customerSlug) {
@@ -963,22 +970,23 @@
       // Show testing state
       resultDiv.style.display = 'block';
       resultDiv.className = 'test-result testing';
-      resultDiv.innerHTML = '<div class="spinner"></div><span>Discovering RFEs and Bugs for ' + customerName + '...</span>';
+      resultDiv.innerHTML = '<div class="spinner"></div><span>Onboarding ' + customerName + '...</span>';
       btnDiscover.disabled = true;
       
       try {
-        // Call IPC handler to discover customer
+        // Call IPC handler to onboard customer (non-interactive mode)
         const result = await ipcRenderer.invoke('onboard-discover', {
           name: customerName,
           slug: customerSlug,
+          account: customerAccount,
           email: tamEmail
         });
         
         if (result.success) {
           resultDiv.className = 'test-result success';
-          const account = result.customer.account || 'Unknown';
-          const sbr = result.customer.sbr_groups.length > 0 ? result.customer.sbr_groups.join(', ') : 'Unknown';
-          resultDiv.innerHTML = `✅ <span><strong>Customer discovered!</strong><br>Account: ${account}<br>SBR: ${sbr}</span>`;
+          const account = customerAccount || 'Not provided';
+          const reportPath = result.customer.report_path || 'Created';
+          resultDiv.innerHTML = `✅ <span><strong>Customer onboarded successfully!</strong><br>Account: ${account}<br>Report: ${result.output || reportPath}</span>`;
           customerDiscovered = true;
           
           // Update completion screen to show customer was added

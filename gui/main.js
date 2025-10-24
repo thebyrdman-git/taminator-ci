@@ -1022,6 +1022,11 @@ ipcMain.handle('onboard-discover', async (event, data) => {
       '--json'
     ];
     
+    // Add account number if provided
+    if (data.account && data.account.trim()) {
+      args.push('--account', data.account.trim());
+    }
+    
     const cliPath = 'tam-rfe';
     
     const cliProcess = spawn(cliPath, args, {

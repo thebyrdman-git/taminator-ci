@@ -129,6 +129,11 @@ For more help on a command:
         help='Customer display name (required for --non-interactive)'
     )
     onboard_parser.add_argument(
+        '--account',
+        metavar='NUMBER',
+        help='Red Hat account number (optional)'
+    )
+    onboard_parser.add_argument(
         '--non-interactive',
         action='store_true',
         help='Run without prompts (automation mode)'
@@ -225,6 +230,7 @@ For more help on a command:
                     customer=args.discover,
                     email=args.email,
                     display_name=args.display_name,
+                    account=args.account,
                     non_interactive=True,
                     json_output=args.json_output
                 )
@@ -234,6 +240,7 @@ For more help on a command:
                     customer=args.customer,
                     email=args.email,
                     display_name=args.display_name,
+                    account=args.account,
                     non_interactive=args.non_interactive,
                     json_output=args.json_output
                 )

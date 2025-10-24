@@ -82,7 +82,7 @@ Summary: 0 total cases (0 RFE, 0 Bug)
 
 @auth_required([AuthType.VPN])
 def onboard_customer(customer_name: str, email: str = None, display_name: str = None,
-                     non_interactive: bool = False, json_output: bool = False):
+                     account: str = None, non_interactive: bool = False, json_output: bool = False):
     """
     Interactive or automated customer onboarding wizard (Red Hat CLI pattern).
     
@@ -90,12 +90,13 @@ def onboard_customer(customer_name: str, email: str = None, display_name: str = 
         customer_name: Customer name (slug format, e.g., 'acmecorp')
         email: TAM email address (required for non-interactive mode)
         display_name: Customer display name (required for non-interactive mode)
+        account: Red Hat account number (optional)
         non_interactive: If True, run without prompts (automation mode)
         json_output: If True, output structured JSON for machine parsing
     
     Red Hat Design Pattern:
         Interactive mode: tam-rfe onboard acmecorp
-        Automation mode:  tam-rfe onboard acmecorp --email user@redhat.com --display-name "Acme Corp" --non-interactive --json
+        Automation mode:  tam-rfe onboard acmecorp --email user@redhat.com --display-name "Acme Corp" --account 1234567 --non-interactive --json
     """
     import json
     
@@ -142,7 +143,7 @@ We'll collect some information and create an initial tracking report.
     if non_interactive:
         # Automation mode: Use provided values
         customer_info['display_name'] = display_name
-        customer_info['account'] = "TBD"
+        customer_info['account'] = account if account else "TBD"
         customer_info['contact'] = "TBD"
         customer_info['tam'] = "Jimmy Byrd"
     else:
@@ -152,7 +153,7 @@ We'll collect some information and create an initial tracking report.
             default=customer_name.replace('_', ' ').title()
         )
         
-        customer_info['account'] = Prompt.ask(
+        customer_info['account'] = account or Prompt.ask(
             "Red Hat account number",
             default="TBD"
         )
@@ -283,7 +284,7 @@ Need help?
 
 # CLI entry point
 def main(customer: str = None, email: str = None, display_name: str = None,
-         non_interactive: bool = False, json_output: bool = False):
+         account: str = None, non_interactive: bool = False, json_output: bool = False):
     """Main entry point for tam-rfe onboard command (Red Hat CLI pattern)."""
     
     if not customer:
@@ -293,15 +294,15 @@ def main(customer: str = None, email: str = None, display_name: str = None,
         console.print("\nInteractive mode:", style="cyan")
         console.print("  tam-rfe onboard acmecorp")
         console.print("\nAutomation mode (non-interactive):", style="cyan")
-        console.print("  tam-rfe onboard acmecorp --email user@redhat.com --display-name 'Acme Corp' --non-interactive")
-        console.print("  tam-rfe onboard acmecorp --email user@redhat.com --display-name 'Acme Corp' --non-interactive --json")
+        console.print("  tam-rfe onboard acmecorp --email user@redhat.com --display-name 'Acme Corp' --account 1234567 --non-interactive")
+        console.print("  tam-rfe onboard acmecorp --email user@redhat.com --display-name 'Acme Corp' --account 1234567 --non-interactive --json")
         console.print("\nCustomer name should be:")
         console.print("  • Lowercase")
         console.print("  • No spaces (use underscores)")
         console.print("  • Example: 'acme_corp' or 'acmecorp'")
         return 1
     
-    return onboard_customer(customer, email=email, display_name=display_name,
+    return onboard_customer(customer, email=email, display_name=display_name, account=account,
                            non_interactive=non_interactive, json_output=json_output)
 
 
