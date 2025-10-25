@@ -468,6 +468,14 @@
           <span class="nav-icon">🔒</span>
           <span>Vault</span>
         </div>
+        <div class="nav-item" onclick="showRhcaseBot()">
+          <span class="nav-icon">🤖</span>
+          <span>rhcase bot</span>
+        </div>
+        <div class="nav-item" onclick="showHelp()">
+          <span class="nav-icon">📚</span>
+          <span>Help</span>
+        </div>
       <div class="nav-item" onclick="showClippy()">
         <span class="nav-icon">📎</span>
         <span>Clippy Email</span>
@@ -1742,9 +1750,439 @@ ${result.error || result.output || 'Post failed'}
       }
     }
 
+    function showRhcaseBot() {
+      document.getElementById('page-title').textContent = 'rhcase bot';
+      setActiveNav(6);
+      
+      document.getElementById('content').innerHTML = `
+        <div style="max-width: 1200px;">
+          <h2 style="margin-bottom: 24px;">🤖 rhcase bot - Interactive Case Analysis</h2>
+          
+          <div style="margin-bottom: 24px; padding: 16px; background: #E7F1FA; border-left: 4px solid #0066CC; border-radius: 4px;">
+            <p style="margin: 0; color: #151515; font-size: 14px;">
+              <strong>💡 Quick Start:</strong> Type rhcase commands below or use quick actions. All commands execute directly against your Red Hat environment.
+            </p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 300px; gap: 24px;">
+            <!-- Main Chat Area -->
+            <div>
+              <div class="card" style="height: 500px; display: flex; flex-direction: column;">
+                <div class="card-title">Terminal</div>
+                <div id="rhcase-output" style="flex: 1; overflow-y: auto; background: #1E1E1E; color: #D4D4D4; padding: 16px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+                  <div style="color: #4EC9B0;">rhcase bot ready</div>
+                  <div style="color: #6A6E73;">Type a command or use quick actions →</div>
+                </div>
+                
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="rhcase-input" placeholder="rhcase analyze 04056105" 
+                    style="flex: 1; padding: 12px; border: 1px solid #D2D2D2; border-radius: 4px; font-family: 'Courier New', monospace;"
+                    onkeypress="if(event.key==='Enter') executeRhcaseCommand()">
+                  <button class="btn btn-primary" onclick="executeRhcaseCommand()">
+                    ▶️ Execute
+                  </button>
+                  <button class="btn btn-secondary" onclick="clearRhcaseOutput()">
+                    🗑️ Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions Sidebar -->
+            <div>
+              <div class="card">
+                <div class="card-title">Quick Actions</div>
+                <div class="card-content" style="display: flex; flex-direction: column; gap: 8px;">
+                  <button class="btn btn-secondary" style="width: 100%; text-align: left;" onclick="quickRhcase('list jpmc')">
+                    📋 List JPMC Cases
+                  </button>
+                  <button class="btn btn-secondary" style="width: 100%; text-align: left;" onclick="quickRhcase('analyze --help')">
+                    📖 Analyze Help
+                  </button>
+                  <button class="btn btn-secondary" style="width: 100%; text-align: left;" onclick="quickRhcase('kcs search OpenShift')">
+                    🔍 Search KCS
+                  </button>
+                  <button class="btn btn-secondary" style="width: 100%; text-align: left;" onclick="quickRhcase('doctor')">
+                    🏥 Health Check
+                  </button>
+                </div>
+              </div>
+
+              <div class="card" style="margin-top: 16px;">
+                <div class="card-title">Common Commands</div>
+                <div class="card-content" style="font-size: 13px; line-height: 1.8; font-family: 'Courier New', monospace; color: #6A6E73;">
+                  <div>analyze [case-id]</div>
+                  <div>list [account]</div>
+                  <div>kcs search [query]</div>
+                  <div>jira search [query]</div>
+                  <div>doctor</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function executeRhcaseCommand() {
+      const input = document.getElementById('rhcase-input');
+      const output = document.getElementById('rhcase-output');
+      const command = input.value.trim();
+      
+      if (!command) return;
+      
+      // Add command to output
+      output.innerHTML += `<div style="color: #4EC9B0; margin-top: 12px;">$ rhcase ${command}</div>`;
+      
+      // Show loading
+      output.innerHTML += `<div style="color: #F0AB00;">Executing...</div>`;
+      output.scrollTop = output.scrollHeight;
+      
+      try {
+        const { exec } = require('child_process');
+        const util = require('util');
+        const execPromise = util.promisify(exec);
+        
+        const result = await execPromise(`rhcase ${command} 2>&1`, { maxBuffer: 1024 * 1024 * 10 });
+        
+        // Remove "Executing..." line
+        const lines = output.innerHTML.split('\\n');
+        lines.pop();
+        output.innerHTML = lines.join('\\n');
+        
+        // Add result
+        output.innerHTML += `<div style="white-space: pre-wrap;">${result.stdout || result.stderr || 'Command completed'}</div>`;
+        
+      } catch (error) {
+        output.innerHTML += `<div style="color: #C9190B;">Error: ${error.message}</div>`;
+      }
+      
+      output.scrollTop = output.scrollHeight;
+      input.value = '';
+    }
+
+    function quickRhcase(command) {
+      document.getElementById('rhcase-input').value = command;
+      executeRhcaseCommand();
+    }
+
+    function clearRhcaseOutput() {
+      document.getElementById('rhcase-output').innerHTML = `
+        <div style="color: #4EC9B0;">rhcase bot ready</div>
+        <div style="color: #6A6E73;">Type a command or use quick actions →</div>
+      `;
+    }
+
+    function showHelp() {
+      document.getElementById('page-title').textContent = 'Help & Documentation';
+      setActiveNav(7);
+      
+      document.getElementById('content').innerHTML = `
+        <div style="max-width: 1200px;">
+          <h2 style="margin-bottom: 24px;">📚 Help & Documentation</h2>
+          
+          <div style="margin-bottom: 24px;">
+            <input type="text" id="help-search" placeholder="Search documentation..." 
+              style="width: 100%; padding: 12px 16px; border: 1px solid #D2D2D2; border-radius: 4px; font-size: 16px;"
+              oninput="filterHelpContent(this.value)">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 250px 1fr; gap: 24px;">
+            <!-- Sidebar Navigation -->
+            <div class="card" style="height: fit-content;">
+              <div class="card-content" style="padding: 0;">
+                <div class="help-nav-item active" onclick="showHelpSection('getting-started')">
+                  🚀 Getting Started
+                </div>
+                <div class="help-nav-item" onclick="showHelpSection('commands')">
+                  ⌨️ Commands
+                </div>
+                <div class="help-nav-item" onclick="showHelpSection('workflows')">
+                  🔄 Workflows
+                </div>
+                <div class="help-nav-item" onclick="showHelpSection('authentication')">
+                  🔐 Authentication
+                </div>
+                <div class="help-nav-item" onclick="showHelpSection('keyboard')">
+                  ⌨️ Keyboard Shortcuts
+                </div>
+                <div class="help-nav-item" onclick="showHelpSection('troubleshooting')">
+                  🔧 Troubleshooting
+                </div>
+                <div class="help-nav-item" onclick="showHelpSection('faq')">
+                  ❓ FAQ
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Area -->
+            <div id="help-content">
+              <!-- Content loaded dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <style>
+          .help-nav-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+          }
+          .help-nav-item:hover {
+            background: #F5F5F5;
+            border-left-color: #EE0000;
+          }
+          .help-nav-item.active {
+            background: #FFF4F4;
+            border-left-color: #EE0000;
+            font-weight: 600;
+            color: #EE0000;
+          }
+        </style>
+      `;
+      
+      // Load default section
+      showHelpSection('getting-started');
+    }
+
+    function showHelpSection(section) {
+      const contentDiv = document.getElementById('help-content');
+      
+      // Update active nav
+      document.querySelectorAll('.help-nav-item').forEach(item => item.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      const content = {
+        'getting-started': `
+          <div class="card">
+            <div class="card-title">🚀 Getting Started</div>
+            <div class="card-content" style="line-height: 1.8;">
+              <h3 style="margin-top: 0;">Welcome to Taminator</h3>
+              <p>Taminator automates TAM workflows for tracking RFEs and Bugs across multiple customers.</p>
+              
+              <h4>First Steps</h4>
+              <ol style="line-height: 2;">
+                <li><strong>Configure Authentication</strong> - Set up JIRA and Portal API tokens in Settings</li>
+                <li><strong>Onboard Customer</strong> - Use the "Onboard" tab to add your first customer</li>
+                <li><strong>Verify Reports</strong> - Check report status with the "Verify" tab</li>
+                <li><strong>Update Reports</strong> - Keep reports current with the "Update" tab</li>
+                <li><strong>Post to Portal</strong> - Publish reports to Customer Portal</li>
+              </ol>
+
+              <h4>Account + Product Filtering</h4>
+              <div style="padding: 16px; background: #FFF4E5; border-left: 4px solid #F0AB00; border-radius: 4px; margin-top: 16px;">
+                <strong style="color: #151515;">⚠️ Important:</strong> Enterprise customers have multiple Red Hat accounts (e.g., JPMC account 334224).
+                Account number alone is insufficient - you <strong>MUST</strong> specify both account and product (e.g., OpenShift) for proper filtering.
+              </div>
+            </div>
+          </div>
+        `,
+        'commands': `
+          <div class="card">
+            <div class="card-title">⌨️ Commands Reference</div>
+            <div class="card-content">
+              <h3 style="margin-top: 0;">Core Commands</h3>
+              
+              <div style="margin-bottom: 24px;">
+                <h4 style="color: #EE0000;">tam-rfe check &lt;customer&gt;</h4>
+                <p>Compare report JIRA statuses with current JIRA data</p>
+                <code style="background: #F5F5F5; padding: 8px 12px; border-radius: 4px; display: block; margin-top: 8px;">
+                  tam-rfe check jpmc
+                </code>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4 style="color: #EE0000;">tam-rfe update &lt;customer&gt;</h4>
+                <p>Update report with current JIRA statuses</p>
+                <code style="background: #F5F5F5; padding: 8px 12px; border-radius: 4px; display: block; margin-top: 8px;">
+                  tam-rfe update jpmc --yes
+                </code>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4 style="color: #EE0000;">tam-rfe post &lt;customer&gt;</h4>
+                <p>Post report to Red Hat Customer Portal</p>
+                <code style="background: #F5F5F5; padding: 8px 12px; border-radius: 4px; display: block; margin-top: 8px;">
+                  tam-rfe post jpmc
+                </code>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4 style="color: #EE0000;">tam-rfe onboard &lt;customer&gt; --email &lt;email&gt; --display-name &lt;name&gt; --account &lt;number&gt; --non-interactive</h4>
+                <p>Onboard new customer (automation mode)</p>
+                <code style="background: #F5F5F5; padding: 8px 12px; border-radius: 4px; display: block; margin-top: 8px;">
+                  tam-rfe onboard jpmc --email jbyrd@redhat.com --display-name "JPMorgan Chase" --account 334224 --non-interactive
+                </code>
+              </div>
+            </div>
+          </div>
+        `,
+        'workflows': `
+          <div class="card">
+            <div class="card-title">🔄 Common Workflows</div>
+            <div class="card-content">
+              <h3 style="margin-top: 0;">Weekly Update Workflow</h3>
+              <ol style="line-height: 2.5;">
+                <li>Go to <strong>Verify</strong> tab → Select customer → Run check</li>
+                <li>Review status changes (JIRA vs Report)</li>
+                <li>Go to <strong>Update</strong> tab → Update report</li>
+                <li>Preview updated report</li>
+                <li>Go to <strong>Post</strong> tab → Post to Portal</li>
+              </ol>
+
+              <h3>Onboarding New Customer</h3>
+              <ol style="line-height: 2.5;">
+                <li>Go to <strong>Onboard</strong> tab</li>
+                <li>Fill in: Customer name, slug, <strong>account number</strong>, <strong>product</strong>, email</li>
+                <li>Click "Discover RFEs & Bugs"</li>
+                <li>Review created report</li>
+              </ol>
+
+              <h3>rhcase Integration</h3>
+              <ol style="line-height: 2.5;">
+                <li>Go to <strong>rhcase bot</strong> tab</li>
+                <li>Type command: <code>analyze 04056105</code></li>
+                <li>Or use Quick Actions for common commands</li>
+              </ol>
+            </div>
+          </div>
+        `,
+        'authentication': `
+          <div class="card">
+            <div class="card-title">🔐 Authentication Setup</div>
+            <div class="card-content">
+              <h3 style="margin-top: 0;">Required Credentials</h3>
+              
+              <div style="margin-bottom: 24px;">
+                <h4>JIRA API Token</h4>
+                <p>Generate at: <a href="https://issues.redhat.com" target="_blank">issues.redhat.com</a> → Profile → Personal Access Tokens</p>
+                <p style="color: #6A6E73;">Used for: Fetching RFE/Bug statuses from JIRA</p>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4>Customer Portal Offline Token</h4>
+                <p>Generate at: <a href="https://access.redhat.com/management/api" target="_blank">access.redhat.com/management/api</a></p>
+                <p style="color: #6A6E73;">Used for: Publishing reports to Customer Portal</p>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4>VPN Connection</h4>
+                <p>Required: Red Hat VPN must be active</p>
+                <p style="color: #6A6E73;">Used for: Internal systems access</p>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4>Kerberos Ticket</h4>
+                <p>Required: Valid Kerberos ticket for JIRA</p>
+                <p style="color: #6A6E73;">Run: <code>kinit</code> if needed</p>
+              </div>
+            </div>
+          </div>
+        `,
+        'keyboard': `
+          <div class="card">
+            <div class="card-title">⌨️ Keyboard Shortcuts</div>
+            <div class="card-content">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #D2D2D2;">
+                    <th style="text-align: left; padding: 12px;">Shortcut</th>
+                    <th style="text-align: left; padding: 12px;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="border-bottom: 1px solid #F0F0F0;">
+                    <td style="padding: 12px;"><code>Ctrl + R</code></td>
+                    <td style="padding: 12px;">Refresh current view</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #F0F0F0;">
+                    <td style="padding: 12px;"><code>Ctrl + K</code></td>
+                    <td style="padding: 12px;">Open rhcase bot</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #F0F0F0;">
+                    <td style="padding: 12px;"><code>Ctrl + /</code></td>
+                    <td style="padding: 12px;">Open Help</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid #F0F0F0;">
+                    <td style="padding: 12px;"><code>Enter</code></td>
+                    <td style="padding: 12px;">Execute command (in rhcase bot)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `,
+        'troubleshooting': `
+          <div class="card">
+            <div class="card-title">🔧 Troubleshooting</div>
+            <div class="card-content">
+              <h3 style="margin-top: 0;">Common Issues</h3>
+              
+              <div style="margin-bottom: 24px; padding: 16px; background: #F5F5F5; border-radius: 4px;">
+                <h4 style="margin-top: 0; color: #EE0000;">Authentication Failed</h4>
+                <p><strong>Solution:</strong> Check VPN connection, verify tokens in Settings, ensure Kerberos ticket is valid</p>
+                <code style="display: block; margin-top: 8px;">kinit && klist</code>
+              </div>
+
+              <div style="margin-bottom: 24px; padding: 16px; background: #F5F5F5; border-radius: 4px;">
+                <h4 style="margin-top: 0; color: #EE0000;">JIRA Query Failed</h4>
+                <p><strong>Solution:</strong> Verify JIRA token, check network connectivity, ensure proper account + product filtering</p>
+              </div>
+
+              <div style="margin-bottom: 24px; padding: 16px; background: #F5F5F5; border-radius: 4px;">
+                <h4 style="margin-top: 0; color: #EE0000;">Report Not Found</h4>
+                <p><strong>Solution:</strong> Check if customer is onboarded, verify report location in Settings</p>
+              </div>
+            </div>
+          </div>
+        `,
+        'faq': `
+          <div class="card">
+            <div class="card-title">❓ Frequently Asked Questions</div>
+            <div class="card-content">
+              <h3 style="margin-top: 0;">General</h3>
+              
+              <div style="margin-bottom: 24px;">
+                <h4>Why do I need both account number AND product?</h4>
+                <p>Enterprise customers (like JPMC) have multiple Red Hat accounts with different products. Account 334224 might have OpenShift cases AND RHEL cases. Without specifying the product, you'll get ALL cases instead of just your product's cases.</p>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4>How often should I update reports?</h4>
+                <p>Weekly updates are recommended. Use the "Verify" tab first to check for changes before updating.</p>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4>Can I use Taminator offline?</h4>
+                <p>Limited functionality. VPN and network access required for JIRA queries and Portal posting.</p>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4>Where are my reports stored?</h4>
+                <p>Default: <code>~/taminator-test-data/</code>. Configurable in Settings.</p>
+              </div>
+
+              <div style="margin-bottom: 24px;">
+                <h4>What's the difference between Vault and Auth Box?</h4>
+                <p>Vault is enterprise-grade secrets management (team sharing). Auth Box is local fallback (personal use). Taminator uses hybrid approach.</p>
+              </div>
+            </div>
+          </div>
+        `
+      };
+      
+      contentDiv.innerHTML = content[section] || '<p>Section not found</p>';
+    }
+
+    function filterHelpContent(query) {
+      // TODO: Implement search filtering across help content
+      console.log('Search:', query);
+    }
+
     function showConfig() {
       document.getElementById('page-title').textContent = 'Settings';
-      setActiveNav(7);
+      setActiveNav(9);
       
       document.getElementById('content').innerHTML = `
         <div class="settings-container">
