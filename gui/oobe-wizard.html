@@ -537,16 +537,22 @@
 
           <div id="customer-discovery-result" style="display: none; margin-top: 24px;"></div>
 
-          <div style="margin-top: 24px;">
-            <button type="button" class="btn btn-secondary" id="btnDiscoverCustomer" style="width: 100%;">
-              🔍 Discover RFEs & Bugs
+          <div style="margin-top: 24px; display: flex; gap: 12px;">
+            <button type="button" class="btn btn-primary" id="btnOnboardCustomer" style="flex: 1;">
+              ✅ Add Customer
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnSkipCustomer" style="flex: 1;">
+              ⏭️ Skip This Step
             </button>
           </div>
         </form>
 
         <div class="info-box" style="margin-top: 32px;">
-          <strong>💡 Quick Start</strong>
-          <p style="color: #6A6E73; margin-bottom: 0;">Click "Discover RFEs & Bugs" to automatically search JIRA for existing issues related to your customer. This creates your first tracker file.</p>
+          <strong>💡 What Happens Next</strong>
+          <p style="color: #6A6E73; margin-bottom: 0;">
+            <strong>Add Customer:</strong> Creates initial tracker file and attempts to discover existing RFEs/Bugs from JIRA.<br>
+            <strong>Skip:</strong> You can add customers later from the main app.
+          </p>
         </div>
       </div>
 
@@ -969,8 +975,8 @@
       }
     });
 
-    // Customer discovery button handler
-    document.getElementById('btnDiscoverCustomer').addEventListener('click', async () => {
+    // Add Customer button handler
+    document.getElementById('btnOnboardCustomer').addEventListener('click', async () => {
       const customerName = document.getElementById('customerName').value;
       const customerSlug = document.getElementById('customerSlug').value;
       const customerAccount = document.getElementById('customerAccount').value;
@@ -983,13 +989,15 @@
       }
       
       const resultDiv = document.getElementById('customer-discovery-result');
-      const btnDiscover = document.getElementById('btnDiscoverCustomer');
+      const btnOnboard = document.getElementById('btnOnboardCustomer');
+      const btnSkip = document.getElementById('btnSkipCustomer');
       
       // Show testing state
       resultDiv.style.display = 'block';
       resultDiv.className = 'test-result testing';
       resultDiv.innerHTML = '<div class="spinner"></div><span>Onboarding ' + customerName + '...</span>';
-      btnDiscover.disabled = true;
+      btnOnboard.disabled = true;
+      btnSkip.disabled = true;
       
       try {
         // Call IPC handler to onboard customer (non-interactive mode)
@@ -1019,11 +1027,19 @@
         }
       } catch (error) {
         resultDiv.className = 'test-result error';
-        resultDiv.innerHTML = `❌ <span><strong>Discovery failed</strong><br>${error.message}</span>`;
+        resultDiv.innerHTML = `❌ <span><strong>Onboarding failed</strong><br>${error.message}</span>`;
         customerDiscovered = false;
       } finally {
-        btnDiscover.disabled = false;
+        btnOnboard.disabled = false;
+        btnSkip.disabled = false;
       }
+    });
+
+    // Skip Customer button handler
+    document.getElementById('btnSkipCustomer').addEventListener('click', async () => {
+      // User chose to skip customer onboarding
+      await ipcRenderer.invoke('oobe-complete-step', 'firstCustomer');
+      showScreen('completion');
     });
 
     // Finish button handler (on completion screen)
