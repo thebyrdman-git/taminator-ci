@@ -354,14 +354,15 @@
         <!-- Visual Preview of Value -->
         <div style="background: #1E1E1E; border-radius: 8px; padding: 24px; margin-bottom: 32px; color: #D4D4D4; font-family: 'Courier New', monospace; font-size: 13px;">
           <div style="color: #4EC9B0; margin-bottom: 8px;">$ tam-rfe check jpmc</div>
-          <div style="color: #6A6E73;">Checking 12 JIRA issues...</div>
+          <div style="color: #6A6E73;">Checking JIRA for account 540155 (RHEL)...</div>
+          <div style="color: #6A6E73;">Found 12 open RFEs and Bugs</div>
           <div style="color: #3E8635; margin-top: 8px;">✅ 3 status changes detected</div>
-          <div style="color: #F0AB00;">⚠️  RHEL-12345: In Progress → Post</div>
-          <div style="color: #F0AB00;">⚠️  OCP-67890: Backlog → In Progress</div>
-          <div style="color: #F0AB00;">⚠️  RFE-11111: New → Refinement</div>
+          <div style="color: #F0AB00;">⚠️  [RFE] RHEL-12345: In Progress → Post</div>
+          <div style="color: #F0AB00;">⚠️  [BUG] RHEL-67890: Backlog → In Progress</div>
+          <div style="color: #F0AB00;">⚠️  [RFE] RHEL-11111: New → Refinement</div>
           
           <div style="color: #4EC9B0; margin-top: 16px;">$ tam-rfe update jpmc</div>
-          <div style="color: #3E8635;">✅ Report updated with latest statuses</div>
+          <div style="color: #3E8635;">✅ Report updated with latest JIRA statuses</div>
           
           <div style="color: #4EC9B0; margin-top: 16px;">$ tam-rfe post jpmc</div>
           <div style="color: #3E8635;">✅ Posted to Customer Portal</div>
