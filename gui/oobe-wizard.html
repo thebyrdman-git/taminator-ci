@@ -348,19 +348,40 @@
     <div class="wizard-content">
       <!-- Screen 1: Welcome -->
       <div id="screen-welcome" class="screen active">
-        <h2>Let's Get You Set Up</h2>
-        <p>Taminator helps Red Hat TAMs automate their workflow by tracking RFEs and Bugs, keeping customer reports up-to-date, and publishing to the portal in one click.</p>
+        <h2>🤖 What Taminator Does</h2>
+        <p style="font-size: 18px; margin-bottom: 32px;"><strong>Automates hours of manual TAM work</strong> - tracks RFEs/Bugs, updates reports, posts to Portal.</p>
         
-        <ul class="feature-list">
-          <li>Track RFEs and Bugs automatically</li>
-          <li>Keep customer reports always up-to-date</li>
-          <li>Publish reports to portal in one click</li>
-          <li>Save hours of manual JIRA work each week</li>
-        </ul>
+        <!-- Visual Preview of Value -->
+        <div style="background: #1E1E1E; border-radius: 8px; padding: 24px; margin-bottom: 32px; color: #D4D4D4; font-family: 'Courier New', monospace; font-size: 13px;">
+          <div style="color: #4EC9B0; margin-bottom: 8px;">$ tam-rfe check jpmc</div>
+          <div style="color: #6A6E73;">Checking 12 JIRA issues...</div>
+          <div style="color: #3E8635; margin-top: 8px;">✅ 3 status changes detected</div>
+          <div style="color: #F0AB00;">⚠️  RHEL-12345: In Progress → Post</div>
+          <div style="color: #F0AB00;">⚠️  OCP-67890: Backlog → In Progress</div>
+          <div style="color: #F0AB00;">⚠️  RFE-11111: New → Refinement</div>
+          
+          <div style="color: #4EC9B0; margin-top: 16px;">$ tam-rfe update jpmc</div>
+          <div style="color: #3E8635;">✅ Report updated with latest statuses</div>
+          
+          <div style="color: #4EC9B0; margin-top: 16px;">$ tam-rfe post jpmc</div>
+          <div style="color: #3E8635;">✅ Posted to Customer Portal</div>
+          <div style="color: #6A6E73; margin-top: 4px;">→ https://access.redhat.com/groups/...</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;">
+          <div style="background: #E7F5E7; border-left: 4px solid #3E8635; padding: 16px; border-radius: 4px;">
+            <div style="font-size: 32px; font-weight: bold; color: #3E8635; margin-bottom: 8px;">3 clicks</div>
+            <div style="color: #151515; font-size: 14px;">Check → Update → Post<br><strong>vs. hours of manual work</strong></div>
+          </div>
+          <div style="background: #E7F1FA; border-left: 4px solid #0066CC; padding: 16px; border-radius: 4px;">
+            <div style="font-size: 32px; font-weight: bold; color: #0066CC; margin-bottom: 8px;">AI-powered</div>
+            <div style="color: #151515; font-size: 14px;">Integrated rhcase bot<br><strong>for case analysis</strong></div>
+          </div>
+        </div>
 
         <div class="info-box">
-          <strong>📋 This setup takes about 5 minutes</strong>
-          <p style="color: #6A6E73; margin-bottom: 0;">You'll need a JIRA API token (we'll show you how to get one)</p>
+          <strong>⏱️ Setup takes 3 minutes</strong>
+          <p style="color: #6A6E73; margin-bottom: 0;">You'll need JIRA & Portal API tokens (we'll show you where to get them)</p>
         </div>
       </div>
 
