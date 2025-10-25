@@ -571,38 +571,70 @@ ipcMain.handle('oobe-test-portal-token', async (event, data) => {
  * Save manual tokens
  */
 ipcMain.handle('oobe-save-manual-tokens', async (event, tokens) => {
-  console.log('[OOBE] Saving manual tokens...');
-  
-  const fs = require('fs');
-  const os = require('os');
+  console.log('[OOBE] Saving manual tokens to system keyring...');
   
   try {
-    const configDir = path.join(os.homedir(), '.config', 'taminator-gui');
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
-    }
-    
-    const tokensFile = path.join(configDir, 'tokens.json');
+    // Use system keyring (same as tam-rfe CLI) via Python keyring library
+    // This matches the auth_box behavior in src/taminator/core/auth_box.py
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execPromise = util.promisify(exec);
     
     // Sanitize tokens before saving - remove whitespace, newlines
     const cleanJiraToken = tokens.jiraToken ? tokens.jiraToken.trim().replace(/[\r\n\t]/g, '') : '';
     const cleanPortalToken = tokens.portalToken ? tokens.portalToken.trim().replace(/[\r\n\t]/g, '') : '';
     
-    // Save tokens (should be encrypted in future)
-    const config = {
-      jiraToken: cleanJiraToken,
-      portalToken: cleanPortalToken,
-      lastVerified: new Date().toISOString()
-    };
+    // Save tokens using Python keyring (same as auth_box)
+    // Service name: "taminator" (matches auth_box.KEYRING_SERVICE)
+    if (cleanJiraToken) {
+      const jiraCmd = `python3 -c "import keyring; keyring.set_password('taminator', 'jira-token', '''${cleanJiraToken.replace(/'/g, "\\'")}''')"`;
+      await execPromise(jiraCmd);
+      console.log('[OOBE] JIRA token saved to system keyring');
+    }
     
-    fs.writeFileSync(tokensFile, JSON.stringify(config, null, 2), 'utf8');
+    if (cleanPortalToken) {
+      const portalCmd = `python3 -c "import keyring; keyring.set_password('taminator', 'portal-token', '''${cleanPortalToken.replace(/'/g, "\\'")}''')"`;
+      await execPromise(portalCmd);
+      console.log('[OOBE] Portal token saved to system keyring');
+    }
     
-    console.log('[OOBE] Tokens saved successfully');
+    console.log('[OOBE] Tokens saved successfully to system keyring (same as CLI)');
     return { success: true };
     
   } catch (error) {
-    console.error('[OOBE] Error saving tokens:', error);
-    throw error;
+    console.error('[OOBE] Error saving tokens to keyring:', error);
+    
+    // Fallback: save to config file in user's home directory
+    console.log('[OOBE] Falling back to config file storage...');
+    const fs = require('fs');
+    const os = require('os');
+    
+    try {
+      const configDir = path.join(os.homedir(), '.config', 'taminator');
+      if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir, { recursive: true });
+      }
+      
+      const tokensFile = path.join(configDir, 'tokens.json');
+      
+      const cleanJiraToken = tokens.jiraToken ? tokens.jiraToken.trim().replace(/[\r\n\t]/g, '') : '';
+      const cleanPortalToken = tokens.portalToken ? tokens.portalToken.trim().replace(/[\r\n\t]/g, '') : '';
+      
+      const config = {
+        jiraToken: cleanJiraToken,
+        portalToken: cleanPortalToken,
+        lastVerified: new Date().toISOString()
+      };
+      
+      fs.writeFileSync(tokensFile, JSON.stringify(config, null, 2), 'utf8');
+      
+      console.log('[OOBE] Tokens saved to ~/.config/taminator/tokens.json (fallback)');
+      return { success: true, fallback: true };
+      
+    } catch (fallbackError) {
+      console.error('[OOBE] Fallback also failed:', fallbackError);
+      throw fallbackError;
+    }
   }
 });
 
