@@ -51,6 +51,7 @@ Summary: 0 total cases (0 RFE, 0 Bug)
 ## Customer Information
 
 - **Account:** {customer_info.get('account', 'TBD')}
+- **Product:** {customer_info.get('product', 'TBD')}
 - **Primary Contact:** {customer_info.get('contact', 'TBD')}
 - **TAM:** {customer_info.get('tam', 'Jimmy Byrd')}
 
@@ -82,7 +83,7 @@ Summary: 0 total cases (0 RFE, 0 Bug)
 
 @auth_required([AuthType.VPN])
 def onboard_customer(customer_name: str, email: str = None, display_name: str = None,
-                     account: str = None, non_interactive: bool = False, json_output: bool = False):
+                     account: str = None, product: str = None, non_interactive: bool = False, json_output: bool = False):
     """
     Interactive or automated customer onboarding wizard (Red Hat CLI pattern).
     
@@ -90,13 +91,14 @@ def onboard_customer(customer_name: str, email: str = None, display_name: str = 
         customer_name: Customer name (slug format, e.g., 'acmecorp')
         email: TAM email address (required for non-interactive mode)
         display_name: Customer display name (required for non-interactive mode)
-        account: Red Hat account number (optional)
+        account: Red Hat account number (required for proper JIRA filtering)
+        product: Red Hat product (required for SBR group filtering, e.g., RHEL, Ansible, OpenShift)
         non_interactive: If True, run without prompts (automation mode)
         json_output: If True, output structured JSON for machine parsing
     
     Red Hat Design Pattern:
         Interactive mode: tam-rfe onboard acmecorp
-        Automation mode:  tam-rfe onboard acmecorp --email user@redhat.com --display-name "Acme Corp" --account 1234567 --non-interactive --json
+        Automation mode:  tam-rfe onboard acmecorp --email user@redhat.com --display-name "Acme Corp" --account 334224 --product Ansible --non-interactive --json
     """
     import json
     
@@ -144,6 +146,7 @@ We'll collect some information and create an initial tracking report.
         # Automation mode: Use provided values
         customer_info['display_name'] = display_name
         customer_info['account'] = account if account else "TBD"
+        customer_info['product'] = product if product else "TBD"
         customer_info['contact'] = "TBD"
         customer_info['tam'] = "Jimmy Byrd"
     else:
@@ -174,6 +177,29 @@ We'll collect some information and create an initial tracking report.
             
             if not customer_info['account'] or customer_info['account'] == "":
                 console.print("\n❌ Cannot proceed without account number", style="red bold")
+                return 1
+        
+        customer_info['product'] = product or Prompt.ask(
+            "Red Hat product (REQUIRED - e.g., RHEL, Ansible, OpenShift)",
+            default=""
+        )
+        
+        # Validate product is provided
+        if not customer_info['product'] or customer_info['product'] == "":
+            console.print("\n⚠️  Product is required!", style="yellow bold")
+            console.print("\nWhy this matters:", style="cyan")
+            console.print("  • JIRA filtering requires both account number AND product")
+            console.print("  • Product maps to SBR groups (e.g., 'Ansible' → 'SBR Ansible')")
+            console.print("  • Without product, you get ALL issues for the account (OpenShift, RHEL, etc.)")
+            console.print("\nExample: For JPMC Ansible work, use account 334224 + product 'Ansible'\n")
+            
+            customer_info['product'] = Prompt.ask(
+                "Red Hat product (required)",
+                default=""
+            )
+            
+            if not customer_info['product'] or customer_info['product'] == "":
+                console.print("\n❌ Cannot proceed without product", style="red bold")
                 return 1
         
         customer_info['contact'] = Prompt.ask(
@@ -251,7 +277,9 @@ We'll collect some information and create an initial tracking report.
             "customer": {
                 "name": customer_name,
                 "display_name": customer_info['display_name'],
-                "slug": customer_name
+                "slug": customer_name,
+                "account": customer_info.get('account', 'TBD'),
+                "product": customer_info.get('product', 'TBD')
             },
             "report": {
                 "path": str(report_path),
@@ -302,7 +330,7 @@ Need help?
 
 # CLI entry point
 def main(customer: str = None, email: str = None, display_name: str = None,
-         account: str = None, non_interactive: bool = False, json_output: bool = False):
+         account: str = None, product: str = None, non_interactive: bool = False, json_output: bool = False):
     """Main entry point for tam-rfe onboard command (Red Hat CLI pattern)."""
     
     if not customer:
@@ -312,8 +340,8 @@ def main(customer: str = None, email: str = None, display_name: str = None,
         console.print("\nInteractive mode:", style="cyan")
         console.print("  tam-rfe onboard acmecorp")
         console.print("\nAutomation mode (non-interactive):", style="cyan")
-        console.print("  tam-rfe onboard acmecorp --email user@redhat.com --display-name 'Acme Corp' --account 1234567 --non-interactive")
-        console.print("  tam-rfe onboard acmecorp --email user@redhat.com --display-name 'Acme Corp' --account 1234567 --non-interactive --json")
+        console.print("  tam-rfe onboard acmecorp --email user@redhat.com --display-name 'Acme Corp' --account 334224 --product Ansible --non-interactive")
+        console.print("  tam-rfe onboard acmecorp --email user@redhat.com --display-name 'Acme Corp' --account 334224 --product Ansible --non-interactive --json")
         console.print("\nCustomer name should be:")
         console.print("  • Lowercase")
         console.print("  • No spaces (use underscores)")
@@ -321,7 +349,7 @@ def main(customer: str = None, email: str = None, display_name: str = None,
         return 1
     
     return onboard_customer(customer, email=email, display_name=display_name, account=account,
-                           non_interactive=non_interactive, json_output=json_output)
+                           product=product, non_interactive=non_interactive, json_output=json_output)
 
 
 if __name__ == '__main__':

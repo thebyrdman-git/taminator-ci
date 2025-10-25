@@ -134,6 +134,11 @@ For more help on a command:
         help='Red Hat account number (REQUIRED: enterprise customers have multiple accounts)'
     )
     onboard_parser.add_argument(
+        '--product',
+        metavar='PRODUCT',
+        help='Red Hat product (REQUIRED: filters JIRA by SBR group, e.g., RHEL, Ansible, OpenShift)'
+    )
+    onboard_parser.add_argument(
         '--non-interactive',
         action='store_true',
         help='Run without prompts (automation mode)'
@@ -231,6 +236,7 @@ For more help on a command:
                     email=args.email,
                     display_name=args.display_name,
                     account=args.account,
+                    product=args.product,
                     non_interactive=True,
                     json_output=args.json_output
                 )
@@ -241,6 +247,7 @@ For more help on a command:
                     email=args.email,
                     display_name=args.display_name,
                     account=args.account,
+                    product=args.product,
                     non_interactive=args.non_interactive,
                     json_output=args.json_output
                 )
