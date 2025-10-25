@@ -161,6 +161,15 @@ For more help on a command:
     )
     
     # ========================================
+    # GUI command
+    # ========================================
+    gui_parser = subparsers.add_parser(
+        'gui',
+        help='Launch Taminator GUI',
+        description='Open the Taminator graphical interface (cross-platform)'
+    )
+    
+    # ========================================
     # CONFIG command
     # ========================================
     config_parser = subparsers.add_parser(
@@ -256,6 +265,72 @@ For more help on a command:
                     non_interactive=args.non_interactive,
                     json_output=args.json_output
                 )
+        
+        elif args.command == 'gui':
+            from rich.console import Console
+            import subprocess
+            import os
+            import platform
+            
+            console = Console()
+            console.print("\n🚀 Launching Taminator GUI...\n", style="cyan bold")
+            
+            # Determine GUI executable path based on platform
+            system = platform.system()
+            
+            if system == "Windows":
+                # Windows: Look for Taminator.exe in common locations
+                gui_paths = [
+                    r"C:\Program Files\Taminator\Taminator.exe",
+                    r"C:\Program Files (x86)\Taminator\Taminator.exe",
+                    os.path.expanduser("~\\AppData\\Local\\Programs\\Taminator\\Taminator.exe")
+                ]
+                gui_cmd = None
+                for path in gui_paths:
+                    if os.path.exists(path):
+                        gui_cmd = [path]
+                        break
+                
+                if not gui_cmd:
+                    console.print("❌ Taminator GUI not found in standard Windows locations", style="red")
+                    console.print("\nSearched:", style="cyan")
+                    for path in gui_paths:
+                        console.print(f"  • {path}")
+                    sys.exit(1)
+                
+            elif system == "Darwin":
+                # macOS: Open the .app bundle
+                gui_cmd = ["open", "-a", "Taminator"]
+                
+            else:
+                # Linux: Look for AppImage or installed binary
+                gui_paths = [
+                    "/usr/local/bin/taminator-gui",
+                    "/usr/bin/taminator-gui",
+                    os.path.expanduser("~/.local/bin/taminator-gui"),
+                    os.path.expanduser("~/Applications/Taminator.AppImage")
+                ]
+                gui_cmd = None
+                for path in gui_paths:
+                    if os.path.exists(path):
+                        gui_cmd = [path]
+                        break
+                
+                if not gui_cmd:
+                    console.print("❌ Taminator GUI not found in standard Linux locations", style="red")
+                    console.print("\nSearched:", style="cyan")
+                    for path in gui_paths:
+                        console.print(f"  • {path}")
+                    console.print("\n💡 Tip: Ensure Taminator AppImage is installed or use: npm start", style="yellow")
+                    sys.exit(1)
+            
+            # Launch GUI
+            try:
+                subprocess.Popen(gui_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                console.print("✅ GUI launched successfully!", style="green")
+            except Exception as e:
+                console.print(f"❌ Failed to launch GUI: {e}", style="red")
+                sys.exit(1)
         
         elif args.command == 'config':
             from taminator.commands.config import main as config_main

@@ -151,6 +151,28 @@
       align-items: center;
     }
 
+    .cli-switcher {
+      position: fixed;
+      bottom: 80px;
+      right: 24px;
+      background: white;
+      border: 2px solid #EE0000;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      max-width: 400px;
+      z-index: 1000;
+    }
+
+    .cli-switcher-collapsed {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .cli-switcher-collapsed:hover {
+      background: #FDE7E7;
+    }
+
     .btn {
       padding: 12px 32px;
       border: none;
@@ -386,6 +408,15 @@
         <div class="info-box">
           <strong>⏱️ Setup takes 3 minutes</strong>
           <p style="color: #6A6E73; margin-bottom: 0;">You'll need JIRA & Portal API tokens (we'll show you where to get them)</p>
+        </div>
+
+        <!-- CLI Alternative -->
+        <div style="background: #F5F5F5; border: 1px solid #D2D2D2; border-radius: 4px; padding: 16px; margin-top: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <strong style="color: #151515;">💻 Prefer the terminal?</strong>
+            <button onclick="copyCliCommand('tam-rfe config --setup-vault')" style="background: #EE0000; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer;">Copy CLI Command</button>
+          </div>
+          <p style="color: #6A6E73; font-size: 13px; margin: 0;">You can complete this entire setup via CLI. Full command parity with GUI.</p>
         </div>
       </div>
 
@@ -638,10 +669,27 @@
         <button class="btn btn-primary" id="btnNext">Let's Get Started →</button>
       </div>
     </div>
+
+    <!-- CLI Switcher Widget -->
+    <div class="cli-switcher cli-switcher-collapsed" id="cliSwitcher" onclick="toggleCliSwitcher()">
+      <div id="cliSwitcherContent">
+        <strong style="color: #EE0000;">💻 Switch to CLI</strong>
+      </div>
+    </div>
   </div>
 
   <script>
     const { ipcRenderer } = require('electron');
+    const os = require('os');
+    
+    // Detect OS for platform-specific commands
+    const platform = os.platform();
+    const isWindows = platform === 'win32';
+    const isMac = platform === 'darwin';
+    const isLinux = platform === 'linux';
+    
+    // Platform-specific command prefix
+    const cliPrefix = isWindows ? 'tam-rfe.exe' : 'tam-rfe';
     
     // Current screen index
     let currentScreen = 0;
@@ -1078,6 +1126,111 @@
       // For now, just redirect to index.html
       window.location.href = 'index.html';
     });
+
+    // CLI Switcher Functions
+    let cliSwitcherExpanded = false;
+
+    function getCliCommandForCurrentScreen() {
+      const currentScreenName = screens[currentScreen];
+      let command = '';
+      let description = '';
+
+      switch(currentScreenName) {
+        case 'welcome':
+          command = `${cliPrefix} config --setup-vault`;
+          description = 'Start CLI setup workflow';
+          break;
+        case 'auth-choice':
+          command = `${cliPrefix} config --setup-vault`;
+          description = 'Configure Vault via CLI';
+          break;
+        case 'vault-setup':
+          command = `${cliPrefix} config --setup-vault`;
+          description = 'Configure Vault interactively';
+          break;
+        case 'manual-setup':
+          command = `${cliPrefix} config --add-token`;
+          description = 'Add tokens via CLI';
+          break;
+        case 'first-customer':
+          command = `${cliPrefix} onboard jpmc --account 334224 --product Ansible --email jbyrd@redhat.com --display-name "JPMC" --non-interactive`;
+          description = 'Onboard customer via CLI';
+          break;
+        case 'completion':
+          command = `${cliPrefix} check jpmc`;
+          description = 'Run verification from CLI';
+          break;
+        default:
+          command = `${cliPrefix} config`;
+          description = 'View configuration';
+      }
+
+      return { command, description };
+    }
+
+    function toggleCliSwitcher() {
+      const switcher = document.getElementById('cliSwitcher');
+      const content = document.getElementById('cliSwitcherContent');
+
+      if (cliSwitcherExpanded) {
+        // Collapse
+        switcher.classList.add('cli-switcher-collapsed');
+        content.innerHTML = '<strong style="color: #EE0000;">💻 Switch to CLI</strong>';
+        cliSwitcherExpanded = false;
+      } else {
+        // Expand
+        switcher.classList.remove('cli-switcher-collapsed');
+        const { command, description } = getCliCommandForCurrentScreen();
+        
+        // Platform indicator
+        let platformName = isWindows ? 'Windows' : (isMac ? 'macOS' : 'Linux');
+        let terminalName = isWindows ? 'PowerShell/CMD' : (isMac ? 'Terminal' : 'Terminal');
+        
+        content.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <strong style="color: #EE0000;">💻 Switch to CLI</strong>
+            <button onclick="toggleCliSwitcher(); event.stopPropagation();" style="background: transparent; border: none; font-size: 18px; cursor: pointer; color: #6A6E73;">✕</button>
+          </div>
+          <p style="color: #6A6E73; font-size: 13px; margin-bottom: 12px;">
+            <strong>${platformName}</strong> - Continue in ${terminalName}:
+          </p>
+          <div style="background: #1E1E1E; border-radius: 4px; padding: 12px; margin-bottom: 12px; font-family: 'Courier New', monospace; font-size: 12px; color: #D4D4D4; word-break: break-all;">
+            ${command}
+          </div>
+          <button onclick="copyToClipboard('${command.replace(/'/g, "\\'")}'); event.stopPropagation();" style="background: #EE0000; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 13px; cursor: pointer; width: 100%; margin-bottom: 8px;">
+            📋 Copy Command
+          </button>
+          <p style="color: #6A6E73; font-size: 12px; margin: 8px 0;">
+            ${description}
+          </p>
+          <hr style="border: none; border-top: 1px solid #D2D2D2; margin: 12px 0;">
+          <p style="color: #6A6E73; font-size: 12px; margin-bottom: 8px;">
+            <strong>Return to GUI anytime:</strong>
+          </p>
+          <div style="background: #1E1E1E; border-radius: 4px; padding: 12px; font-family: 'Courier New', monospace; font-size: 12px; color: #D4D4D4;">
+            ${cliPrefix} gui
+          </div>
+        `;
+        cliSwitcherExpanded = true;
+      }
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        btn.style.background = '#3E8635';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = '#EE0000';
+        }, 2000);
+      });
+    }
+
+    function copyCliCommand(command) {
+      copyToClipboard(command);
+    }
 
     // Initialize
     updateProgress();
