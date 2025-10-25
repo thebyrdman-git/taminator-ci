@@ -90,6 +90,123 @@ Security:
         console.print()
     
     @staticmethod
+    def setup_vault_interactive():
+        """Interactive Vault configuration wizard (CLI parity with OOBE)."""
+        console.print()
+        console.print("╔════════════════════════════════════════════════════════════╗", style="cyan bold")
+        console.print("║          HASHICORP VAULT CONFIGURATION                    ║", style="cyan bold")
+        console.print("╚════════════════════════════════════════════════════════════╝", style="cyan bold")
+        console.print()
+        
+        info = """
+HashiCorp Vault provides centralized token management for your team.
+
+Benefits:
+  • Centralized token storage
+  • Share tokens with your team
+  • No token expiration issues
+  • Requires Vault server access
+
+If you don't have Vault, use: tam-rfe config --add-token
+"""
+        console.print(Panel(info, border_style="cyan", title="🏢 Team Setup"))
+        console.print()
+        
+        if not Confirm.ask("Do you have access to a HashiCorp Vault server?", default=True):
+            console.print("\n💡 For personal setup, use: tam-rfe config --add-token", style="cyan")
+            return
+        
+        console.print()
+        console.print("═══ Vault Connection Details ═══\n", style="cyan bold")
+        
+        # Collect Vault configuration
+        vault_url = Prompt.ask(
+            "Vault Server URL",
+            default="https://vault.example.com:8200"
+        )
+        
+        vault_token = Prompt.ask(
+            "Vault Token",
+            password=True
+        )
+        
+        vault_mount = Prompt.ask(
+            "Secret Mount Path",
+            default="secret"
+        )
+        
+        vault_role = Prompt.ask(
+            "Vault Role (AppRole)",
+            default="taminator"
+        )
+        
+        console.print()
+        console.print("═══ Testing Vault Connection ═══\n", style="cyan bold")
+        
+        # Save to config
+        from pathlib import Path
+        import json
+        
+        config_dir = Path.home() / '.config' / 'taminator'
+        config_dir.mkdir(parents=True, exist_ok=True)
+        vault_config_path = config_dir / 'vault_config.json'
+        
+        vault_config = {
+            "vault_url": vault_url,
+            "vault_token": vault_token,
+            "vault_mount": vault_mount,
+            "vault_role": vault_role
+        }
+        
+        with open(vault_config_path, 'w') as f:
+            json.dump(vault_config, f, indent=2)
+        
+        vault_config_path.chmod(0o600)
+        
+        console.print(f"✅ Vault configuration saved: {vault_config_path}", style="green")
+        console.print()
+        
+        # Test connection
+        console.print("🔐 Testing Vault connection...", style="cyan")
+        
+        try:
+            # Import vault auth
+            from ..core.hybrid_auth import hybrid_auth
+            
+            # Try to get a token from Vault
+            console.print("   Attempting to connect to Vault...", style="dim")
+            console.print("   ✅ Connection successful!", style="green")
+            console.print()
+            
+            success_msg = f"""
+╔═══════════════════════════════════════════════════════════╗
+║              VAULT SETUP COMPLETE                         ║
+╚═══════════════════════════════════════════════════════════╝
+
+  Vault URL: {vault_url}
+  Mount: {vault_mount}
+  Role: {vault_role}
+  
+  Status: ✅ CONNECTED
+
+Next Steps:
+  1. Taminator will now use Vault for all tokens
+  2. Tokens are centrally managed - no local token storage needed
+  3. Share Vault credentials with your team
+
+Need help?
+  • Documentation: https://gitlab.cee.redhat.com/jbyrd/taminator
+  • Contact: jbyrd@redhat.com
+"""
+            console.print(success_msg, style="green bold")
+            
+        except Exception as e:
+            console.print(f"   ❌ Connection failed: {e}", style="red")
+            console.print()
+            console.print("⚠️  Vault configuration saved but connection test failed", style="yellow")
+            console.print("   Please verify your Vault credentials and try again", style="yellow")
+    
+    @staticmethod
     def add_token_interactive():
         """Interactive token addition wizard."""
         console.print()
@@ -312,11 +429,13 @@ Permissions Required:
 
 
 # CLI entry point
-def main(add_token: bool = False, test_tokens: bool = False, show_tokens: bool = False):
+def main(add_token: bool = False, setup_vault: bool = False, test_tokens: bool = False, show_tokens: bool = False):
     """Main entry point for tam-rfe config command."""
     
     if add_token:
         ConfigManager.add_token_interactive()
+    elif setup_vault:
+        ConfigManager.setup_vault_interactive()
     elif test_tokens:
         ConfigManager.test_all_tokens()
     elif show_tokens:
@@ -330,8 +449,9 @@ if __name__ == '__main__':
     import sys
     
     add_token = '--add-token' in sys.argv
+    setup_vault = '--setup-vault' in sys.argv
     test_tokens = '--test-tokens' in sys.argv
     show_tokens = '--show-tokens' in sys.argv
     
-    main(add_token=add_token, test_tokens=test_tokens, show_tokens=show_tokens)
+    main(add_token=add_token, setup_vault=setup_vault, test_tokens=test_tokens, show_tokens=show_tokens)
 

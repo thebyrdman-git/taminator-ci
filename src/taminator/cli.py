@@ -174,6 +174,11 @@ For more help on a command:
         help='Add authentication token interactively'
     )
     config_parser.add_argument(
+        '--setup-vault',
+        action='store_true',
+        help='Configure HashiCorp Vault for centralized token management'
+    )
+    config_parser.add_argument(
         '--test-tokens',
         action='store_true',
         help='Test all configured tokens'
@@ -256,6 +261,7 @@ For more help on a command:
             from taminator.commands.config import main as config_main
             config_main(
                 add_token=args.add_token,
+                setup_vault=args.setup_vault,
                 test_tokens=args.test_tokens,
                 show_tokens=args.show_tokens
             )
