@@ -513,6 +513,23 @@
           </div>
 
           <div class="form-group">
+            <label for="customerProduct">Product *</label>
+            <select id="customerProduct" required>
+              <option value="">Select product...</option>
+              <option value="OpenShift Container Platform">OpenShift Container Platform</option>
+              <option value="Red Hat Enterprise Linux">Red Hat Enterprise Linux</option>
+              <option value="Red Hat Ansible Automation Platform">Red Hat Ansible Automation Platform</option>
+              <option value="Red Hat Satellite">Red Hat Satellite</option>
+              <option value="Red Hat OpenStack Platform">Red Hat OpenStack Platform</option>
+              <option value="Red Hat Virtualization">Red Hat Virtualization</option>
+              <option value="Red Hat Ceph Storage">Red Hat Ceph Storage</option>
+              <option value="Red Hat Enterprise Linux CoreOS">Red Hat Enterprise Linux CoreOS</option>
+              <option value="Other">Other</option>
+            </select>
+            <small><strong>Required:</strong> Account number alone is insufficient. You must specify which product this tracker is for (e.g., JPMC 334224 has OpenShift AND RHEL cases - you need both account + product to filter correctly).</small>
+          </div>
+
+          <div class="form-group">
             <label for="tamEmail">Your Email</label>
             <input type="email" id="tamEmail" placeholder="you@redhat.com">
             <small>Your Red Hat email address</small>
@@ -957,10 +974,11 @@
       const customerName = document.getElementById('customerName').value;
       const customerSlug = document.getElementById('customerSlug').value;
       const customerAccount = document.getElementById('customerAccount').value;
+      const customerProduct = document.getElementById('customerProduct').value;
       const tamEmail = document.getElementById('tamEmail').value;
       
-      if (!customerName || !customerSlug || !customerAccount) {
-        alert('Please enter customer name, slug, and account number.\n\nAccount number is required because enterprise customers often have multiple Red Hat accounts.');
+      if (!customerName || !customerSlug || !customerAccount || !customerProduct) {
+        alert('Please enter customer name, slug, account number, and product.\n\nAccount number alone is insufficient for proper filtering - you must specify which product (e.g., JPMC 334224 has OpenShift AND RHEL).');
         return;
       }
       
@@ -979,14 +997,16 @@
           name: customerName,
           slug: customerSlug,
           account: customerAccount,
+          product: customerProduct,
           email: tamEmail
         });
         
         if (result.success) {
           resultDiv.className = 'test-result success';
           const account = customerAccount || 'Not provided';
+          const product = customerProduct || 'Not provided';
           const reportPath = result.customer.report_path || 'Created';
-          resultDiv.innerHTML = `✅ <span><strong>Customer onboarded successfully!</strong><br>Account: ${account}<br>Report: ${result.output || reportPath}</span>`;
+          resultDiv.innerHTML = `✅ <span><strong>Customer onboarded successfully!</strong><br>Account: ${account}<br>Product: ${product}<br>Report: ${result.output || reportPath}</span>`;
           customerDiscovered = true;
           
           // Update completion screen to show customer was added
