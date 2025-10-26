@@ -612,77 +612,136 @@
       }
     }
 
-    function showDashboard() {
+    async function showDashboard() {
       document.getElementById('page-title').textContent = 'Dashboard';
       setActiveNav(0);
       
+      // Show loading state
       document.getElementById('content').innerHTML = `
-        <h2 style="margin-bottom: 24px; font-size: 28px; font-weight: 700;">👋 Welcome, Jimmy</h2>
+        <h2 style="margin-bottom: 24px; font-size: 28px; font-weight: 700;">📊 Customer Dashboard</h2>
         
-        <div style="margin-bottom: 24px; padding: 16px; background: #FFF4E5; border-left: 4px solid #F0AB00; border-radius: 4px;">
-          <p style="margin: 0; color: #151515; font-size: 14px;">
-            <strong>⚠️ Dashboard shows placeholder data.</strong> Real-time customer status tracking coming in future release.
-            For actual status, use the "Verify" and "Update" tabs.
-          </p>
-        </div>
-        
-        <div class="dashboard-grid">
-          <div class="card">
-            <div class="card-title">📊 Customers <small style="color: #F0AB00; font-weight: normal;">(Demo Data)</small></div>
-            <div class="card-content">
-              <div class="status-item">
-                <span class="status-label">Acme Corp</span>
-                <span class="status-badge success">✓ Up-to-date</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Example Inc</span>
-                <span class="status-badge warning">⚠ Needs update</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Big Customer</span>
-                <span class="status-badge success">✓ Up-to-date</span>
-              </div>
-              <div class="status-item">
-                <span class="status-label">Test Co</span>
-                <span class="status-badge success">✓ Up-to-date</span>
-              </div>
-            </div>
-            <button class="btn btn-primary" style="width: 100%; margin-top: 16px;" onclick="showOnboard()">+ Add Customer</button>
-          </div>
-
-          <div class="card">
-            <div class="card-title">🔐 Auth Status <small style="color: #3E8635; font-weight: normal;">(Live)</small></div>
-            <div class="card-content" id="auth-card">
-              <div class="spinner" style="margin: 20px auto;"></div>
-            </div>
-            <button class="btn btn-secondary" style="width: 100%; margin-top: 16px;" onclick="showVault()">Manage Tokens</button>
-          </div>
-        </div>
-
         <div class="card">
-          <div class="card-title">📝 Recent Activity <small style="color: #F0AB00; font-weight: normal;">(Demo Data)</small></div>
-          <div class="card-content">
-            <div class="status-item">
-              <span>✅ Checked Acme Corp report</span>
-              <span style="color: #6A6E73; font-size: 13px;">2 hours ago</span>
-            </div>
-            <div class="status-item">
-              <span>✅ Updated Example Inc report</span>
-              <span style="color: #6A6E73; font-size: 13px;">1 day ago</span>
-            </div>
-            <div class="status-item">
-              <span>⚠️ Portal token expires in 2 days</span>
-              <span style="color: #6A6E73; font-size: 13px;">Just now</span>
-            </div>
+          <div class="card-title">Live Customer Stats</div>
+          <div class="card-content" style="text-align: center; padding: 40px;">
+            <div class="spinner" style="margin: 0 auto 16px;"></div>
+            <p style="color: #6A6E73;">Loading customer data from JIRA...</p>
           </div>
-        </div>
-
-        <div style="margin-top: 24px; display: flex; gap: 12px;">
-          <button class="btn btn-primary" onclick="alert('Check All Reports - Coming soon!')">Check All Reports</button>
-          <button class="btn btn-secondary" onclick="refreshAuth()">Run Auth Audit</button>
-          <button class="btn btn-secondary" onclick="showConfig()">View Settings</button>
         </div>
       `;
+
+      try {
+        // Fetch dashboard data from backend
+        const result = await ipcRenderer.invoke('dashboard-load');
+        
+        if (result.success && result.data && result.data.length > 0) {
+          // Render dashboard with real data
+          let customersHTML = '';
+          let totalRFEs = 0;
+          let totalBugs = 0;
+          
+          for (const customer of result.data) {
+            totalRFEs += customer.open_rfes;
+            totalBugs += customer.open_bugs;
+            
+            const totalColor = customer.total_open < 5 ? '#3E8635' : customer.total_open < 10 ? '#F0AB00' : '#EE0000';
+            const sourceIcon = customer.data_source === 'live_jira' ? '🟢' : '📄';
+            const sourceText = customer.data_source === 'live_jira' ? 'Live JIRA' : 'Report';
+            
+            customersHTML += `
+              <tr style="border-bottom: 1px solid #D2D2D2;">
+                <td style="padding: 12px; font-weight: 600;">${customer.slug}</td>
+                <td style="padding: 12px; color: #6A6E73;">${customer.account}</td>
+                <td style="padding: 12px; color: #6A6E73;">${customer.product}</td>
+                <td style="padding: 12px; text-align: right; color: #0066CC;">${customer.open_rfes}</td>
+                <td style="padding: 12px; text-align: right; color: #F0AB00;">${customer.open_bugs}</td>
+                <td style="padding: 12px; text-align: right; font-weight: 600; color: ${totalColor};">${customer.total_open}</td>
+                <td style="padding: 12px; font-size: 13px; color: #6A6E73;">${sourceIcon} ${sourceText}</td>
+                <td style="padding: 12px; font-size: 13px; color: #6A6E73;">${customer.last_modified}</td>
+              </tr>
+            `;
+          }
+          
+          document.getElementById('content').innerHTML = `
+            <h2 style="margin-bottom: 24px; font-size: 28px; font-weight: 700;">📊 Customer Dashboard</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              <div class="card" style="text-align: center;">
+                <div style="font-size: 32px; font-weight: 700; color: #EE0000;">${result.data.length}</div>
+                <div style="color: #6A6E73; font-size: 14px;">Total Customers</div>
+              </div>
+              <div class="card" style="text-align: center;">
+                <div style="font-size: 32px; font-weight: 700; color: #0066CC;">${totalRFEs}</div>
+                <div style="color: #6A6E73; font-size: 14px;">Open RFEs</div>
+              </div>
+              <div class="card" style="text-align: center;">
+                <div style="font-size: 32px; font-weight: 700; color: #F0AB00;">${totalBugs}</div>
+                <div style="color: #6A6E73; font-size: 14px;">Open Bugs</div>
+              </div>
+              <div class="card" style="text-align: center;">
+                <div style="font-size: 32px; font-weight: 700; color: #3E8635;">${totalRFEs + totalBugs}</div>
+                <div style="color: #6A6E73; font-size: 14px;">Total Issues</div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-title">📋 Customer Details</div>
+              <div class="card-content" style="padding: 0; overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <thead style="background: #F5F5F5; border-bottom: 2px solid #D2D2D2;">
+                    <tr>
+                      <th style="padding: 12px; text-align: left; font-weight: 600; color: #151515;">Customer</th>
+                      <th style="padding: 12px; text-align: left; font-weight: 600; color: #151515;">Account</th>
+                      <th style="padding: 12px; text-align: left; font-weight: 600; color: #151515;">Product</th>
+                      <th style="padding: 12px; text-align: right; font-weight: 600; color: #151515;">RFEs</th>
+                      <th style="padding: 12px; text-align: right; font-weight: 600; color: #151515;">Bugs</th>
+                      <th style="padding: 12px; text-align: right; font-weight: 600; color: #151515;">Total</th>
+                      <th style="padding: 12px; text-align: left; font-weight: 600; color: #151515;">Source</th>
+                      <th style="padding: 12px; text-align: left; font-weight: 600; color: #151515;">Last Modified</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${customersHTML}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div style="margin-top: 24px; display: flex; gap: 12px;">
+              <button class="btn btn-primary" onclick="showDashboard()">🔄 Refresh Dashboard</button>
+              <button class="btn btn-secondary" onclick="showOnboard()">+ Add Customer</button>
+              <button class="btn btn-secondary" onclick="showVault()">Manage Tokens</button>
+            </div>
+          `;
+        } else {
+          // No customers yet
+          document.getElementById('content').innerHTML = `
+            <h2 style="margin-bottom: 24px; font-size: 28px; font-weight: 700;">📊 Customer Dashboard</h2>
+            
+            <div class="card" style="text-align: center; padding: 60px 24px;">
+              <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+              <h3 style="margin-bottom: 12px; color: #151515;">No Customers Yet</h3>
+              <p style="color: #6A6E73; margin-bottom: 24px;">
+                Get started by onboarding your first customer to track RFEs and Bugs.
+              </p>
+              <button class="btn btn-primary" onclick="showOnboard()">+ Add Your First Customer</button>
+            </div>
+          `;
+        }
+      } catch (error) {
+        // Error loading dashboard
+        document.getElementById('content').innerHTML = `
+          <h2 style="margin-bottom: 24px; font-size: 28px; font-weight: 700;">📊 Customer Dashboard</h2>
+          
+          <div class="card">
+            <div class="card-content" style="padding: 40px; text-align: center;">
+              <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+              <h3 style="margin-bottom: 12px; color: #EE0000;">Failed to Load Dashboard</h3>
+              <p style="color: #6A6E73; margin-bottom: 24px;">${error.message}</p>
+              <button class="btn btn-primary" onclick="showDashboard()">Try Again</button>
+            </div>
+          </div>
+        `;
+      }
 
       loadAuthStatus();
     }
@@ -3235,6 +3294,317 @@ ${result.error || result.output || 'Post failed'}
     function publishFromPreview() {
       portalPreview.publishFromPreview();
     }
+    
+    // ============================================================
+    // 📎 CLIPPY ASSISTANT EASTER EGG
+    // ============================================================
+    
+    class ClippyAssistant {
+      constructor() {
+        this.visible = false;
+        this.currentMessage = 0;
+        this.messages = [
+          "It looks like you're tracking RFEs! Would you like help?",
+          "Did you know? You can press Ctrl+Shift+C to toggle me!",
+          "I see you're updating a report. Don't forget to post it to the Portal!",
+          "Having trouble with authentication? Try checking your tokens in Settings.",
+          "💡 Pro tip: Use the dashboard to see all your customers at once!",
+          "Remember: TAMs are the real heroes here, not me! 🦸",
+          "Fun fact: I was originally designed for Microsoft Office. Now I help TAMs!",
+          "Feeling stressed? Try switching to Windows XP theme for nostalgia!",
+          "This app is powered by Python, Electron, and pure TAM determination.",
+          "Need help? Check the Help tab for full documentation!"
+        ];
+        this.element = null;
+        this.init();
+      }
+      
+      init() {
+        // Create Clippy element
+        this.element = document.createElement('div');
+        this.element.id = 'clippy-assistant';
+        this.element.innerHTML = `
+          <div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: none; flex-direction: column; align-items: flex-end;">
+            <div style="background: white; border: 2px solid #000; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; max-width: 280px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); position: relative;">
+              <button onclick="clippy.dismiss()" style="position: absolute; top: 4px; right: 8px; background: none; border: none; font-size: 18px; cursor: pointer; color: #666; line-height: 1;">&times;</button>
+              <p id="clippy-message" style="margin: 0; font-size: 14px; color: #151515; padding-right: 20px;"></p>
+            </div>
+            <div style="font-size: 80px; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));" onclick="clippy.nextMessage()" title="Click for next tip!">
+              📎
+            </div>
+          </div>
+        `;
+        document.body.appendChild(this.element);
+        
+        // Add keyboard shortcut (Ctrl+Shift+C)
+        document.addEventListener('keydown', (e) => {
+          if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+            this.toggle();
+          }
+        });
+        
+        // Listen for "clippy" typed in any input
+        let keyBuffer = '';
+        document.addEventListener('keypress', (e) => {
+          keyBuffer += e.key.toLowerCase();
+          if (keyBuffer.length > 10) {
+            keyBuffer = keyBuffer.slice(-10);
+          }
+          if (keyBuffer.includes('clippy')) {
+            this.show();
+            keyBuffer = '';
+          }
+        });
+      }
+      
+      show() {
+        this.visible = true;
+        const container = this.element.querySelector('div');
+        container.style.display = 'flex';
+        this.showMessage(this.currentMessage);
+      }
+      
+      hide() {
+        this.visible = false;
+        const container = this.element.querySelector('div');
+        container.style.display = 'none';
+      }
+      
+      toggle() {
+        if (this.visible) {
+          this.hide();
+        } else {
+          this.show();
+        }
+      }
+      
+      showMessage(index) {
+        const messageEl = document.getElementById('clippy-message');
+        if (messageEl) {
+          messageEl.textContent = this.messages[index];
+        }
+      }
+      
+      nextMessage() {
+        this.currentMessage = (this.currentMessage + 1) % this.messages.length;
+        this.showMessage(this.currentMessage);
+      }
+      
+      dismiss() {
+        this.hide();
+      }
+    }
+    
+    // Initialize Clippy
+    const clippy = new ClippyAssistant();
+    
+    // Show Clippy after 30 seconds (first-time help)
+    setTimeout(() => {
+      if (!localStorage.getItem('clippy-dismissed')) {
+        clippy.show();
+        localStorage.setItem('clippy-dismissed', 'true');
+      }
+    }, 30000);
+    
+    // ============================================================
+    // ⛷️ SKIFREE EASTER EGG (KONAMI CODE)
+    // ============================================================
+    
+    class SkiFreeGame {
+      constructor() {
+        this.active = false;
+        this.konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        this.konamiIndex = 0;
+        this.init();
+      }
+      
+      init() {
+        document.addEventListener('keydown', (e) => {
+          if (e.key === this.konamiCode[this.konamiIndex]) {
+            this.konamiIndex++;
+            if (this.konamiIndex === this.konamiCode.length) {
+              this.activate();
+              this.konamiIndex = 0;
+            }
+          } else {
+            this.konamiIndex = 0;
+          }
+        });
+      }
+      
+      activate() {
+        if (this.active) return;
+        this.active = true;
+        
+        // Show SkiFree modal
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center;';
+        
+        modal.innerHTML = `
+          <div style="text-align: center; color: white;">
+            <h1 style="font-size: 48px; margin-bottom: 24px;">🎿 SKIFREE! ⛷️</h1>
+            <p style="font-size: 24px; margin-bottom: 32px;">You found the secret SkiFree easter egg!</p>
+            <div style="font-size: 120px; margin: 40px 0; animation: ski 2s infinite;">⛷️</div>
+            <p style="font-size: 18px; color: #CCC; margin-bottom: 32px;">
+              Remember the good old days of Windows 95?<br>
+              Where you'd ski down the mountain... until the Yeti got you! 🐻‍❄️
+            </p>
+            <button onclick="this.parentElement.parentElement.remove(); skifree.active = false;" class="btn btn-primary" style="font-size: 20px; padding: 16px 32px;">
+              Escape the Yeti (Close)
+            </button>
+          </div>
+          <style>
+            @keyframes ski {
+              0%, 100% { transform: translateY(0) rotate(-10deg); }
+              50% { transform: translateY(-20px) rotate(10deg); }
+            }
+          </style>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Play a fun alert sound (if available)
+        if (window.speechSynthesis) {
+          const utterance = new SpeechSynthesis Utterance('Ski Free! Watch out for the Yeti!');
+          utterance.rate = 1.5;
+          window.speechSynthesis.speak(utterance);
+        }
+        
+        // Add Yeti chase after 5 seconds
+        setTimeout(() => {
+          if (modal.parentElement) {
+            const yeti = document.createElement('div');
+            yeti.style.cssText = 'position: absolute; font-size: 150px; bottom: -200px; left: 50%; transform: translateX(-50%); animation: yetiChase 3s ease-in;';
+            yeti.textContent = '🐻‍❄️';
+            modal.appendChild(yeti);
+            
+            const style = document.createElement('style');
+            style.textContent = `
+              @keyframes yetiChase {
+                from { bottom: -200px; }
+                to { bottom: 50%; }
+              }
+            `;
+            document.head.appendChild(style);
+          }
+        }, 5000);
+      }
+    }
+    
+    // Initialize SkiFree
+    const skifree = new SkiFreeGame();
+    
+    // ============================================================
+    // 🔊 WINDOWS XP SOUND EFFECTS
+    // ============================================================
+    
+    class WindowsXPSounds {
+      constructor() {
+        this.audioContext = null;
+        this.enabled = localStorage.getItem('xp-sounds-enabled') === 'true';
+        this.init();
+      }
+      
+      init() {
+        // Initialize Web Audio Context (only when needed to avoid autoplay issues)
+        document.addEventListener('click', () => {
+          if (!this.audioContext) {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          }
+        }, { once: true });
+      }
+      
+      playStartup() {
+        if (!this.enabled) return;
+        this.playChord([523.25, 659.25, 783.99, 1046.50], 0.3, 1.5); // C major chord (higher octave)
+      }
+      
+      playError() {
+        if (!this.enabled) return;
+        this.playTone(200, 0.3, 0.5); // Low error beep
+      }
+      
+      playSuccess() {
+        if (!this.enabled) return;
+        this.playChord([523.25, 659.25, 783.99], 0.2, 0.8); // Success chime
+      }
+      
+      playNotification() {
+        if (!this.enabled) return;
+        this.playTone(800, 0.15, 0.3); // Quick beep
+      }
+      
+      playClick() {
+        if (!this.enabled) return;
+        this.playTone(1000, 0.05, 0.1); // Subtle click
+      }
+      
+      playChord(frequencies, volume = 0.3, duration = 1.0) {
+        if (!this.audioContext) return;
+        
+        frequencies.forEach((freq, index) => {
+          setTimeout(() => {
+            this.playTone(freq, volume, duration * 0.8);
+          }, index * 100);
+        });
+      }
+      
+      playTone(frequency, volume = 0.3, duration = 0.5) {
+        if (!this.audioContext) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        
+        // Fade in/out
+        const now = this.audioContext.currentTime;
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(volume, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+        
+        oscillator.start(now);
+        oscillator.stop(now + duration);
+      }
+      
+      toggle() {
+        this.enabled = !this.enabled;
+        localStorage.setItem('xp-sounds-enabled', this.enabled.toString());
+        if (this.enabled) {
+          this.playSuccess();
+        }
+        return this.enabled;
+      }
+    }
+    
+    // Initialize Windows XP Sounds
+    const xpSounds = new WindowsXPSounds();
+    
+    // Play startup sound when app loads (if XP theme)
+    window.addEventListener('load', () => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      if (theme === 'windows-xp' && xpSounds.enabled) {
+        setTimeout(() => xpSounds.playStartup(), 500);
+      }
+    });
+    
+    // Add sound effects to button clicks
+    document.addEventListener('click', (e) => {
+      if (e.target.matches('button.btn-primary')) {
+        xpSounds.playClick();
+      }
+    });
+    
+    // Hook into existing functions for sound effects
+    const originalShowDashboard = showDashboard;
+    showDashboard = async function() {
+      xpSounds.playNotification();
+      return originalShowDashboard.apply(this, arguments);
+    };
   </script>
 
   <!-- Portal Preview Modal -->

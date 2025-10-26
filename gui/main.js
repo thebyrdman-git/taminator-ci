@@ -638,6 +638,55 @@ ipcMain.handle('oobe-save-manual-tokens', async (event, tokens) => {
   }
 });
 
+/**
+ * Load Dashboard data
+ */
+ipcMain.handle('dashboard-load', async (event) => {
+  console.log('[Dashboard] Loading customer data...');
+  
+  const { spawn } = require('child_process');
+  
+  return new Promise((resolve) => {
+    const tamrfe = spawn('tam-rfe', ['dashboard', '--json']);
+    
+    let stdout = '';
+    let stderr = '';
+    
+    tamrfe.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+    
+    tamrfe.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+    
+    tamrfe.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const jsonData = JSON.parse(stdout);
+          resolve({
+            success: true,
+            data: jsonData.customers || []  // Map 'customers' to 'data' for GUI
+          });
+        } catch (error) {
+          console.error('[Dashboard] Failed to parse JSON:', error);
+          resolve({
+            success: false,
+            error: 'Failed to parse dashboard data',
+            output: stdout
+          });
+        }
+      } else {
+        resolve({
+          success: false,
+          error: stderr || 'Dashboard command failed',
+          output: stdout
+        });
+      }
+    });
+  });
+});
+
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {

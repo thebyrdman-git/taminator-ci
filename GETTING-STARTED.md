@@ -1,334 +1,514 @@
-# 🚀 Getting Started with Taminator v1.9.5
+# Getting Started with Taminator
 
-**Welcome to Taminator!** The RFE/Bug tracking tool that Red Hat TAMs actually want.
+**Product:** Taminator - RFE and Bug Tracking Automation Tool  
+**Version:** 1.10.0  
+**Audience:** Red Hat Technical Account Managers (TAMs)  
+**Time to Complete:** 15 minutes
 
 ---
 
-## 📦 Installation
+## Overview
 
-### 1. Download
+This guide provides step-by-step instructions for installing, configuring, and using Taminator for the first time. By the end of this guide, you will have:
 
-Get the latest AppImage from:
-- **GitLab Releases:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases
-- **Direct Download:** `Taminator-1.9.5.AppImage`
+- ✅ Installed Taminator on your workstation
+- ✅ Configured authentication credentials
+- ✅ Onboarded your first customer
+- ✅ Generated your first RFE/Bug report
 
-### 2. Make Executable
+---
 
+## Prerequisites
+
+Before beginning installation, verify you have:
+
+| Requirement | Description | Verification |
+|-------------|-------------|--------------|
+| **Red Hat VPN** | Active VPN connection | `ping issues.redhat.com` |
+| **Red Hat Account** | Valid SSO credentials | Login to access.redhat.com |
+| **JIRA API Token** | Personal access token | Generated at access.redhat.com/management/api |
+| **Customer Data** | Account number and product | Obtain from customer relationship records |
+
+---
+
+## Step 1: Installation
+
+### 1.1 Download Taminator
+
+**Linux (x86_64):**
 ```bash
-chmod +x Taminator-1.9.5.AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0-x86_64.AppImage
 ```
 
-### 3. Run
-
+**Linux (ARM64 - Apple Silicon Macs):**
 ```bash
-./Taminator-1.9.5.AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0-arm64.AppImage
 ```
 
-Or double-click from your file manager!
-
-### 4. (Optional) Add to Applications Menu
-
+**macOS:**
 ```bash
-# Copy to Applications folder
-cp Taminator-1.9.5.AppImage ~/Applications/
+curl -O https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0.dmg
+```
 
-# Create desktop entry
+**Windows:**
+Download `Taminator-Setup-1.10.0.exe` from GitLab releases page.
+
+---
+
+### 1.2 Install Application
+
+**Linux:**
+```bash
+# Make executable
+chmod +x Taminator-1.10.0-*.AppImage
+
+# Run directly (no installation required)
+./Taminator-1.10.0-*.AppImage
+```
+
+**Optional - System Integration:**
+```bash
+# Install to Applications directory
+mkdir -p ~/Applications
+mv Taminator-1.10.0-*.AppImage ~/Applications/
+
+# Create desktop entry for application launcher
 cat > ~/.local/share/applications/taminator.desktop << 'EOF'
 [Desktop Entry]
 Version=1.0
 Type=Application
 Name=Taminator
-Comment=RFE/Bug tracking tool for Red Hat TAMs
-Exec=/home/$USER/Applications/Taminator-1.9.5.AppImage %U
+Comment=RFE and Bug Tracking Tool
+Exec=/home/$USER/Applications/Taminator-1.10.0-x86_64.AppImage
 Icon=taminator
 Terminal=false
 Categories=Development;Utility;
-Keywords=rfe;bug;jira;redhat;tam;
 EOF
 
 # Update desktop database
 update-desktop-database ~/.local/share/applications/
 ```
 
+**macOS:**
+```bash
+# Mount DMG
+open Taminator-1.10.0.dmg
+
+# Drag Taminator.app to Applications folder
+# First launch: Right-click → Open (bypass Gatekeeper)
+```
+
+**Windows:**
+```powershell
+# Run installer
+.\Taminator-Setup-1.10.0.exe
+
+# Follow installation wizard
+# Choose installation directory (default: C:\Program Files\Taminator)
+# Select Start Menu integration
+# Complete installation
+```
+
 ---
 
-## 🔑 Authentication Setup
+## Step 2: First Launch (OOBE Wizard)
 
-Taminator v1.9.5 supports **two authentication methods**:
+### 2.1 Welcome Screen
 
-### Option 1: Auth Box (Local Storage) ✅ Recommended for Single Users
+On first launch, Taminator displays an Out-of-Box Experience (OOBE) wizard.
 
-**What it is:** Encrypted local token storage on your machine.
+**What to expect:**
+- Welcome message with feature overview
+- Visual demonstration of tool capabilities
+- Progress indicator (20% → 100%)
 
-**Setup:** No configuration needed! Just add tokens via the GUI.
+**Action:** Click **"Next: Set Up Authentication"**
 
-**Pros:**
-- ✅ Works offline
+---
+
+### 2.2 Authentication Setup
+
+Choose your token storage method:
+
+#### Option A: Manual Token Setup (Recommended for Individual Users)
+
+**Description:** Tokens stored locally in `~/.config/taminator/tokens.json`
+
+**Advantages:**
 - ✅ No external dependencies
-- ✅ Quick setup
+- ✅ Works offline
+- ✅ Simple configuration
+- ✅ 5-minute setup
 
-**Cons:**
-- ❌ Tokens only on one machine
+**Disadvantages:**
+- ❌ Tokens stored per machine
 - ❌ No team sharing
 
-### Option 2: HashiCorp Vault 🔒 Recommended for Teams
+**Action:** Click **"Manual Token Setup"** → Proceed to Step 2.3
 
-**What it is:** Centralized secrets management with audit logging.
+#### Option B: HashiCorp Vault (Recommended for Teams)
 
-**Setup:**
+**Description:** Centralized secrets management with audit logging
 
-1. **Set environment variables** (before launching Taminator):
-   ```bash
-   export VAULT_ADDR="http://your-vault-server:8201"
-   export VAULT_TOKEN="your-vault-token-here"
-   ```
+**Prerequisites:**
+- HashiCorp Vault server (version 1.12.0+)
+- Valid Vault token with read/write permissions
+- Network connectivity to Vault server
 
-2. **Make permanent** (add to `~/.bashrc` or `~/.zshrc`):
-   ```bash
-   echo 'export VAULT_ADDR="http://your-vault-server:8201"' >> ~/.bashrc
-   echo 'export VAULT_TOKEN="your-vault-token-here"' >> ~/.bashrc
-   source ~/.bashrc
-   ```
+**Configuration:**
+```bash
+export VAULT_ADDR="http://vault.example.com:8200"
+export VAULT_TOKEN="hvs.CAESII..."
+```
 
-3. **Launch Taminator** - It will automatically detect Vault!
-
-**Pros:**
-- ✅ Centralized tokens (access from any machine)
+**Advantages:**
+- ✅ Centralized token management
 - ✅ Team collaboration
 - ✅ Audit logging
-- ✅ Auto-fallback to Auth Box if offline
+- ✅ Multi-machine access
 
-**Cons:**
-- ❌ Requires Vault server
-- ❌ Initial setup needed
+**Disadvantages:**
+- ❌ Requires Vault infrastructure
+- ❌ Initial setup complexity
+
+**Action:** Click **"Set Up Vault"** → Enter connection details
 
 ---
 
-## 🎯 First-Time Setup
+### 2.3 Token Configuration
 
-### 1. Launch Taminator
+#### 2.3.1 Obtain JIRA API Token
 
-```bash
-./Taminator-1.9.5.AppImage
+1. **Navigate to:** https://access.redhat.com/management/api
+2. **Click:** "Generate Token" or "Create Personal Access Token"
+3. **Copy token:** Format `MTE1NjQyMD...` (long alphanumeric string)
+4. **Save securely:** You'll need this in next step
+
+#### 2.3.2 Add Token to Taminator
+
+**In OOBE Wizard:**
+1. Paste JIRA token in "JIRA API Token" field
+2. (Optional) Paste Portal token in "Portal API Token" field
+3. Click **"Test Tokens"** to verify connectivity
+4. If successful: ✅ Green checkmark appears
+5. If failed: ❌ Red error message with troubleshooting steps
+6. Click **"Next: Add Your First Customer"** (or skip)
+
+---
+
+## Step 3: Customer Onboarding
+
+### 3.1 Gather Customer Information
+
+Before onboarding, collect:
+
+| Information | Example | Source |
+|-------------|---------|--------|
+| **Customer Name** | JPMorgan Chase | Customer relationship records |
+| **Account Number** | 334224 | Red Hat account database |
+| **Product** | Ansible Automation Platform | Customer subscription |
+| **Your Email** | jbyrd@redhat.com | Your Red Hat email |
+
+---
+
+### 3.2 Add Customer via OOBE
+
+**In OOBE Wizard:**
+1. **Customer Name:** Enter display name (e.g., "JPMorgan Chase")
+2. **Short Name (Slug):** Enter lowercase identifier (e.g., "jpmc")
+3. **Your Email:** Enter your Red Hat email
+4. **Account Number:** Enter customer account number (required)
+5. **Product:** Select from dropdown (Ansible, RHEL, OpenShift, etc.)
+6. Click **"✅ Add Customer"**
+
+**System Actions:**
+- Queries JIRA for open RFEs and Bugs
+- Filters by account number and product (SBR group)
+- Generates initial report template
+- Saves to `~/taminator-test-data/<slug>.md`
+
+**Expected Result:**
+```
+✅ Customer Added Successfully!
+Found 12 open RFEs and Bugs for JPMorgan Chase (Account: 334224, Product: Ansible)
+Report saved to: ~/taminator-test-data/jpmc.md
 ```
 
-### 2. Navigate to Vault Tab (or Use Auth Box Fallback)
+---
 
-**If using Vault:**
-- Set VAULT_ADDR and VAULT_TOKEN (see above)
-- Navigate to **🔒 Vault** tab
-- Connection status should show "✓ Online"
+### 3.3 Complete OOBE
 
-**If using Auth Box:**
-- No setup needed
-- Vault tab will show "⚠️ Using Auth Box fallback"
-- You're ready to go!
+Click **"Finish"** to exit wizard and enter main application.
 
-### 3. Add Your JIRA Token
-
-**Via Vault Tab:**
-1. Click **"Add Token"**
-2. Service name: `jira`
-3. Token value: `your-jira-token-here`
-4. Click **"Save"**
-
-**Via Auth Box (if not using Vault):**
-- Auth Box still works automatically in the background
-- No manual setup needed for first use
-
-### 4. Add Other Tokens (Optional)
-
-Depending on your workflow, you may want:
-- `portal` - Red Hat Customer Portal API token
-- `hydra` - Customer intelligence data
-- `supportshell` - Case data access
-- `github` - For issue reporting
+**Post-OOBE:**
+- Dashboard loads automatically
+- Customer appears in customer list
+- Live JIRA stats displayed (if token configured)
 
 ---
 
-## 📝 Generate Your First Report
+## Step 4: Using Taminator
 
-### Quick Start
+### 4.1 Dashboard Overview
 
-1. **Navigate to Home** (🏠 icon)
-2. **Enter customer name** in the search box
-3. **Click "Check Status"** or "Generate Report"
-4. **View results** in the main panel
+**Navigation:** Dashboard tab (home icon)
 
-### Detailed Workflow
+**Features:**
+- **Summary Cards:** Total customers, RFEs, Bugs, Total Issues
+- **Customer Table:** Detailed view with account, product, counts
+- **Data Source:** 🟢 Live JIRA or 📄 Report fallback
+- **Last Modified:** Report update timestamp
 
-#### Step 1: Check JIRA Issues
-```bash
-# Via CLI (if you prefer terminal)
-tam-rfe check <customer-name>
+**Actions:**
+- **Refresh Dashboard:** Updates all customer stats from JIRA
+- **Add Customer:** Launch customer onboarding wizard
+- **Manage Tokens:** Navigate to token management
+
+---
+
+### 4.2 Check Report Status
+
+**Purpose:** Compare saved report against current JIRA data
+
+**Navigation:** Check tab → Select customer → Click "Compare Report vs. Live JIRA"
+
+**Output:**
+```
+Checking JIRA for account 334224 (Ansible)...
+Found 12 open RFEs and Bugs
+
+✅ 3 status changes detected
+⚠️  [RFE] AAP-12345: In Progress → Post
+└─ Linked to case 03891234
+⚠️  [BUG] AAP-67890: Backlog → In Progress
+└─ Linked to case 03892345
+⚠️  [RFE] AAP-11111: New → Refinement
+└─ Linked to case 03893456
 ```
 
-Or use the GUI:
-- Home → Enter customer name → "Check Status"
-
-#### Step 2: Generate RFE Report
-- Click **"Generate Report"**
-- Select report type (RFE, Bug, or Both)
-- Choose format (Markdown, HTML, PDF)
-- Click **"Generate"**
-
-#### Step 3: Review & Post
-- Review the generated report
-- Edit if needed
-- Click **"Post to Portal"** (or save locally)
+**Interpretation:**
+- **Green ✅:** Changes detected, update recommended
+- **Yellow ⚠️:** Specific issues with status changes
+- **Red ❌:** Errors or failures
 
 ---
 
-## 🛠️ Common Tasks
+### 4.3 Update Report
 
-### View Current JIRA Status
-1. Navigate to **Home** tab
-2. Enter customer name
-3. Click **"Check Status"**
-4. View issue list with current statuses
+**Purpose:** Synchronize saved report with latest JIRA data
 
-### Update Report
-1. Navigate to **Reports** tab
-2. Select existing report
-3. Click **"Update"**
-4. Review changes
-5. Post updated version
+**Navigation:** Update tab → Select customer → Click "Update from JIRA"
 
-### Onboard New Customer
-1. Navigate to **Onboard** tab
-2. Click **"Add Customer"**
-3. Enter customer details:
-   - Name
-   - Account number
-   - SBR groups
-4. Click **"Save"**
+**Process:**
+1. System fetches current JIRA data
+2. Compares with saved report
+3. Creates backup (`.backup` extension)
+4. Updates report with new statuses
+5. Adds "Last Updated" timestamp
 
-### Migrate from Auth Box to Vault
-1. Set VAULT_ADDR and VAULT_TOKEN
-2. Restart Taminator
-3. Navigate to **Vault** tab
-4. Click **"Migrate from Auth Box"**
-5. All tokens copied automatically!
+**Safety Features:**
+- ✅ Automatic backup before updating
+- ✅ Preserves custom formatting
+- ✅ Rollback available (restore from `.backup`)
 
 ---
 
-## 🔧 Settings
+### 4.4 Post to Customer Portal
 
-### Access Settings
-- Click **Settings** (⚙️) in the navigation
+**Purpose:** Publish report to Red Hat Customer Portal group
 
-### General Settings
-- **Default TAM Email** - Your Red Hat email
-- **Auto-update** - Check for report updates on startup
-- **Notifications** - Desktop notifications for events
+**Prerequisites:**
+- Portal API token configured
+- Customer Portal Group ID
+- Red Hat VPN connection
 
-### Report Settings
-- **Default Format** - Markdown, HTML, or PDF
-- **Include Timestamps** - Add timestamps to reports
-- **Generate Changelog** - Track changes on updates
+**Navigation:** Post tab → Select customer → Click "Post to Portal"
 
-### Advanced Settings
-- **Reports Directory** - Where to save reports
-- **JIRA Timeout** - Query timeout (default: 30s)
-- **Debug Mode** - Enable detailed logging
+**Workflow:**
+1. Enter Customer Portal Group ID
+2. (Optional) Preview report before posting
+3. Click "Publish"
+4. Verify success message with Portal URL
 
-### Reset All
-- Click **"🔄 Reset to Defaults"**
-- Clears all settings (including Vault cache)
-- **Note:** Vault environment variables must be cleared manually
+**Example:**
+```
+✅ Posted to Customer Portal
+→ https://access.redhat.com/groups/1234567/discussions/7891011
+```
 
 ---
 
-## 🆘 Troubleshooting
+## Step 5: Command-Line Usage
 
-### Issue: Blank page on launch
-**Fix:** You may have v1.9.4 or earlier (known bug). Download v1.9.5.
+### 5.1 CLI Access
 
-### Issue: "Vault not configured"
-**Fix:** Set VAULT_ADDR and VAULT_TOKEN environment variables before launching.
+**Linux/macOS:**
+```bash
+# Add to PATH (one-time setup)
+ln -s ~/Applications/Taminator-1.10.0-x86_64.AppImage /usr/local/bin/tam-rfe
 
-### Issue: "JIRA token not found"
-**Fix:** 
-1. Navigate to Vault tab (or Auth Box fallback)
-2. Add JIRA token
-3. Retry operation
+# Verify installation
+tam-rfe --help
+```
 
-### Issue: "Connection timeout"
-**Fix:**
-1. Check VPN connection (Red Hat internal APIs require VPN)
-2. Increase timeout in Settings → Advanced → JIRA Timeout
-3. Check network connectivity
-
-### Issue: Can't see Vault tab
-**Fix:** You may have an older version. Download v1.9.5.
-
-### Issue: Vault shows "Offline" but server is running
-**Fix:**
-1. Verify VAULT_ADDR is correct: `echo $VAULT_ADDR`
-2. Verify VAULT_TOKEN is set: `echo $VAULT_TOKEN`
-3. Test connection: `curl $VAULT_ADDR/v1/sys/health`
-4. Restart Taminator
+**Windows:**
+```powershell
+# CLI automatically added to PATH during installation
+tam-rfe --help
+```
 
 ---
 
-## 📚 Additional Resources
+### 5.2 Common CLI Operations
 
-### Documentation
-- **CHANGELOG:** See `CHANGELOG-v1.9.5.md` for what's new in v1.9.5
-- **Vault Integration:** See `VAULT-INTEGRATION-COMPLETE.md` for details
-- **GitLab Issues:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
+**View Dashboard:**
+```bash
+tam-rfe dashboard
+```
 
-### Getting Help
-- **File a bug:** Use `tam-rfe report-issue` or the GUI
-- **Slack:** #tam-automation (internal)
-- **GitLab Issues:** Submit directly to the repository
+**Check Customer:**
+```bash
+tam-rfe check jpmc
+```
 
-### Tips & Tricks
-- **Keyboard shortcuts:** Coming in v2.0!
-- **Batch operations:** Select multiple issues for bulk updates
-- **Offline mode:** Works perfectly with Auth Box (no Vault needed)
-- **Team collaboration:** Use Vault for shared token management
+**Update Report:**
+```bash
+tam-rfe update jpmc --yes
+```
+
+**Post to Portal:**
+```bash
+tam-rfe post jpmc
+```
+
+**Onboard New Customer:**
+```bash
+tam-rfe onboard <customer-slug> \
+  --email jbyrd@redhat.com \
+  --display-name "Customer Name" \
+  --account 123456 \
+  --product Ansible \
+  --non-interactive
+```
 
 ---
 
-## 🎉 What's Next?
+## Troubleshooting
+
+### Issue: OOBE doesn't appear on first launch
+
+**Cause:** OOBE state file exists from previous installation
+
+**Resolution:**
+```bash
+# Remove OOBE state
+rm ~/.config/taminator-gui/oobe-state.json
+
+# Relaunch Taminator
+./Taminator-1.10.0-*.AppImage
+```
+
+---
+
+### Issue: "JIRA token not configured" error
+
+**Cause:** Token not saved or invalid token format
+
+**Resolution:**
+1. Navigate to Settings → Vault → Add Token
+2. Service name: `jira-token`
+3. Paste token from https://access.redhat.com/management/api
+4. Click "Save"
+5. Click "Test Token" to verify
+
+---
+
+### Issue: "Connection timeout" when checking JIRA
+
+**Cause:** VPN not connected or firewall blocking
+
+**Resolution:**
+1. Verify VPN connection:
+   ```bash
+   ping issues.redhat.com
+   ```
+2. Verify firewall rules allow HTTPS (port 443)
+3. Increase timeout: Settings → Advanced → JIRA Timeout → 60 seconds
+
+---
+
+### Issue: Dashboard shows "No customers yet"
+
+**Cause:** No customer reports exist
+
+**Resolution:**
+1. Onboard at least one customer:
+   ```bash
+   tam-rfe onboard test-customer --account 123456 --product Ansible
+   ```
+2. Verify report created:
+   ```bash
+   ls ~/taminator-test-data/
+   ```
+
+---
+
+## Next Steps
 
 ### Explore Features
-- 📊 **Reports Tab** - View and manage all your reports
-- 📋 **Check Tab** - Quick status checks for customers
-- ➕ **Onboard Tab** - Add new customers
-- 🔒 **Vault Tab** - Manage tokens centrally (v1.9.5+)
-- ⚙️ **Settings Tab** - Customize your experience
+- ✅ **Dashboard:** Monitor all customers at once
+- ✅ **Check:** Verify report accuracy
+- ✅ **Update:** Keep reports current
+- ✅ **Post:** Automate Portal communication
+- ✅ **Help Tab:** In-app documentation
 
-### Learn Advanced Features
-- **Automated updates** - Reports stay current automatically
-- **Change tracking** - See what changed in each update
-- **Bulk operations** - Process multiple issues at once
-- **Team sharing** - Vault enables team token management
+### Customize Experience
+- **Themes:** Settings → Theme Gallery (7 themes available)
+- **Focus Mode:** Settings → Toggle for professional mode
+- **Notifications:** Settings → Enable desktop notifications
 
-### Contribute
-- Found a bug? Report it!
-- Have a feature request? File an issue!
-- Want to contribute? Check the GitLab repository!
+### Automation
+- **Weekly Updates:** Schedule cron job for automatic updates
+- **Dashboard Monitoring:** Daily JIRA checks
+- **Report Distribution:** Automate Portal posting
 
 ---
 
-## 📞 Support
+## Additional Resources
 
-**Need help?** We're here for you!
+### Documentation
+- **User Guide:** [README.md](README.md)
+- **Release Notes:** [RELEASE-NOTES-v1.10.0.md](RELEASE-NOTES-v1.10.0.md)
+- **CLI Reference:** Run `tam-rfe --help`
 
-- **Internal TAMs:** #tam-automation Slack channel
-- **Issues:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
+### Support
+- **GitLab Issues:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
+- **Slack:** `#tam-automation` (internal)
 - **Email:** jbyrd@redhat.com
 
+### Training
+- **In-App Help:** Help tab (comprehensive documentation)
+- **Video Tutorials:** Coming in v1.11.0
+- **Team Training:** Contact jbyrd@redhat.com
+
 ---
 
-**Welcome to the team!** 🚀
+## Summary
 
-You're now ready to automate your RFE and bug tracking workflow. Happy reporting!
+You have successfully:
+- ✅ Installed Taminator v1.10.0
+- ✅ Completed OOBE wizard
+- ✅ Configured authentication
+- ✅ Onboarded first customer
+- ✅ Learned basic workflows
+
+**Estimated Time Saved:** 2-3 hours per week per customer
+
+**Next Milestone:** Automate weekly update workflow with cron
 
 ---
 
-**Version:** Taminator v1.9.5  
-**Last Updated:** October 23, 2025  
-**Author:** Jimmy Byrd (jbyrd@redhat.com)
+**Document Version:** 1.0  
+**Last Updated:** October 25, 2025  
+**Software Version:** Taminator 1.10.0  
+**Status:** General Availability (GA)

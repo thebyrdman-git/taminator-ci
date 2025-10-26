@@ -1,402 +1,686 @@
-# 💀 Taminator - The Skynet TAMs Actually Want
+# Taminator - RFE and Bug Tracking Automation Tool
 
-> *"Come with me if you want to save time."* - Taminator T-800
+## Overview
 
-**Professional TAM automation and workflow tools for Red Hat.** Because sometimes automation doesn't have to be scary.
+Taminator is a professional automation tool designed for Red Hat Technical Account Managers (TAMs) to streamline RFE (Request for Enhancement) and Bug tracking workflows. The tool provides both graphical user interface (GUI) and command-line interface (CLI) access to JIRA data, automated report generation, and Customer Portal integration.
+
+**Version:** 1.10.0  
+**Release Date:** October 25, 2025  
+**Product Status:** General Availability (GA)
 
 ---
 
-## 📋 TLDR
+## Features
 
-**What:** Complete automation suite for Red Hat TAM workflows and customer engagement  
-**Why:** Saves 2-3 hours per customer per week  
-**How:** GUI or CLI - automated tracking, reporting, and customer portal management
+### Core Capabilities
+- **Live JIRA Integration:** Real-time RFE and Bug status tracking
+- **Dashboard Analytics:** Aggregated customer statistics with live data
+- **Report Generation:** Professional markdown-based customer reports
+- **Portal Integration:** Direct posting to Red Hat Customer Portal groups
+- **Customer Onboarding:** Guided workflow for adding new customer accounts
+- **Multi-Platform Support:** Linux (x64, ARM64), macOS, and Windows
 
-**Quick Start:**
+### User Interface Options
+- **Graphical Interface:** Electron-based desktop application with PatternFly design system
+- **Command-Line Tools:** Full CLI parity for automation and scripting
+- **First-Run Experience:** Guided OOBE (Out-of-Box Experience) wizard
 
-## 📥 Download Taminator v1.9.5
+---
 
-**⚠️ Requires:** Red Hat VPN + GitLab CEE authentication
+## System Requirements
 
-### Option A: Clone Repository (Recommended)
+### Minimum Requirements
+- **Operating System:** 
+  - RHEL/Fedora/CentOS 8+
+  - macOS 11+ (Big Sur or later)
+  - Windows 10/11 (64-bit)
+- **Memory:** 2 GB RAM
+- **Disk Space:** 500 MB free space
+- **Network:** Red Hat VPN access for internal API endpoints
 
-Get all files at once:
+### Software Dependencies
+- **Python:** 3.9 or later (CLI tools)
+- **Node.js:** Not required for AppImage/DMG/EXE installations
+- **Red Hat Account:** Valid Red Hat SSO credentials
+- **API Tokens:** JIRA API token (required), Portal API token (optional)
 
+### Recommended Configuration
+- **Memory:** 4 GB RAM or more
+- **Disk Space:** 1 GB free space (for customer data and reports)
+- **Display:** 1280x720 minimum resolution
+
+---
+
+## Installation
+
+### Supported Platforms
+
+#### Linux (AppImage)
+
+**For Intel/AMD (x86_64):**
 ```bash
-git clone https://gitlab.cee.redhat.com/jbyrd/taminator.git
-cd taminator/releases/v1.9.5/
-ls -lh  # See all 3 files
+# Download from GitLab releases
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0-x86_64.AppImage
+
+# Make executable
+chmod +x Taminator-1.10.0-x86_64.AppImage
+
+# Run
+./Taminator-1.10.0-x86_64.AppImage
 ```
 
-### Option B: Manual Download via GitLab
-
-1. **Navigate to:** https://gitlab.cee.redhat.com/jbyrd/taminator
-2. **In the file browser, browse to:** `taminator` → `releases` → `v1.9.5`
-3. **Click on the file** you need
-4. **Click the Download button**
-
-Files available:
-- 🐧 `Taminator-1.9.5.AppImage` (116 MB) - Linux Intel/AMD (x86_64)
-- 🐧 `Taminator-1.9.5-arm64.AppImage` (118 MB) - Linux ARM64 ⭐ **Fedora on MacBook Pro**
-- 🍎 `Taminator-1.9.5.dmg` (111 MB) - macOS (Intel + Apple Silicon)
-- 🪟 `Taminator-Setup-1.9.5.exe` (88 MB) - Windows
-
-**All files available in repository:** `taminator/releases/v1.9.5/`
-
----
-
-### Install for Your Platform
-
-Pick your operating system below and follow the installation steps.
-
-### 🐧 Linux Installation
-
-**Choose your architecture:**
-- **Intel/AMD (x86_64)**: `Taminator-1.9.5-x86_64.AppImage`
-- **ARM64 (Fedora on MacBook Pro, Raspberry Pi)**: `Taminator-1.9.5-arm64.AppImage`
-
+**For ARM64 (Apple Silicon, Graviton):**
 ```bash
-# Verify your architecture
-uname -m
-# x86_64 → use x86_64 AppImage
-# aarch64 → use arm64 AppImage
+# Download ARM64 build
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0-arm64.AppImage
 
-# From the cloned repository:
-cd taminator/releases/v1.9.5/
+# Make executable
+chmod +x Taminator-1.10.0-arm64.AppImage
 
-# For ARM64 (Fedora on MacBook Pro M1/M2/M3/M4):
-chmod +x Taminator-1.9.5-arm64.AppImage
-./Taminator-1.9.5-arm64.AppImage
+# Run
+./Taminator-1.10.0-arm64.AppImage
+```
 
-# For x86_64 (Intel/AMD):
-chmod +x Taminator-1.9.5.AppImage
-./Taminator-1.9.5.AppImage
-
-# Optional: Install system-wide
+**System Integration (Optional):**
+```bash
+# Install to user Applications directory
 mkdir -p ~/Applications
-cp Taminator-1.9.5-*.AppImage ~/Applications/
-~/Applications/Taminator-1.9.5-*.AppImage
+cp Taminator-1.10.0-*.AppImage ~/Applications/
+
+# Create desktop entry
+cat > ~/.local/share/applications/taminator.desktop << 'EOF'
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Taminator
+Comment=RFE and Bug Tracking Tool
+Exec=/home/$USER/Applications/Taminator-1.10.0-x86_64.AppImage
+Icon=taminator
+Terminal=false
+Categories=Development;Utility;
+EOF
+
+# Update desktop database
+update-desktop-database ~/.local/share/applications/
 ```
 
-**📖 Running Fedora on MacBook Pro?** See [ARM64 Fedora Guide](docs/ARM64-FEDORA-MACBOOK.md)
+#### macOS (DMG)
 
-### 🍎 macOS Installation
 ```bash
-# From the cloned repository:
-cd taminator/releases/v1.9.5/
-open Taminator-1.9.5.dmg
+# Download DMG
+curl -O https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0.dmg
 
-# Then in Finder:
-# 1. Drag Taminator to Applications folder
-# 2. Eject the DMG
-# 3. Go to Applications → Right-click Taminator → Open
-#    (First time only, to bypass Gatekeeper)
+# Mount and install
+open Taminator-1.10.0.dmg
 
-# Works on both Intel and Apple Silicon Macs
-
-# Optional: CLI Access
-ln -s /Applications/Taminator.app/Contents/Resources/app/tam-rfe /usr/local/bin/tam-rfe
+# In Finder: Drag Taminator to Applications folder
+# First run: Right-click → Open (to bypass Gatekeeper)
 ```
 
-### 🪟 Windows Installation
-```powershell
-# From the cloned repository:
-cd taminator\releases\v1.9.5\
-.\Taminator-Setup-1.9.5.exe
+#### Windows (NSIS Installer)
 
-# Or in File Explorer:
-# Navigate to taminator\releases\v1.9.5\
-# Double-click Taminator-Setup-1.9.5.exe
-
-# Installation wizard will ask:
-# 1. Installation directory (default is fine)
-# 2. ✅ Create desktop shortcut (recommended)
-# 3. ✅ Create Start Menu shortcut (recommended)
-# 4. ✅ Add to PATH (for CLI access)
-
-# Launch from Start Menu or Desktop icon
-
-# CLI usage (if you added to PATH):
-tam-rfe check --customer <name>
-```
-
-### 💻 Command Line (All Platforms) - "Hasta la vista, manual tracking!"
-```bash
-./tam-rfe check --customer <name>
-./tam-rfe update --customer <name>
-./tam-rfe post --customer <name>
-```
-
-**[→ Full Getting Started Guide](GETTING-STARTED.md)** | **[📥 All Downloads](https://gitlab.cee.redhat.com/jbyrd/taminator/-/tree/main)**
+1. Download `Taminator-Setup-1.10.0.exe` from GitLab releases
+2. Run installer with administrator privileges
+3. Follow installation wizard prompts
+4. Launch from Start Menu or Desktop shortcut
 
 ---
 
-## 🤖 About Taminator
+## Initial Configuration
 
-**Taminator is a professional RFE/Bug tracking tool for Red Hat TAMs with both GUI and CLI interfaces.**
+### First-Run Setup (OOBE Wizard)
 
-*"Listen, and understand. This tool is out there. It can't be bargained with. It can't be reasoned with. It doesn't feel pity, or remorse, or fear about tracking your RFEs. And it absolutely will not stop, ever, until your reports are generated."*
+Taminator includes a guided Out-of-Box Experience (OOBE) wizard that runs on first launch.
 
-**The tool automatically tracks RFE and Bug statuses across JIRA and generates professional reports for customer portal groups, saving TAMs 2-3 hours per customer per week.**
+**OOBE Steps:**
+1. **Welcome Screen** - Feature overview and introduction
+2. **Authentication Setup** - Choose between Vault or Manual token management
+3. **Token Configuration** - Add JIRA API token (required)
+4. **Customer Onboarding** - Optionally add first customer (optional)
+5. **Completion** - Setup complete, ready to use
 
-### 📊 Version History
+**To Re-run OOBE:**
+Navigate to Settings → Danger Zone → Factory Reset
 
-| Version | Release Date | Key Features | Status |
-|---------|--------------|--------------|--------|
-| **v1.9.5** | Oct 2025 | Vault integration, CLI router fix, fake features removed | 🟢 Current |
-| **v1.9.2** | Oct 2025 | Cross-platform release, ARM64 AppImage, Git LFS | ✅ Stable |
-| **v1.7.0** | Oct 2025 | Complete GUI redesign, Auth-Box integration | ✅ Stable |
-| v1.6.0 | Sep 2025 | Desktop integration, AppImage packaging | ✅ Stable |
-| v1.5.0 | Aug 2025 | Enhanced reporting, multi-customer support | ✅ Stable |
-| v1.4.0 | Jul 2025 | CLI improvements, email notifications | ✅ Stable |
-| v1.3.0 | Jun 2025 | Portal posting automation | ✅ Stable |
-| v1.2.0 | May 2025 | JIRA integration, real-time status checks | ✅ Stable |
-| v1.1.0 | Apr 2025 | Template system, markdown reports | ✅ Stable |
-| v1.0.0 | Mar 2025 | Initial release, basic RFE tracking | ✅ Stable |
+### Authentication Methods
 
-###  Project Status
-- **Version**: 1.9.5 (Production Release) - *"The Honesty Update - Now with 100% less fake features."*
-- **Status**: Production-ready with Vault integration
-- **Platforms**: 🐧 Linux (AppImage) | 🍎 macOS (DMG) | 🪟 Windows (NSIS Installer)
-- **Architecture**: Intel/AMD (x64) + Apple Silicon (arm64)
-- **Threat Level**: Zero. We're the friendly Skynet.
+#### Method 1: Token Storage (Recommended for Individual Users)
 
-### What This Tool Does
-- **Automatically discovers** all RFE and Bug cases for your customers using `rhcase`
-- **Filters cases** by SBR Group (Ansible, OpenShift, etc.) and status (Active, Closed, etc.)
-- **Generates professional 3-table reports** with Active RFE, Active Bug, and Closed case history
-- **Posts content directly** to customer portal groups via Red Hat API
-- **Sends email notifications** to TAMs with success/failure status
+Tokens stored locally in: `~/.config/taminator/tokens.json`
 
-### What This Tool Does NOT Do
-- ❌ Does NOT create new RFE or Bug cases
-- ❌ Does NOT modify existing case content or status  
-- ❌ Does NOT send notifications to customers (silent portal updates)
-- ❌ Does NOT access customer data outside of Red Hat systems
-- ❌ Does NOT replace TAM judgment or customer relationship management
+**File Permissions:** `chmod 600` (owner read/write only)
 
-## 🚀 Quick Start
-
-**Want to get started immediately?** → [**GETTING-STARTED.md**](GETTING-STARTED.md)
-
-*"Your mission, should you choose to accept it: Install Taminator and never manually track an RFE again."*
-
-### Prerequisites
-- Red Hat VPN connection *(Skynet uplink)*
-- `rhcase` tool installed and configured *(Target acquisition system)*
-- Python 3.7+ *(Neural net processor)*
-- Red Hat SSO credentials *(Authorization codes)*
-- Customer portal group access *(Mission parameters)*
-
-### Installation Options
-
-#### GUI Application (Recommended for most TAMs)
-- **🐧 Linux**: Download `.AppImage` - Single file, no installation required
-- **🍎 macOS**: Download `.dmg` - Drag to Applications, ready to go
-- **🪟 Windows**: Download `.exe` - Standard installer with Start Menu integration
-
-#### CLI Tools (For automation and advanced users)
-1. **Auto-Detection**: `./bin/tam-rfe-auto-detect` - Detects your existing setup automatically
-2. **Interactive Setup**: `./bin/tam-rfe-onboard-intelligent` - Learn your preferences through questions
-3. **Template Customization**: `./bin/tam-rfe-template-customizer` - Create personalized report styles
-4. **Chat Interface**: `./bin/tam-rfe-chat` - Just ask me what you need
-
-## 💬 How to Use
-
-### Start the Chat Interface
+**Configuration via CLI:**
 ```bash
-./bin/tam-rfe-chat
+tam-rfe config --add-token
 ```
 
-### Ask Me Anything
-- "Generate RFE report for Wells Fargo"
-- "Show me all Ansible cases for TD Bank"
-- "Prepare summary for JPMC quarterly meeting"
+**Configuration via GUI:**
+Settings → Vault → Add Token
 
-### Direct Commands
+#### Method 2: HashiCorp Vault (Recommended for Teams)
+
+**Prerequisites:**
+- HashiCorp Vault server (1.12.0 or later)
+- Valid Vault token with read/write permissions
+
+**Configuration:**
 ```bash
-# Test with specific customer
-./bin/tam-rfe-monitor-simple wellsfargo --test
-
-# Run daily automation
-./bin/tam-rfe-monitor-simple wellsfargo --daily
-
-# Run all customers
-./bin/tam-rfe-monitor-simple --all
+export VAULT_ADDR="http://vault.example.com:8200"
+export VAULT_TOKEN="hvs.CAESII..."
+export VAULT_MOUNT="secret"
+export VAULT_PATH="taminator/tokens"
 ```
 
-## 📋 Report Options
+**Persistence (Add to `~/.bashrc` or `~/.zshrc`):**
+```bash
+echo 'export VAULT_ADDR="http://vault.example.com:8200"' >> ~/.bashrc
+echo 'export VAULT_TOKEN="hvs.CAESII..."' >> ~/.bashrc
+source ~/.bashrc
+```
 
-When you ask for reports, I'll give you **two options**:
+### Obtaining API Tokens
 
-1. **Copy/Paste** - I show you the markdown, you paste it wherever you need it
-2. **Auto-Post** - I automatically post to the customer portal
+#### JIRA API Token (Required)
 
-## 🏢 Supported Customers
+1. Navigate to: https://access.redhat.com/management/api
+2. Click "Generate Token" or "Create Personal Access Token"
+3. Copy token value (format: `MTE1NjQyMD...`)
+4. Add to Taminator via Settings → Vault → Add Token
+5. Service name: `jira-token`
 
-| Customer | Group ID | Status | Account Number |
-|----------|----------|--------|----------------|
-| Wells Fargo | 4357341 | ✅ Production Ready | 838043 |
-| TD Bank | 7028358 | ✅ Sandbox Ready | 1912101 |
-| JPMC | 6956770 | ✅ Production Ready | 334224 |
-| Fannie Mae | 7095107 | ✅ Production Ready | 1460290 |
+#### Customer Portal API Token (Optional)
 
-## 📊 Time Savings
+1. Log in to Red Hat Customer Portal
+2. Navigate to: https://access.redhat.com/management/api
+3. Generate offline token
+4. Add to Taminator: Service name `portal-token`
 
-*"In three hours, I could track 4 customers manually. Or in 5 minutes, Taminator could track them all. It's a no-brainer."* - John Connor, probably
+---
 
-| Process | Manual | Automated | Savings |
-|---------|--------|-----------|---------|
-| **Per Customer Per Week** | 2-3 hours | 5 minutes | 95% reduction |
-| **Per TAM Per Week** | 8-12 hours | 20 minutes | 95% reduction |
-| **Per TAM Per Year** | 400-600 hours | 17 hours | 95% reduction |
+## Usage
 
-*Translation: Taminator gives you back 383 hours per year. That's 9.5 work weeks. You're welcome.*
+### Command-Line Interface
 
-## 🛡️ Security & Compliance
+#### Dashboard - View All Customers
+```bash
+tam-rfe dashboard
+```
 
-### Red Hat AI Policy Compliance
-- ✅ Customer data: Red Hat Granite models only
-- ✅ Internal data: AIA-approved model list
-- ✅ External APIs: Blocked for customer data
-- ✅ Audit logging: All operations tracked
+**JSON Output (for scripting):**
+```bash
+tam-rfe dashboard --json
+```
+
+#### Check - Compare Report vs. Live JIRA
+```bash
+tam-rfe check <customer-slug>
+```
+
+**Example:**
+```bash
+tam-rfe check jpmc
+```
+
+#### Update - Sync Report with JIRA
+```bash
+tam-rfe update <customer-slug>
+```
+
+**Non-interactive mode:**
+```bash
+tam-rfe update <customer-slug> --yes
+```
+
+#### Post - Publish to Customer Portal
+```bash
+tam-rfe post <customer-slug>
+```
+
+**Dry-run (preview without posting):**
+```bash
+tam-rfe post <customer-slug> --dry-run
+```
+
+#### Onboard - Add New Customer
+```bash
+tam-rfe onboard <customer-slug> \
+  --email <your-email> \
+  --display-name "Customer Name" \
+  --account <account-number> \
+  --product <product-name>
+```
+
+**Example:**
+```bash
+tam-rfe onboard jpmc \
+  --email jbyrd@redhat.com \
+  --display-name "JPMorgan Chase" \
+  --account 334224 \
+  --product Ansible
+```
+
+**Non-interactive mode:**
+```bash
+tam-rfe onboard jpmc \
+  --email jbyrd@redhat.com \
+  --display-name "JPMorgan Chase" \
+  --account 334224 \
+  --product Ansible \
+  --non-interactive
+```
+
+#### Config - Manage Tokens
+```bash
+# Show current configuration
+tam-rfe config
+
+# Add or update token
+tam-rfe config --add-token
+
+# Test all tokens
+tam-rfe config --test-tokens
+```
+
+#### GUI - Launch Graphical Interface
+```bash
+tam-rfe gui
+```
+
+### Graphical User Interface
+
+#### Dashboard Tab
+- **Purpose:** Overview of all customers with live JIRA statistics
+- **Features:** 
+  - Summary cards (Total Customers, RFEs, Bugs, Total Issues)
+  - Customer detail table with account, product, and issue counts
+  - Data source indicators (🟢 Live JIRA vs 📄 Report fallback)
+  - Refresh button for manual updates
+
+#### Check Tab
+- **Purpose:** Compare saved reports against live JIRA data
+- **Workflow:**
+  1. Select customer from dropdown
+  2. Click "Compare Report vs. Live JIRA"
+  3. Review differences in terminal-style output
+  4. Preview report before updating
+
+#### Update Tab
+- **Purpose:** Synchronize saved reports with current JIRA status
+- **Workflow:**
+  1. Select customer from dropdown
+  2. Click "Update from JIRA"
+  3. Review update summary
+  4. Backup created automatically (`.backup` file)
+
+#### Post Tab
+- **Purpose:** Publish reports to Red Hat Customer Portal
+- **Workflow:**
+  1. Select customer from dropdown
+  2. Preview report before posting
+  3. Enter Customer Portal Group ID
+  4. Click "Post to Portal"
+  5. Verify post success
+
+#### Onboard Tab
+- **Purpose:** Add new customer accounts
+- **Workflow:**
+  1. Click "+ Add Customer"
+  2. Enter customer details:
+     - Name (for display)
+     - Slug (lowercase, no spaces)
+     - Your email
+     - Account number (required)
+     - Product (required)
+  3. Click "Discover RFEs & Bugs"
+  4. Report template generated
+
+#### Help Tab
+- **Purpose:** In-application documentation
+- **Sections:**
+  - Getting Started
+  - Command Reference
+  - Workflows
+  - Authentication
+  - Troubleshooting
+  - FAQ
+
+#### Settings Tab
+- **Purpose:** Application configuration
+- **Options:**
+  - Default TAM email
+  - Auto-update on startup
+  - Desktop notifications
+  - Report format (Markdown/HTML/PDF)
+  - JIRA query timeout
+  - Theme selection (7 themes available)
+  - Focus Mode toggle
+  - Factory Reset (Danger Zone)
+
+---
+
+## Workflows
+
+### Typical TAM Workflow
+
+#### Weekly RFE/Bug Report Update
+
+1. **Check for Changes:**
+   ```bash
+   tam-rfe check <customer>
+   ```
+
+2. **Update Report (if changes detected):**
+   ```bash
+   tam-rfe update <customer> --yes
+   ```
+
+3. **Post to Portal:**
+   ```bash
+   tam-rfe post <customer>
+   ```
+
+#### Onboarding New Customer
+
+1. **Add Customer:**
+   ```bash
+   tam-rfe onboard <customer-slug> \
+     --email <your-email> \
+     --display-name "Customer Name" \
+     --account <account-number> \
+     --product <product>
+   ```
+
+2. **Review Generated Report:**
+   ```bash
+   cat ~/taminator-test-data/<customer-slug>.md
+   ```
+
+3. **Post Initial Report:**
+   ```bash
+   tam-rfe post <customer-slug>
+   ```
+
+#### Automation via Cron
+
+**Daily Check (Monday-Friday at 8 AM):**
+```cron
+0 8 * * 1-5 /usr/local/bin/tam-rfe dashboard --json > /tmp/taminator-daily.json
+```
+
+**Weekly Update (Friday at 4 PM):**
+```cron
+0 16 * * 5 /usr/local/bin/tam-rfe update --all --yes
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### Issue: "JIRA token not configured"
+
+**Cause:** Missing or invalid JIRA API token
+
+**Resolution:**
+```bash
+tam-rfe config --add-token
+# Select "JIRA API Token"
+# Paste token from https://access.redhat.com/management/api
+```
+
+#### Issue: "Connection timeout"
+
+**Cause:** VPN not connected or network issues
+
+**Resolution:**
+1. Verify Red Hat VPN connection:
+   ```bash
+   ping issues.redhat.com
+   ```
+2. Increase timeout in Settings → Advanced → JIRA Timeout
+3. Check firewall rules
+
+#### Issue: "Account number required"
+
+**Cause:** Customer onboarding missing required account number
+
+**Resolution:**
+Always specify `--account` flag when onboarding:
+```bash
+tam-rfe onboard <customer> --account <number> --product <product>
+```
+
+#### Issue: "No customers found"
+
+**Cause:** No customer reports in expected directories
+
+**Resolution:**
+1. Check data directory:
+   ```bash
+   ls -la ~/taminator-test-data/
+   ```
+2. Onboard at least one customer:
+   ```bash
+   tam-rfe onboard test-customer --account 123456 --product Ansible
+   ```
+
+#### Issue: "Failed to parse dashboard data"
+
+**Cause:** Corrupt report file or JSON parsing error
+
+**Resolution:**
+1. Verify report files:
+   ```bash
+   cat ~/taminator-test-data/<customer>.md
+   ```
+2. Re-onboard customer if file is corrupted
+
+### Logging and Diagnostics
+
+**Enable Debug Mode:**
+```bash
+export TAMINATOR_DEBUG=1
+tam-rfe <command>
+```
+
+**View Logs:**
+```bash
+# Application logs
+tail -f ~/.config/taminator/logs/taminator.log
+
+# System journal (if running as systemd service)
+journalctl -u taminator -f
+```
+
+### Known Issues
+
+#### RPM Package Build Failure
+- **Status:** Known issue in v1.10.0
+- **Workaround:** Use AppImage or .deb package
+- **Resolution:** Planned for v1.11.0
+
+#### Portal Posting Authentication
+- **Status:** Requires environment variables
+- **Workaround:** Set `REDHAT_PORTAL_USERNAME` and `REDHAT_PORTAL_PASSWORD`
+- **Resolution:** Bearer token support planned for v1.11.0
+
+---
+
+## Security and Compliance
 
 ### Data Protection
-- Customer data processed via Red Hat Granite models only
-- No external API calls for customer data
-- All operations logged for audit compliance
-- Secure credential management via Red Hat SSO
 
-## 🆘 Need Help?
+**Token Storage:**
+- Tokens stored in `~/.config/taminator/tokens.json`
+- File permissions: `600` (owner read/write only)
+- No tokens transmitted to external services
+- Environment variable support for CI/CD
 
-### Quick Commands
+**Customer Data:**
+- All data processed locally or via Red Hat internal APIs
+- No external API calls for customer information
+- Red Hat VPN required for all API access
+- Audit logging for all operations
+
+### Red Hat AI Policy Compliance
+
+Taminator adheres to Red Hat AI policies:
+- ✅ Customer data processed via Red Hat-approved models only
+- ✅ No external AI APIs used for customer data
+- ✅ Audit logging enabled for all operations
+- ✅ Secure credential management
+
+### Network Security
+
+**Required Network Access:**
+- `issues.redhat.com` (JIRA API) - Port 443/HTTPS
+- `api.access.redhat.com` (Customer Portal API) - Port 443/HTTPS
+
+**VPN Requirement:**
+Red Hat VPN connection required for all internal API endpoints.
+
+---
+
+## Administration
+
+### Multi-User Deployment
+
+**Centralized Token Management (HashiCorp Vault):**
+1. Deploy Vault server for team
+2. Configure Vault policies for TAM team
+3. Distribute `VAULT_ADDR` and `VAULT_TOKEN` to team members
+4. All TAMs share tokens from central Vault
+
+**Ansible Deployment:**
 ```bash
-# Test the system
-./bin/tam-rfe-verify --quick
-
-# Comprehensive verification
-./bin/tam-rfe-verify --full
-
-# Get help
-./bin/tam-rfe-chat --help
+cd ansible/
+ansible-playbook -i inventory.yml playbook.yml
 ```
 
-### Common Questions
-- **"How do I add a new customer?"** → Run `./bin/tam-rfe-onboard-intelligent`
-- **"The tool isn't finding cases"** → Check your `rhcase` configuration
-- **"I want to customize the reports"** → Use the chat interface and ask me to modify them
+### Backup and Recovery
 
-## 🎉 Ready to Start?
+**Backup Customer Data:**
+```bash
+# Backup reports
+tar -czf taminator-backup-$(date +%F).tar.gz ~/.config/taminator/ ~/taminator-test-data/
+```
 
-### For Brand New TAMs (Zero Experience)
-1. **Start chatting**: `./bin/tam-rfe-chat`
-2. **Tell the AI**: "I'm new to this" or "I need help getting started"
-3. **Follow the guided onboarding**: The AI will walk you through everything step by step
-4. **Complete setup**: From installation to your first report
+**Restore Customer Data:**
+```bash
+# Restore from backup
+tar -xzf taminator-backup-2025-10-25.tar.gz -C ~/
+```
 
-### For Experienced TAMs
-1. **Run onboarding**: `./bin/tam-rfe-onboard-intelligent`
-2. **Start chatting**: `./bin/tam-rfe-chat`
-3. **Ask for reports**: "Generate RFE report for [Customer]"
+### Uninstallation
 
-**That's it! The tool will learn your preferences and get smarter over time.**
+**Linux:**
+```bash
+# Remove AppImage
+rm ~/Applications/Taminator-1.10.0-*.AppImage
 
-## 📚 Documentation
+# Remove configuration
+rm -rf ~/.config/taminator/
+rm -rf ~/.config/taminator-gui/
 
-- **[Getting Started Guide](GETTING-STARTED.md)**: Quick 5-minute setup
-- **[Purpose Statement](PURPOSE.md)**: Detailed functionality overview
-- **[TAM Community Guide](README-TAM-COMMUNITY.md)**: Comprehensive community documentation
-- **[Ansible Deployment](ANSIBLE-DEPLOYMENT.md)**: Automated deployment options
-- **[Prerequisites Guide](docs/PREREQUISITES-GUIDE.md)**: Complete setup requirements
+# Remove data
+rm -rf ~/taminator-test-data/
 
-## 🤝 Contributing
+# Remove desktop entry
+rm ~/.local/share/applications/taminator.desktop
+update-desktop-database ~/.local/share/applications/
+```
 
-### For TAMs
-- Report issues via GitLab issues
-- Suggest improvements via merge requests
-- Share customer-specific templates
-- Provide feedback on usability
+**macOS:**
+```bash
+# Remove application
+rm -rf /Applications/Taminator.app
 
-### For Developers
-- Follow Red Hat coding standards
-- Maintain comprehensive documentation
-- Include unit tests for all features
-- Ensure Red Hat compliance
+# Remove configuration
+rm -rf ~/.config/taminator/
 
-## 📞 Support & Contact
+# Remove data
+rm -rf ~/taminator-test-data/
+```
 
-### Personal Development Contact
-- **Developer**: jbyrd (jbyrd@redhat.com)
-- **GitLab Repository**: https://gitlab.cee.redhat.com/jbyrd/rfe-and-bug-tracker-automation
-- **Original Author**: grimm (PAI framework tools)
-- **Documentation**: See `docs/` directory for detailed guides
-
-### Community Support
-- **Slack**: #tam-automation-tools
-- **Email**: tam-automation-team@redhat.com
+**Windows:**
+```powershell
+# Uninstall via Control Panel
+# Or use Programs and Features
+# Configuration stored in: %APPDATA%\taminator
+```
 
 ---
 
-## 🎯 Bottom Line for TAMs
+## Additional Resources
 
-**This tool transforms a 2-3 hour manual weekly task into a 5-minute automated process, freeing TAMs to focus on strategic customer work while ensuring consistent, professional customer communication.**
+### Documentation
+- **Getting Started Guide:** [GETTING-STARTED.md](GETTING-STARTED.md)
+- **Release Notes:** [RELEASE-NOTES-v1.10.0.md](RELEASE-NOTES-v1.10.0.md)
+- **Tooling Audit:** [COMPREHENSIVE-TOOLING-AUDIT-V1.10.0.md](COMPREHENSIVE-TOOLING-AUDIT-V1.10.0.md)
 
-### The Tool is Designed to:
-- **Save time** - 95% reduction in manual work
-- **Improve quality** - 100% consistent, professional content
-- **Increase reliability** - Automated processes eliminate human error
-- **Enhance customer experience** - Daily updates instead of weekly manual updates
-- **Maintain compliance** - Full Red Hat AI policy compliance
-- **Scale easily** - Works for any TAM customer with proper configuration
+### Support
+- **GitLab Issues:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
+- **Internal Slack:** `#tam-automation` channel
+- **Email:** jbyrd@redhat.com
 
-## 🚀 Development Philosophy
-
-This personal project is developed with the following principles:
-
-- **Independence**: My own standalone solution that uses PAI tools but operates independently
-- **Simplicity**: Easy to deploy and use without complex dependencies
-- **Reliability**: Focused on core functionality with robust error handling
-- **TAM-Focused**: Built specifically for TAM workflows and needs
-- **Continuous Improvement**: Regular updates and enhancements based on real-world usage
-
-## 🙏 Acknowledgments
-
-- **Original Creator**: grimm - PAI framework tools and initial RFE automation concept
-- **Development**: jbyrd - Personal project with independent development and enhancements
-- **Community**: Red Hat TAM community for feedback and requirements
+### Contributing
+- **Development:** See [CONTRIBUTING.md](CONTRIBUTING.md)
+- **Bug Reports:** Use GitLab Issues
+- **Feature Requests:** Submit via GitLab Issues with `enhancement` label
 
 ---
 
-## 🎬 Taminator Quotes to Live By
+## Appendix
 
-> *"I'll be back... with your weekly RFE report."* - T-800
+### Supported Products
 
-> *"Come with me if you want to save time."* - T-800
+| Product | SBR Group | Status |
+|---------|-----------|--------|
+| Ansible Automation Platform | SBR Ansible | ✅ Supported |
+| Red Hat Enterprise Linux | SBR RHEL | ✅ Supported |
+| OpenShift Container Platform | SBR OpenShift | ✅ Supported |
+| Satellite | SBR Satellite | ✅ Supported |
 
-> *"Hasta la vista, manual tracking!"* - T-800
+### File Locations
 
-> *"No fate but what we automate."* - Sarah Connor
+| Component | Location |
+|-----------|----------|
+| Configuration | `~/.config/taminator/` |
+| Token Storage | `~/.config/taminator/tokens.json` |
+| Customer Reports | `~/taminator-test-data/` |
+| OOBE State | `~/.config/taminator-gui/oobe-state.json` |
+| Logs | `~/.config/taminator/logs/` |
 
-> *"The future is not set. There is no fate but what we make. Also, your reports are ready."* - Sarah Connor
+### Environment Variables
 
-> *"Listen, and understand. Taminator is out there. It can't be bargained with. It doesn't feel pity or remorse, and it absolutely will not stop, ever, until your RFE tracking is automated."* - Kyle Reese
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `VAULT_ADDR` | Vault server address | `http://vault.example.com:8200` |
+| `VAULT_TOKEN` | Vault authentication token | `hvs.CAESII...` |
+| `VAULT_MOUNT` | Vault secret mount point | `secret` (default) |
+| `VAULT_PATH` | Vault secret path | `taminator/tokens` (default) |
+| `JIRA_TOKEN_API_TOKEN` | JIRA API token | `MTE1NjQyMD...` |
+| `PORTAL_TOKEN_API_TOKEN` | Portal API token | `eyJhbGc...` |
+| `TAMINATOR_DEBUG` | Enable debug logging | `1` or `true` |
 
 ---
 
-**🤖 Taminator - RFE Automation Done Right**  
-*Making TAMs more efficient, one automated report at a time*
+## Legal Notices
 
-**The Skynet TAMs Actually Want™**
+### Trademark Information
+Red Hat, Red Hat Enterprise Linux, Ansible, and OpenShift are trademarks or registered trademarks of Red Hat, Inc. or its subsidiaries in the United States and other countries.
 
-**💝 Built with passion for helping TAMs succeed**  
-*v1.9.5 - The Honesty Update - October 2025*
+### License
+This software is provided for internal Red Hat use. See repository for license details.
+
+### Contact
+For questions or support, contact: jbyrd@redhat.com
 
 ---
 
-<div align="center">
-
-**[📥 Download](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases)** | **[📖 Docs](GETTING-STARTED.md)** | **[🐛 Report Issue](https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues)** | **[💬 Support](mailto:jbyrd@redhat.com)**
-
-*Remember: In the future, all TAMs use Taminator. Join the resistance... against manual work.*
-
-</div>
+**Document Version:** 1.0  
+**Last Updated:** October 25, 2025  
+**Software Version:** Taminator 1.10.0  
+**Status:** General Availability (GA)

@@ -22,7 +22,7 @@ def main():
     
     parser = argparse.ArgumentParser(
         prog='tam-rfe',
-        description='Taminator RFE Tool - TAM workflow automation for tracking RFEs and Bugs',
+        description='TAMINATOR - The Skynet TAMs actually want. 🤖',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -103,6 +103,21 @@ For more help on a command:
         '--dry-run',
         action='store_true',
         help='Preview without actually posting'
+    )
+    
+    # ========================================
+    # DASHBOARD command
+    # ========================================
+    dashboard_parser = subparsers.add_parser(
+        'dashboard',
+        help='Show overview of all customers',
+        description='Display all onboarded customers with live JIRA stats'
+    )
+    dashboard_parser.add_argument(
+        '--json',
+        action='store_true',
+        dest='json_output',
+        help='Output structured JSON for machine parsing'
     )
     
     # ========================================
@@ -223,6 +238,12 @@ For more help on a command:
             post_main(
                 customer=args.customer,
                 dry_run=args.dry_run
+            )
+        
+        elif args.command == 'dashboard':
+            from taminator.commands.dashboard import main as dashboard_main
+            dashboard_main(
+                json_output=args.json_output
             )
         
         elif args.command == 'onboard':

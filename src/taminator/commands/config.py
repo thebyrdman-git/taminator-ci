@@ -23,7 +23,7 @@ from rich.prompt import Prompt, Confirm
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from ..core.hybrid_auth import hybrid_auth
-from ..core.auth_box import auth_box, KEYRING_AVAILABLE
+from ..core.auth_box import auth_box
 from ..core.auth_types import AuthType, TOKEN_REGISTRY
 
 console = Console()
@@ -59,9 +59,7 @@ class ConfigManager:
                 status = "✅ Configured"
                 
                 # Determine storage method
-                if auth_box._get_token_from_keyring(token_type):
-                    storage = "🔐 Keyring (secure)"
-                elif auth_box._get_token_from_env(token_type):
+                if auth_box._get_token_from_env(token_type):
                     storage = "🌍 Environment var"
                 else:
                     storage = "📁 Config file"
@@ -77,14 +75,14 @@ class ConfigManager:
         # Storage info
         storage_info = f"""
 Storage Information:
-  Keyring Available: {'✅ Yes (recommended)' if KEYRING_AVAILABLE else '❌ No (install python3-keyring)'}
+  Config File: ~/.config/taminator/tokens.json
   Config Directory: ~/.config/taminator/
   Environment Variables: Detected automatically
 
 Security:
-  • Keyring storage is encrypted by your OS
-  • Environment variables are session-only
-  • Config files should be 600 permissions
+  • Config file has 600 permissions (owner read/write only)
+  • Environment variables are session-only  
+  • Same security model as aws-cli, gh, kubectl
 """
         console.print(Panel(storage_info, border_style="cyan", title="Storage Methods"))
         console.print()
@@ -280,17 +278,14 @@ Permissions Required:
         
         # Save token
         console.print("\n💾 Saving token...", style="cyan")
+        console.print()
         
-        if KEYRING_AVAILABLE:
-            success = auth_box.set_token(token_type, token_value)
-            if success:
-                console.print("✅ Token saved securely to system keyring\n", style="green bold")
-            else:
-                console.print("⚠️  Keyring save failed, use environment variable instead\n", style="yellow")
-        else:
-            # Fallback: Show environment variable instructions
+        success = auth_box.set_token(token_type, token_value)
+        
+        if not success:
+            # Show environment variable as fallback
             env_var = f"{token_type.value.upper()}_API_TOKEN"
-            console.print(f"\n⚠️  Keyring not available. Add to environment:\n", style="yellow")
+            console.print(f"\n⚠️  Failed to save to config file. Use environment variable instead:\n", style="yellow")
             console.print(f"  export {env_var}=\"{token_value[:10]}...\"")
             console.print(f"\n  Add to ~/.bashrc or ~/.zshrc for persistence\n")
         
@@ -349,17 +344,35 @@ Permissions Required:
     
     @staticmethod
     def _test_portal_token(token: str) -> bool:
-        """Test Portal token."""
+        """Test Portal token by accessing Portal API."""
         import requests
         try:
+            # Try the Portal REST API base endpoint
+            # This is the documented Portal API: https://access.redhat.com/articles/3626371
             response = requests.get(
-                'https://access.redhat.com/hydra/rest/v1/ping',
+                'https://api.access.redhat.com/rs/cases',
                 headers={'Authorization': f'Bearer {token}'},
+                params={'count': 1},  # Minimal query
                 timeout=10
             )
-            return response.status_code in [200, 401, 403]
+            
+            if response.status_code == 200:
+                console.print(f"  ✅ Valid Portal token", style="green")
+                return True
+            elif response.status_code == 401:
+                console.print(f"  ❌ Token expired or invalid (401 Unauthorized)", style="red")
+                console.print(f"     Generate a new token at: https://access.redhat.com/management/api", style="yellow")
+                return False
+            elif response.status_code == 403:
+                console.print(f"  ❌ Token lacks required permissions (403 Forbidden)", style="red")
+                return False
+            else:
+                console.print(f"  ❌ HTTP {response.status_code}", style="red")
+                console.print(f"     Response: {response.text[:200]}", style="dim")
+                return False
+                
         except Exception as e:
-            console.print(f"  Error: {str(e)}", style="red")
+            console.print(f"  ❌ Error: {str(e)}", style="red")
             return False
     
     @staticmethod

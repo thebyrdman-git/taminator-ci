@@ -23,17 +23,13 @@ Usage:
 """
 
 import os
+import json
 import subprocess
 import time
+from pathlib import Path
 from typing import List, Optional, Dict
 from functools import wraps
 from datetime import datetime, timedelta
-
-try:
-    import keyring
-    KEYRING_AVAILABLE = True
-except ImportError:
-    KEYRING_AVAILABLE = False
 
 import requests
 from rich.console import Console
@@ -61,19 +57,22 @@ class AuthBox:
     Centralized authentication management for Taminator.
     
     Handles:
-    - Token storage and validation
+    - Token storage and validation (config file + env vars)
     - VPN connection detection
     - Kerberos ticket checking
     - SSH key verification
     - Pre-flight authentication checks
     """
     
-    # Keyring service name
-    KEYRING_SERVICE = "taminator"
+    # Config file location
+    CONFIG_DIR = Path.home() / '.config' / 'taminator'
+    TOKEN_FILE = CONFIG_DIR / 'tokens.json'
     
     def __init__(self):
         """Initialize Auth-Box."""
         self.console = Console()
+        # Ensure config directory exists
+        self.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     
     # ===== Token Management =====
     
@@ -91,12 +90,8 @@ class AuthBox:
         Raises:
             AuthenticationError: If token required but not found
         """
-        # Try keyring first (most secure)
-        token = self._get_token_from_keyring(token_type)
-        
-        # Fallback to environment variable
-        if not token:
-            token = self._get_token_from_env(token_type)
+        # Try environment variable first (highest priority)
+        token = self._get_token_from_env(token_type)
         
         # Fallback to config file
         if not token:
@@ -109,7 +104,7 @@ class AuthBox:
     
     def set_token(self, token_type: AuthType, token: str) -> bool:
         """
-        Store token securely in system keyring.
+        Store token in config file.
         
         Args:
             token_type: Type of token
@@ -118,32 +113,7 @@ class AuthBox:
         Returns:
             True if successful
         """
-        if not KEYRING_AVAILABLE:
-            console.print("⚠️  Keyring not available, token not saved", style="yellow")
-            return False
-        try:
-            keyring.set_password(
-                self.KEYRING_SERVICE,
-                token_type.value,
-                token
-            )
-            console.print(f"✅ {TOKEN_REGISTRY[token_type].name} saved securely")
-            return True
-        except Exception as e:
-            console.print(f"❌ Failed to save token: {e}", style="red")
-            return False
-    
-    def _get_token_from_keyring(self, token_type: AuthType) -> Optional[str]:
-        """Get token from system keyring."""
-        if not KEYRING_AVAILABLE:
-            return None
-        try:
-            return keyring.get_password(
-                self.KEYRING_SERVICE,
-                token_type.value
-            )
-        except Exception:
-            return None
+        return self._save_token_to_config(token_type, token)
     
     def _get_token_from_env(self, token_type: AuthType) -> Optional[str]:
         """Get token from environment variables."""
@@ -159,9 +129,54 @@ class AuthBox:
         return None
     
     def _get_token_from_config(self, token_type: AuthType) -> Optional[str]:
-        """Get token from config file (future implementation)."""
-        # TODO: Implement config file reading
-        return None
+        """Get token from config file."""
+        if not self.TOKEN_FILE.exists():
+            return None
+        
+        try:
+            with open(self.TOKEN_FILE, 'r') as f:
+                tokens = json.load(f)
+            return tokens.get(token_type.value)
+        except Exception:
+            return None
+    
+    def _save_token_to_config(self, token_type: AuthType, token: str) -> bool:
+        """
+        Save token to config file.
+        
+        Args:
+            token_type: Type of token
+            token: Token value
+            
+        Returns:
+            True if successful
+        """
+        try:
+            # Load existing tokens
+            tokens = {}
+            if self.TOKEN_FILE.exists():
+                try:
+                    with open(self.TOKEN_FILE, 'r') as f:
+                        tokens = json.load(f)
+                except Exception:
+                    pass  # Start fresh if file is corrupted
+            
+            # Add/update token
+            tokens[token_type.value] = token
+            
+            # Save to file with secure permissions
+            with open(self.TOKEN_FILE, 'w') as f:
+                json.dump(tokens, f, indent=2)
+            
+            # Set file permissions to 600 (owner read/write only)
+            self.TOKEN_FILE.chmod(0o600)
+            
+            console.print(f"✅ {TOKEN_REGISTRY[token_type].name} saved to {self.TOKEN_FILE}")
+            return True
+            
+        except Exception as e:
+            console.print(f"❌ Failed to save token: {e}", style="red")
+            return False
     
     def _raise_token_missing_error(self, token_type: AuthType):
         """Raise informative error when token is missing."""
