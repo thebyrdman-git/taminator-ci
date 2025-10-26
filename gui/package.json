@@ -30,6 +30,7 @@
   "build": {
     "appId": "com.redhat.taminator",
     "productName": "Taminator",
+    "publish": null,
     "directories": {
       "output": "dist",
       "buildResources": "build"
