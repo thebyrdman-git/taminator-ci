@@ -1,4 +1,6 @@
-# Taminator - RFE and Bug Tracking Automation Tool
+# Taminator - The Skynet TAMs Actually Want 🤖
+
+*Your technical intelligence hub for customer engineering work.*
 
 ## Overview
 
