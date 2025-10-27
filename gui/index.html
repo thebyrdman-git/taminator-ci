@@ -551,7 +551,7 @@
     // Load and apply saved settings on startup
     async function loadSavedSettingsOnStartup() {
       try {
-        const settings = await window.api.invoke('load-settings');
+        const settings = await ipcRenderer.invoke('load-settings');
         
         if (settings) {
           console.log('[Settings] Loaded saved settings:', settings);
@@ -2796,50 +2796,65 @@ ${result.error || result.output || 'Post failed'}
         const authStatus = await ipcRenderer.invoke('check-auth');
         
         const authCard = document.getElementById('auth-card');
-        authCard.innerHTML = `
-          <div class="status-item">
-            <span class="status-label">JIRA Token</span>
-            <span class="status-badge ${authStatus.jira_token ? 'success' : 'error'}">
-              ${authStatus.jira_token ? '✓ Valid' : '✗ Not configured'}
-            </span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Portal Token</span>
-            <span class="status-badge ${authStatus.portal_token ? 'success' : 'error'}">
-              ${authStatus.portal_token ? '✓ Valid' : '✗ Not configured'}
-            </span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">VPN</span>
-            <span class="status-badge ${authStatus.vpn ? 'success' : 'error'}">
-              ${authStatus.vpn ? '✓ Connected' : '✗ Not connected'}
-            </span>
-          </div>
-          <div class="status-item">
-            <span class="status-label">Kerberos</span>
-            <span class="status-badge ${authStatus.kerberos ? 'success' : 'error'}">
-              ${authStatus.kerberos ? '✓ Valid' : '✗ No ticket'}
-            </span>
-          </div>
-        `;
+        if (authCard) {
+          authCard.innerHTML = `
+            <div class="status-item">
+              <span class="status-label">JIRA Token</span>
+              <span class="status-badge ${authStatus.jira_token ? 'success' : 'error'}">
+                ${authStatus.jira_token ? '✓ Valid' : '✗ Not configured'}
+              </span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Portal Token</span>
+              <span class="status-badge ${authStatus.portal_token ? 'success' : 'error'}">
+                ${authStatus.portal_token ? '✓ Valid' : '✗ Not configured'}
+              </span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">VPN</span>
+              <span class="status-badge ${authStatus.vpn ? 'success' : 'error'}">
+                ${authStatus.vpn ? '✓ Connected' : '✗ Not connected'}
+              </span>
+            </div>
+            <div class="status-item">
+              <span class="status-label">Kerberos</span>
+              <span class="status-badge ${authStatus.kerberos ? 'success' : 'error'}">
+                ${authStatus.kerberos ? '✓ Valid' : '✗ No ticket'}
+              </span>
+            </div>
+          `;
+        }
 
-        // Update status bar
-        const authOK = authStatus.vpn && authStatus.kerberos;
-        document.getElementById('auth-status').innerHTML = authOK 
-          ? '✅ All authentication OK' 
-          : '⚠️ Authentication issues detected';
+        // Update status bar (only if elements exist)
+        const authStatusEl = document.getElementById('auth-status');
+        if (authStatusEl) {
+          const authOK = authStatus.vpn && authStatus.kerberos;
+          authStatusEl.innerHTML = authOK 
+            ? '✅ All authentication OK' 
+            : '⚠️ Authentication issues detected';
+        }
         
-        document.getElementById('last-check').textContent = `Last check: ${new Date().toLocaleTimeString()}`;
+        const lastCheckEl = document.getElementById('last-check');
+        if (lastCheckEl) {
+          lastCheckEl.textContent = `Last check: ${new Date().toLocaleTimeString()}`;
+        }
       } catch (error) {
         console.error('Failed to load auth status:', error);
       }
     }
 
     async function refreshAuth() {
-      document.getElementById('refresh-btn').innerHTML = '<div class="spinner"></div>';
+      const refreshBtn = document.getElementById('refresh-btn');
+      if (refreshBtn) {
+        refreshBtn.innerHTML = '<div class="spinner"></div>';
+      }
+      
       await loadAuthStatus();
+      
       setTimeout(() => {
-        document.getElementById('refresh-btn').textContent = '🔄 Refresh';
+        if (refreshBtn) {
+          refreshBtn.textContent = '🔄 Refresh';
+        }
       }, 500);
     }
 
@@ -3799,7 +3814,7 @@ ${result.error || result.output || 'Post failed'}
       
       // Initialize game
       if (!skiFreeGame) {
-        skiFreeGame = new SkiFreeGame();
+        skiFreeGame = new SkiFreeGameEngine();
       }
       skiFreeGame.start();
     }
@@ -3813,8 +3828,8 @@ ${result.error || result.output || 'Post failed'}
       xpSounds.playNotification(); // Play close sound
     }
 
-    // SkiFree Game Engine
-    class SkiFreeGame {
+    // SkiFree Game Engine (Full Implementation)
+    class SkiFreeGameEngine {
       constructor() {
         this.canvas = document.getElementById('skifree-canvas');
         this.ctx = this.canvas.getContext('2d');

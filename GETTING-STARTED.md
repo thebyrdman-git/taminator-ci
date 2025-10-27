@@ -1,7 +1,7 @@
 # Getting Started with Taminator
 
 **Product:** Taminator - RFE and Bug Tracking Automation Tool  
-**Version:** 1.10.1  
+**Version:** 1.10.3  
 **Audience:** Red Hat Technical Account Managers (TAMs)  
 **Time to Complete:** 15 minutes
 
@@ -37,21 +37,21 @@ Before beginning installation, verify you have:
 
 **Linux (x86_64):**
 ```bash
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1.AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.3/Taminator-1.10.3.AppImage
 ```
 
 **Linux (ARM64 - Apple Silicon Macs):**
 ```bash
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1-arm64.AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.3/Taminator-1.10.3-arm64.AppImage
 ```
 
 **macOS:**
 ```bash
-curl -O https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1.dmg
+curl -O https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.3/Taminator-1.10.3.dmg
 ```
 
 **Windows:**
-Download `Taminator Setup 1.10.1.exe` from GitLab releases page.
+Download `Taminator Setup 1.10.3.exe` from GitLab releases page.
 
 ---
 
@@ -60,17 +60,17 @@ Download `Taminator Setup 1.10.1.exe` from GitLab releases page.
 **Linux:**
 ```bash
 # Make executable
-chmod +x Taminator-1.10.1-*.AppImage
+chmod +x Taminator-1.10.3-*.AppImage
 
 # Run directly (no installation required)
-./Taminator-1.10.1-*.AppImage
+./Taminator-1.10.3-*.AppImage
 ```
 
 **Optional - System Integration:**
 ```bash
 # Install to Applications directory
 mkdir -p ~/Applications
-mv Taminator-1.10.1-*.AppImage ~/Applications/
+mv Taminator-1.10.3-*.AppImage ~/Applications/
 
 # Create desktop entry for application launcher
 cat > ~/.local/share/applications/taminator.desktop << 'EOF'
@@ -79,7 +79,7 @@ Version=1.0
 Type=Application
 Name=Taminator
 Comment=RFE and Bug Tracking Tool
-Exec=/home/$USER/Applications/Taminator-1.10.1.AppImage
+Exec=/home/$USER/Applications/Taminator-1.10.3.AppImage
 Icon=taminator
 Terminal=false
 Categories=Development;Utility;
@@ -92,7 +92,7 @@ update-desktop-database ~/.local/share/applications/
 **macOS:**
 ```bash
 # Mount DMG
-open Taminator-1.10.1.dmg
+open Taminator-1.10.3.dmg
 
 # Drag Taminator.app to Applications folder
 # First launch: Right-click → Open (bypass Gatekeeper)
@@ -101,7 +101,7 @@ open Taminator-1.10.1.dmg
 **Windows:**
 ```powershell
 # Run installer
-.\Taminator-Setup-1.10.1.exe
+.\Taminator-Setup-1.10.3.exe
 
 # Follow installation wizard
 # Choose installation directory (default: C:\Program Files\Taminator)
@@ -345,7 +345,7 @@ Found 12 open RFEs and Bugs
 **Linux/macOS:**
 ```bash
 # Add to PATH (one-time setup)
-ln -s ~/Applications/Taminator-1.10.1-x86_64.AppImage /usr/local/bin/tam-rfe
+ln -s ~/Applications/Taminator-1.10.3-x86_64.AppImage /usr/local/bin/tam-rfe
 
 # Verify installation
 tam-rfe --help
@@ -405,7 +405,7 @@ tam-rfe onboard <customer-slug> \
 rm ~/.config/taminator-gui/oobe-state.json
 
 # Relaunch Taminator
-./Taminator-1.10.1-*.AppImage
+./Taminator-1.10.3-*.AppImage
 ```
 
 ---
@@ -478,7 +478,7 @@ rm ~/.config/taminator-gui/oobe-state.json
 
 ### Documentation
 - **User Guide:** [README.md](README.md)
-- **Release Notes:** [RELEASE-NOTES-v1.10.1.md](RELEASE-NOTES-v1.10.1.md)
+- **Release Notes:** [RELEASE-NOTES-v1.10.3.md](RELEASE-NOTES-v1.10.3.md)
 - **CLI Reference:** Run `tam-rfe --help`
 
 ### Support
@@ -496,7 +496,7 @@ rm ~/.config/taminator-gui/oobe-state.json
 ## Summary
 
 You have successfully:
-- ✅ Installed Taminator v1.10.1
+- ✅ Installed Taminator v1.10.3
 - ✅ Completed OOBE wizard
 - ✅ Configured authentication
 - ✅ Onboarded first customer
@@ -510,5 +510,5 @@ You have successfully:
 
 **Document Version:** 1.0  
 **Last Updated:** October 25, 2025  
-**Software Version:** Taminator 1.10.1  
+**Software Version:** Taminator 1.10.3  
 **Status:** General Availability (GA)
