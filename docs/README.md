@@ -1,6 +1,6 @@
 # Taminator Documentation
 
-Complete documentation for Taminator v1.10.0 - The Skynet TAMs Actually Want 🤖
+Complete documentation for Taminator v1.10.1 - The Skynet TAMs Actually Want 🤖
 
 ---
 
@@ -53,6 +53,6 @@ All documentation follows Red Hat technical writing standards:
 ---
 
 *Last Updated: October 26, 2025*  
-*Version: 1.10.0*
+*Version: 1.10.1*
 
 
