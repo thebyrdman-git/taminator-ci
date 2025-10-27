@@ -1,4 +1,4 @@
-name: Build Taminator Binaries
+name: Build Taminator v1.10.1+
 
 on:
   push:
@@ -10,40 +10,79 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    name: Build Windows (NSIS)
-    runs-on: windows-latest
-    
+  # Step 1: Build Python CLI binary (needed by all platforms)
+  build-cli-binary:
+    name: Build Python CLI Binary
+    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install PyInstaller and dependencies
+        run: |
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build standalone binary
+        run: |
+          ./build-cli-binary.sh
+
+      - name: Verify binary
+        run: |
+          ./bin/tam-rfe --help
+          ls -lh bin/tam-rfe
+
+      - name: Upload CLI binary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tam-rfe-binary
+          path: bin/tam-rfe
+          retention-days: 1
+
+  build-windows:
+    name: Build Windows (NSIS)
+    runs-on: windows-latest
+    needs: build-cli-binary
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download CLI binary
+        uses: actions/download-artifact@v4
+        with:
+          name: tam-rfe-binary
+          path: bin/
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: gui/package-lock.json
-      
+          node-version: '20'
+          # NO cache - package-lock.json may not be committed
+
       - name: Install dependencies
-        run: |
-          cd gui
-          npm ci
-      
+        working-directory: gui
+        run: npm install
+
       - name: Build Windows installer
-        run: |
-          cd gui
-          npm run build -- --publish never
+        working-directory: gui
+        run: npx electron-builder --win --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: Taminator-Windows
           path: gui/dist/*.exe
           retention-days: 30
-      
+
       - name: Upload to release (if tagged)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
@@ -55,37 +94,44 @@ jobs:
   build-macos:
     name: Build macOS (DMG)
     runs-on: macos-latest
-    
+    needs: build-cli-binary
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Download CLI binary
+        uses: actions/download-artifact@v4
+        with:
+          name: tam-rfe-binary
+          path: bin/
+
+      - name: Make binary executable
+        run: chmod +x bin/tam-rfe
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: gui/package-lock.json
-      
+          node-version: '20'
+          # NO cache - package-lock.json may not be committed
+
       - name: Install dependencies
-        run: |
-          cd gui
-          npm ci
-      
+        working-directory: gui
+        run: npm install
+
       - name: Build macOS DMG
-        run: |
-          cd gui
-          npm run build -- --publish never
+        working-directory: gui
+        run: npx electron-builder --mac --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: Taminator-macOS
           path: gui/dist/*.dmg
           retention-days: 30
-      
+
       - name: Upload to release (if tagged)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
@@ -97,47 +143,54 @@ jobs:
   build-linux:
     name: Build Linux (AppImage)
     runs-on: ubuntu-latest
-    
+    needs: build-cli-binary
+
     strategy:
       matrix:
         arch: [x64, arm64]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Download CLI binary
+        uses: actions/download-artifact@v4
+        with:
+          name: tam-rfe-binary
+          path: bin/
+
+      - name: Make binary executable
+        run: chmod +x bin/tam-rfe
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: gui/package-lock.json
-      
+          node-version: '20'
+          # NO cache - package-lock.json may not be committed
+
       - name: Install dependencies
-        run: |
-          cd gui
-          npm ci
-      
+        working-directory: gui
+        run: npm install
+
       - name: Set up QEMU (for ARM64)
         if: matrix.arch == 'arm64'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
-      
+
       - name: Build Linux AppImage
-        run: |
-          cd gui
-          npm run build -- --linux --${{ matrix.arch }}
+        working-directory: gui
+        run: npx electron-builder --linux --${{ matrix.arch }} --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: Taminator-Linux-${{ matrix.arch }}
           path: gui/dist/*.AppImage
           retention-days: 30
-      
+
       - name: Upload to release (if tagged)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
@@ -145,4 +198,3 @@ jobs:
           files: gui/dist/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

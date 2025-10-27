@@ -147,7 +147,7 @@ class CustomerDashboard:
                 search_url,
                 params=params,
                 headers=headers,
-                auth=HTTPBasicAuth('jbyrd@redhat.com', jira_token),  # TODO: Get email from config
+                auth=HTTPBasicAuth(os.getenv('JIRA_USERNAME', 'user@redhat.com'), jira_token)
                 timeout=30
             )
             

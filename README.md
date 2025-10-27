@@ -4,10 +4,12 @@
 
 ## Overview
 
-Taminator is a professional automation tool designed for Red Hat Technical Account Managers (TAMs) to streamline RFE (Request for Enhancement) and Bug tracking workflows. The tool provides both graphical user interface (GUI) and command-line interface (CLI) access to JIRA data, automated report generation, and Customer Portal integration.
+Taminator is the TAM automation platform that actually understands your workflow. Stop juggling JIRA tabs, Customer Portal groups, and scattered reports. Taminator unifies RFE tracking, bug monitoring, and customer communication into one intelligent interface - with enough personality to make your day better.
 
-**Version:** 1.10.0  
-**Release Date:** October 25, 2025  
+**Built by TAMs, for TAMs.** Production-ready, professional when you need it, fun when you want it.
+
+**Version:** 1.10.1  
+**Release Date:** October 27, 2025  
 **Product Status:** General Availability (GA)
 
 ---
@@ -15,17 +17,20 @@ Taminator is a professional automation tool designed for Red Hat Technical Accou
 ## Features
 
 ### Core Capabilities
-- **Live JIRA Integration:** Real-time RFE and Bug status tracking
-- **Dashboard Analytics:** Aggregated customer statistics with live data
-- **Report Generation:** Professional markdown-based customer reports
-- **Portal Integration:** Direct posting to Red Hat Customer Portal groups
-- **Customer Onboarding:** Guided workflow for adding new customer accounts
-- **Multi-Platform Support:** Linux (x64, ARM64), macOS, and Windows
+- **Live JIRA Integration:** Real-time RFE and Bug status tracking with instant updates
+- **Customer Portal Integration:** Direct posting to Red Hat Customer Portal groups with live preview
+- **Portal Preview Sandbox:** See exactly how your report will look before posting (no more post-oops-edit cycles)
+- **Dashboard Analytics:** Aggregated customer statistics with live data and health indicators
+- **Automated Report Generation:** Professional markdown-based customer reports with smart templates
+- **Customer Onboarding:** Guided workflow for adding new customer accounts with auto-discovery
+- **Multi-Platform Support:** Linux (x64, ARM64), macOS, and Windows - one tool, everywhere
 
 ### User Interface Options
-- **Graphical Interface:** Electron-based desktop application with PatternFly design system
-- **Command-Line Tools:** Full CLI parity for automation and scripting
-- **First-Run Experience:** Guided OOBE (Out-of-Box Experience) wizard
+- **Graphical Interface:** Electron-based desktop application with Red Hat PatternFly design system
+- **Command-Line Tools:** Full CLI parity for automation, scripting, and power users
+- **First-Run Experience:** Guided OOBE (Out-of-Box Experience) wizard - zero to productive in 2 minutes
+- **Theme System:** 7 beautiful themes from Professional to Matrix hacker green (with Focus Mode for customer demos)
+- **Vault Integration:** HashiCorp Vault support for team token management and enterprise deployments
 
 ---
 
@@ -499,7 +504,7 @@ journalctl -u taminator -f
 ### Known Issues
 
 #### RPM Package Build Failure
-- **Status:** Known issue in v1.10.0
+- **Status:** Known issue in v1.10.1
 - **Workaround:** Use AppImage or .deb package
 - **Resolution:** Planned for v1.11.0
 
@@ -507,6 +512,11 @@ journalctl -u taminator -f
 - **Status:** Requires environment variables
 - **Workaround:** Set `REDHAT_PORTAL_USERNAME` and `REDHAT_PORTAL_PASSWORD`
 - **Resolution:** Bearer token support planned for v1.11.0
+
+#### JIRA Authentication Username
+- **Status:** Uses default username if not configured
+- **Workaround:** Set `JIRA_USERNAME` environment variable to your Red Hat email
+- **Example:** `export JIRA_USERNAME="yourname@redhat.com"`
 
 ---
 

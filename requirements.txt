@@ -1,5 +1,5 @@
 # Taminator Requirements
-# Version: 2.0.0-alpha
+# Version: 2.1.0-alpha (AI features)
 
 # UI/Output
 rich>=13.0.0              # Beautiful terminal output
@@ -17,6 +17,10 @@ pyyaml>=6.0               # YAML config files
 # Security/Storage
 # keyring removed in v1.10.0 (over-engineered; now using simple config files)
 cryptography>=41.0.0      # Encryption utilities
+
+# AI/ML Integration (v1.11.0+)
+openai>=1.0.0             # OpenAI-compatible API client (for LiteLLM)
+tiktoken>=0.5.0           # Token counting for AI models
 
 # Testing
 pytest>=7.4.0             # Testing framework

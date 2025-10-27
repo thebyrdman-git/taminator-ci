@@ -10,6 +10,57 @@ const oobeState = require('./oobe-state');
 
 let mainWindow;
 
+/**
+ * Get the path to the bundled tam-rfe CLI
+ * Returns arguments for spawn() to execute the CLI binary
+ */
+function getTamrfeCli() {
+  const fs = require('fs');
+  
+  // Priority 1: Look for standalone binary (packaged with PyInstaller)
+  const bundledBinaryPath = path.join(__dirname, '../bin/tam-rfe');
+  if (fs.existsSync(bundledBinaryPath)) {
+    console.log('[CLI] Using bundled tam-rfe binary:', bundledBinaryPath);
+    return {
+      command: bundledBinaryPath,
+      prependArgs: []
+    };
+  }
+  
+  // Priority 2: Look for Python source (development mode)
+  const bundledCliPath = path.join(__dirname, '../src/taminator/cli.py');
+  if (fs.existsSync(bundledCliPath)) {
+    console.log('[CLI] Using Python source (development mode):', bundledCliPath);
+    return {
+      command: 'python3',
+      prependArgs: [bundledCliPath]
+    };
+  }
+  
+  // Priority 3: Fallback to system PATH (manual installation)
+  console.log('[CLI] Using system PATH tam-rfe command');
+  return {
+    command: 'tam-rfe',
+    prependArgs: []
+  };
+}
+
+/**
+ * Spawn tam-rfe CLI with automatic bundled/system detection
+ */
+function spawnTamrfe(args, options = {}) {
+  const cli = getTamrfeCli();
+  const allArgs = [...cli.prependArgs, ...args];
+  
+  console.log('[CLI] Spawning:', cli.command, allArgs.join(' '));
+  
+  return spawn(cli.command, allArgs, {
+    env: { ...process.env },
+    stdio: ['pipe', 'pipe', 'pipe'],
+    ...options
+  });
+}
+
 function createWindow() {
   // Try multiple icon paths for different packaging scenarios
   const fs = require('fs');
@@ -644,10 +695,8 @@ ipcMain.handle('oobe-save-manual-tokens', async (event, tokens) => {
 ipcMain.handle('dashboard-load', async (event) => {
   console.log('[Dashboard] Loading customer data...');
   
-  const { spawn } = require('child_process');
-  
   return new Promise((resolve) => {
-    const tamrfe = spawn('tam-rfe', ['dashboard', '--json']);
+    const tamrfe = spawnTamrfe(['dashboard', '--json']);
     
     let stdout = '';
     let stderr = '';
@@ -930,13 +979,7 @@ ipcMain.handle('check-report', async (event, data) => {
   
   return new Promise((resolve, reject) => {
     const args = ['check', data.customer];
-    // Use system PATH to find tam-rfe (works for any user)
-    const cliPath = 'tam-rfe';
-    
-    const cliProcess = spawn(cliPath, args, {
-      env: { ...process.env },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    const cliProcess = spawnTamrfe(args);
 
     let stdout = '';
     let stderr = '';
@@ -993,13 +1036,7 @@ ipcMain.handle('update-report', async (event, data) => {
   
   return new Promise((resolve, reject) => {
     const args = ['update', data.customer];
-    // Use system PATH to find tam-rfe (works for any user)
-    const cliPath = 'tam-rfe';
-    
-    const cliProcess = spawn(cliPath, args, {
-      env: { ...process.env },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    const cliProcess = spawnTamrfe(args);
 
     let stdout = '';
     let stderr = '';
@@ -1043,13 +1080,7 @@ ipcMain.handle('post-report', async (event, data) => {
       args.push('--format', data.format);
     }
     
-    // Use system PATH to find tam-rfe (works for any user)
-    const cliPath = 'tam-rfe';
-    
-    const cliProcess = spawn(cliPath, args, {
-      env: { ...process.env },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    const cliProcess = spawnTamrfe(args);
 
     let stdout = '';
     let stderr = '';
@@ -1108,12 +1139,7 @@ ipcMain.handle('onboard-discover', async (event, data) => {
       args.push('--account', data.account.trim());
     }
     
-    const cliPath = 'tam-rfe';
-    
-    const cliProcess = spawn(cliPath, args, {
-      env: { ...process.env },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    const cliProcess = spawnTamrfe(args);
 
     let stdout = '';
     let stderr = '';
@@ -1176,13 +1202,7 @@ ipcMain.handle('onboard-generate', async (event) => {
   
   return new Promise((resolve, reject) => {
     const args = ['onboard', '--generate'];
-    // Use system PATH to find tam-rfe (works for any user)
-    const cliPath = 'tam-rfe';
-    
-    const cliProcess = spawn(cliPath, args, {
-      env: { ...process.env },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
+    const cliProcess = spawnTamrfe(args);
 
     let stdout = '';
     let stderr = '';

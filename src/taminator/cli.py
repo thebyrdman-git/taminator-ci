@@ -44,6 +44,23 @@ For more help on a command:
     )
     
     # ========================================
+    # COMPOSE command (AI-powered email)
+    # ========================================
+    compose_parser = subparsers.add_parser(
+        'compose',
+        help='AI-powered email composer',
+        description='Generate professional customer emails about RFE/Bug updates using AI'
+    )
+    compose_parser.add_argument('customer', help='Customer name')
+    compose_parser.add_argument('--type', choices=['status_update', 'specific_update', 'action_required', 'good_news', 'custom'],
+                                default='status_update', help='Type of email')
+    compose_parser.add_argument('--rfes', help='JSON array of RFEs/Bugs')
+    compose_parser.add_argument('--context', help='Additional context')
+    compose_parser.add_argument('--tone', choices=['professional', 'formal', 'casual', 'technical'],
+                                default='professional', help='Email tone')
+    compose_parser.add_argument('--json', action='store_true', help='JSON output')
+    
+    # ========================================
     # CHECK command
     # ========================================
     check_parser = subparsers.add_parser(
@@ -286,6 +303,10 @@ For more help on a command:
                     non_interactive=args.non_interactive,
                     json_output=args.json_output
                 )
+        
+        elif args.command == 'compose':
+            from taminator.commands.compose import compose_email
+            sys.exit(compose_email(args))
         
         elif args.command == 'gui':
             from rich.console import Console
