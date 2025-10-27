@@ -8,7 +8,7 @@ Taminator is the TAM automation platform that actually understands your workflow
 
 **Built by TAMs, for TAMs.** Production-ready, professional when you need it, fun when you want it.
 
-**Version:** 1.10.1  
+**Version:** 1.10.2  
 **Release Date:** October 27, 2025  
 **Product Status:** General Availability (GA)
 

@@ -1,6 +1,6 @@
 {
   "name": "taminator-gui",
-  "version": "1.10.1",
+  "version": "1.10.2",
   "description": "Taminator RFE Tool - GUI Application",
   "homepage": "https://gitlab.cee.redhat.com/jbyrd/taminator",
   "repository": {
