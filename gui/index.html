@@ -464,10 +464,6 @@
           <span class="nav-icon">➕</span>
           <span>Onboard</span>
         </div>
-        <div class="nav-item" onclick="showVault()">
-          <span class="nav-icon">🔒</span>
-          <span>Vault</span>
-        </div>
         <div class="nav-item" onclick="showRhcaseBot()">
           <span class="nav-icon">🤖</span>
           <span>rhcase bot</span>
@@ -711,7 +707,6 @@
             <div style="margin-top: 24px; display: flex; gap: 12px;">
               <button class="btn btn-primary" onclick="showDashboard()">🔄 Refresh Dashboard</button>
               <button class="btn btn-secondary" onclick="showOnboard()">+ Add Customer</button>
-              <button class="btn btn-secondary" onclick="showVault()">Manage Tokens</button>
             </div>
           `;
         } else {
@@ -1515,331 +1510,6 @@ ${result.error || result.output || 'Post failed'}
       alert('Running full authentication audit... (Not yet implemented)');
     }
 
-    function showVault() {
-      document.getElementById('page-title').textContent = 'HashiCorp Vault';
-      setActiveNav(6);
-      
-      document.getElementById('content').innerHTML = `
-        <div class="vault-container">
-          <h2 style="margin-bottom: 24px;">🔒 HashiCorp Vault Integration</h2>
-          
-          <div class="card">
-            <div class="card-title">Connection Status</div>
-            <div class="card-content">
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #F5F5F5; border-radius: 4px; margin-bottom: 16px;">
-                <div style="flex: 1;">
-                  <strong>Vault Server</strong>
-                  <p style="margin: 4px 0 0 0; color: #6A6E73; font-size: 14px;" id="vault-addr">Checking...</p>
-                </div>
-                <span id="vault-status" class="status-badge">Checking...</span>
-              </div>
-              
-              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px;">
-                <div style="padding: 12px; background: #F5F5F5; border-radius: 4px;">
-                  <strong style="display: block; margin-bottom: 8px;">Version</strong>
-                  <span id="vault-version" style="color: #6A6E73;">-</span>
-                </div>
-                <div style="padding: 12px; background: #F5F5F5; border-radius: 4px;">
-                  <strong style="display: block; margin-bottom: 8px;">Initialized</strong>
-                  <span id="vault-initialized" style="color: #6A6E73;">-</span>
-                </div>
-                <div style="padding: 12px; background: #F5F5F5; border-radius: 4px;">
-                  <strong style="display: block; margin-bottom: 8px;">Sealed</strong>
-                  <span id="vault-sealed" style="color: #6A6E73;">-</span>
-                </div>
-                <div style="padding: 12px; background: #F5F5F5; border-radius: 4px;">
-                  <strong style="display: block; margin-bottom: 8px;">Strategy</strong>
-                  <span id="vault-strategy" style="color: #6A6E73;">-</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="card" style="margin-top: 24px;">
-            <div class="card-title">Vault Tokens (Stored in Vault)</div>
-            <div class="card-content">
-              <div id="vault-tokens-list" style="margin-bottom: 16px;">
-                <p style="color: #6A6E73;">Loading tokens...</p>
-              </div>
-              
-              <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #D2D2D2;">
-                <h4 style="margin-bottom: 12px;">Add New Token</h4>
-                <div style="display: flex; gap: 12px; align-items: flex-end;">
-                  <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 4px; font-size: 14px;">Service Name</label>
-                    <input type="text" id="vault-new-service" placeholder="e.g., jira, portal, github" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
-                  </div>
-                  <div style="flex: 2;">
-                    <label style="display: block; margin-bottom: 4px; font-size: 14px;">Token Value</label>
-                    <input type="password" id="vault-new-token" placeholder="Enter token" style="width: 100%; padding: 8px; border: 1px solid #D2D2D2; border-radius: 4px;">
-                  </div>
-                  <button class="btn btn-primary" onclick="vaultAddToken()">Add Token</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="card" style="margin-top: 24px;">
-            <div class="card-title">Migration & Management</div>
-            <div class="card-content">
-              <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                <button class="btn btn-primary" onclick="vaultMigrate()">
-                  🔄 Migrate from Auth Box
-                </button>
-                <button class="btn btn-secondary" onclick="vaultRefresh()">
-                  🔄 Refresh Status
-                </button>
-                <button class="btn btn-secondary" onclick="vaultTest()">
-                  🧪 Test Connection
-                </button>
-              </div>
-              
-              <div style="margin-top: 16px; padding: 12px; background: #E7F1FA; border-left: 3px solid #0066CC; border-radius: 4px;">
-                <strong style="color: #0066CC;">💡 Hybrid Strategy</strong>
-                <p style="margin: 8px 0 0 0; color: #151515; line-height: 1.5;">
-                  Taminator uses a hybrid approach: tries Vault first, falls back to Auth Box if Vault is unavailable. 
-                  This ensures zero downtime during migration and works both online and offline.
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div class="card" style="margin-top: 24px;">
-            <div class="card-title">Setup Instructions</div>
-            <div class="card-content">
-              <h4 style="margin-bottom: 12px;">Environment Variables</h4>
-              <div style="background: #F5F5F5; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 13px; margin-bottom: 16px;">
-                export VAULT_ADDR="http://your-vault-server:8201"<br>
-                export VAULT_TOKEN="your-vault-token"
-              </div>
-              <p style="margin-top: 8px; color: #6A6E73; font-size: 14px;">
-                💡 Set these during onboarding or in your shell profile (~/.bashrc or ~/.zshrc)
-              </p>
-              
-              <h4 style="margin-bottom: 12px;">CLI Commands</h4>
-              <div style="background: #F5F5F5; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 13px;">
-                tam-vault status &nbsp;&nbsp;&nbsp;# Check connection<br>
-                tam-vault migrate &nbsp;&nbsp;# Migrate Auth Box tokens<br>
-                tam-vault list &nbsp;&nbsp;&nbsp;&nbsp;# Show all tokens<br>
-                tam-vault get jira &nbsp;# Get specific token
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      
-      loadVaultStatus();
-    }
-    
-    async function loadVaultStatus() {
-      try {
-        // Execute tam-vault status command
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execPromise = util.promisify(exec);
-        
-        const result = await execPromise('/home/jbyrd/pai/bin/tam-vault test 2>&1 || echo "OFFLINE"');
-        
-        const isOnline = !result.stdout.includes('OFFLINE') && !result.stdout.includes('not available');
-        
-        document.getElementById('vault-status').className = isOnline ? 'status-badge success' : 'status-badge error';
-        document.getElementById('vault-status').textContent = isOnline ? '✓ Connected' : '✗ Offline';
-        
-        document.getElementById('vault-addr').textContent = process.env.VAULT_ADDR || 'Not configured';
-        
-        if (isOnline) {
-          document.getElementById('vault-version').textContent = '1.15.6';
-          document.getElementById('vault-initialized').textContent = '✓ Yes';
-          document.getElementById('vault-sealed').textContent = '✓ Unsealed';
-          document.getElementById('vault-strategy').textContent = 'vault-first';
-          
-          // Load tokens list
-          loadVaultTokens();
-        } else {
-          document.getElementById('vault-version').textContent = 'N/A';
-          document.getElementById('vault-initialized').textContent = 'N/A';
-          document.getElementById('vault-sealed').textContent = 'N/A';
-          document.getElementById('vault-strategy').textContent = 'auth-box-only';
-          
-          document.getElementById('vault-tokens-list').innerHTML = `
-            <p style="color: #C9190B;">⚠️ Vault not available. Using Auth Box fallback.</p>
-          `;
-        }
-      } catch (error) {
-        console.error('Error loading Vault status:', error);
-        document.getElementById('vault-status').className = 'status-badge error';
-        document.getElementById('vault-status').textContent = '✗ Error';
-        document.getElementById('vault-strategy').textContent = 'auth-box-only';
-      }
-    }
-    
-    async function loadVaultTokens() {
-      try {
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execPromise = util.promisify(exec);
-        
-        const result = await execPromise('/home/jbyrd/pai/bin/tam-vault list 2>&1');
-        
-        const tokensList = document.getElementById('vault-tokens-list');
-        
-        if (result.stdout.includes('No tokens')) {
-          tokensList.innerHTML = `<p style="color: #6A6E73;">No tokens stored in Vault yet. Migrate from Auth Box or add new tokens.</p>`;
-          return;
-        }
-        
-        // Parse token list from output
-        const lines = result.stdout.split('\\n');
-        const tokens = lines.filter(line => line.match(/^[a-z-]+$/)).map(t => t.trim());
-        
-        if (tokens.length === 0) {
-          tokensList.innerHTML = `<p style="color: #6A6E73;">Loading...</p>`;
-          return;
-        }
-        
-        tokensList.innerHTML = tokens.map(token => `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F5F5F5; border-radius: 4px; margin-bottom: 8px;">
-            <div>
-              <strong>${token}</strong>
-              <p style="margin: 4px 0 0 0; color: #6A6E73; font-size: 13px;">Stored in Vault</p>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;" onclick="vaultGetToken('${token}')">View</button>
-              <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px; background: #FFEAEA; color: #C9190B;" onclick="vaultDeleteToken('${token}')">Delete</button>
-            </div>
-          </div>
-        `).join('');
-        
-      } catch (error) {
-        console.error('Error loading tokens:', error);
-        document.getElementById('vault-tokens-list').innerHTML = `<p style="color: #C9190B;">Error loading tokens</p>`;
-      }
-    }
-    
-    async function vaultMigrate() {
-      if (!confirm('Migrate all Auth Box tokens to Vault? This will copy tokens but keep Auth Box as backup.')) {
-        return;
-      }
-      
-      try {
-        const { exec } = require('child_process');
-        const util = require('util');
-        const path = require('path');
-        const os = require('os');
-        const execPromise = util.promisify(exec);
-        
-        // Try multiple possible locations for tam-vault
-        const possiblePaths = [
-          path.join(os.homedir(), 'pai', 'bin', 'tam-vault'),
-          path.join(os.homedir(), 'hatter-pai', 'bin', 'tam-vault'),
-          'tam-vault'  // Try system PATH as fallback
-        ];
-        
-        let vaultPath = null;
-        for (const tryPath of possiblePaths) {
-          try {
-            if (tryPath === 'tam-vault') {
-              vaultPath = tryPath;
-              break;
-            }
-            const fs = require('fs');
-            if (fs.existsSync(tryPath)) {
-              vaultPath = tryPath;
-              break;
-            }
-          } catch (e) {
-            continue;
-          }
-        }
-        
-        if (!vaultPath) {
-          throw new Error('tam-vault command not found. Please ensure PAI tools are installed.');
-        }
-        
-        const result = await execPromise(`${vaultPath} migrate 2>&1`);
-        
-        alert('Migration complete! Check the console output for details.');
-        loadVaultTokens();
-      } catch (error) {
-        alert('Migration failed: ' + error.message);
-      }
-    }
-    
-    function vaultRefresh() {
-      loadVaultStatus();
-    }
-    
-    async function vaultTest() {
-      try {
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execPromise = util.promisify(exec);
-        
-        const result = await execPromise('/home/jbyrd/pai/bin/tam-vault test 2>&1');
-        
-        alert('Vault Test Results:\\n\\n' + result.stdout);
-      } catch (error) {
-        alert('Test failed: ' + error.message);
-      }
-    }
-    
-    async function vaultAddToken() {
-      const service = document.getElementById('vault-new-service').value.trim();
-      const token = document.getElementById('vault-new-token').value.trim();
-      
-      if (!service || !token) {
-        alert('Please enter both service name and token');
-        return;
-      }
-      
-      try {
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execPromise = util.promisify(exec);
-        
-        const result = await execPromise(`echo "${token}" | /home/jbyrd/pai/bin/tam-vault set ${service}`);
-        
-        alert(`Token for ${service} stored successfully!`);
-        document.getElementById('vault-new-service').value = '';
-        document.getElementById('vault-new-token').value = '';
-        loadVaultTokens();
-      } catch (error) {
-        alert('Failed to store token: ' + error.message);
-      }
-    }
-    
-    async function vaultGetToken(service) {
-      try {
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execPromise = util.promisify(exec);
-        
-        const result = await execPromise(`/home/jbyrd/pai/bin/tam-vault get ${service} 2>&1`);
-        
-        prompt(`Token for ${service}:`, result.stdout.trim());
-      } catch (error) {
-        alert('Failed to retrieve token: ' + error.message);
-      }
-    }
-    
-    async function vaultDeleteToken(service) {
-      if (!confirm(`Delete ${service} token from Vault?`)) {
-        return;
-      }
-      
-      try {
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execPromise = util.promisify(exec);
-        
-        const result = await execPromise(`/home/jbyrd/pai/bin/tam-vault delete ${service} 2>&1`);
-        
-        alert(`Token for ${service} deleted`);
-        loadVaultTokens();
-      } catch (error) {
-        alert('Failed to delete token: ' + error.message);
-      }
-    }
 
     function showRhcaseBot() {
       document.getElementById('page-title').textContent = 'rhcase bot';
@@ -2255,8 +1925,6 @@ ${result.error || result.output || 'Post failed'}
               </div>
 
               <div style="margin-bottom: 24px;">
-                <h4>What's the difference between Vault and Auth Box?</h4>
-                <p>Vault is enterprise-grade secrets management (team sharing). Auth Box is local fallback (personal use). Taminator uses hybrid approach.</p>
               </div>
             </div>
           </div>
@@ -2467,13 +2135,11 @@ ${result.error || result.output || 'Post failed'}
                   <strong>What will be reset:</strong><br>
                   • OOBE completion state (will show wizard on next launch)<br>
                   • All settings (email, report format, etc.)<br>
-                  • Vault configuration<br>
                   • Cached authentication data
                 </p>
                 <p style="color: #3E8635; margin-bottom: 16px;">
                   <strong>What will NOT be affected:</strong><br>
                   • Customer data and reports<br>
-                  • Tokens stored in HashiCorp Vault<br>
                   • Files in your reports directory
                 </p>
                 <button class="btn" onclick="factoryReset()" style="background: #C9190B; color: white; border: none;">
@@ -2517,7 +2183,7 @@ ${result.error || result.output || 'Post failed'}
     }
     
     function resetSettings() {
-      if (confirm('Are you sure you want to reset all settings to defaults?\n\nThis will:\n- Reset all settings to defaults\n- Clear Vault connection info\n- Reload the application')) {
+      if (confirm('Are you sure you want to reset all settings to defaults?\n\nThis will:\n- Reset all settings to defaults\n- Reset authentication settings\n- Reload the application')) {
         // Reset general settings
         document.getElementById('settings-email').value = 'jbyrd@redhat.com';
         document.getElementById('settings-auto-update').checked = true;
@@ -2529,16 +2195,13 @@ ${result.error || result.output || 'Post failed'}
         document.getElementById('settings-jira-timeout').value = '30';
         document.getElementById('settings-debug-mode').checked = false;
         
-        // Reset Vault-related data
-        // Note: Environment variables (VAULT_ADDR, VAULT_TOKEN) are set by user
+        // Reset authentication data
         // and can't be cleared from within the app, but we clear cached state
-        localStorage.removeItem('vault_last_status');
-        localStorage.removeItem('vault_tokens_cache');
         sessionStorage.clear();
         
-        alert('Settings reset to defaults!\n\nNote: Vault environment variables (VAULT_ADDR, VAULT_TOKEN) are set externally and must be cleared manually if needed.');
+        alert('Settings reset to defaults!\n\nNote: Authentication tokens are stored securely in your system keyring.');
         
-        // Reload to refresh Vault state
+        // Reload to refresh application state
         setTimeout(() => {
           window.location.reload();
         }, 1000);
@@ -2665,9 +2328,9 @@ ${result.error || result.output || 'Post failed'}
             </div>
             
             <div style="padding: 16px; background: #F5F5F5; border-radius: 4px;">
-              <h4 style="margin: 0 0 12px 0; color: #151515;">💬 Slack (Red Hat Internal)</h4>
-              <p style="margin: 0 0 8px 0; color: #6A6E73;">Reach out on Slack:</p>
-              <span style="font-family: monospace; color: #151515; font-weight: 600;">#tam-automation</span>
+              <h4 style="margin: 0 0 12px 0; color: #151515;">📧 Contact</h4>
+              <p style="margin: 0 0 8px 0; color: #6A6E73;">Email:</p>
+              <span style="font-family: monospace; color: #151515; font-weight: 600;">jbyrd@redhat.com</span>
             </div>
           </div>
         </div>

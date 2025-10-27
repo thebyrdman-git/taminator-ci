@@ -17,12 +17,15 @@ let mainWindow;
 function getTamrfeCli() {
   const fs = require('fs');
   
-  // Priority 1: Look for standalone binary (packaged with PyInstaller)
-  const bundledBinaryPath = path.join(__dirname, '../bin/tam-rfe');
-  if (fs.existsSync(bundledBinaryPath)) {
-    console.log('[CLI] Using bundled tam-rfe binary:', bundledBinaryPath);
+  // Priority 1: Look for standalone binary in extraResources (production)
+  const resourcesBinaryPath = app.isPackaged 
+    ? path.join(process.resourcesPath, 'bin', 'tam-rfe')
+    : path.join(__dirname, '../bin/tam-rfe');
+    
+  if (fs.existsSync(resourcesBinaryPath)) {
+    console.log('[CLI] Using bundled tam-rfe binary:', resourcesBinaryPath);
     return {
-      command: bundledBinaryPath,
+      command: resourcesBinaryPath,
       prependArgs: []
     };
   }
@@ -239,205 +242,6 @@ ipcMain.handle('oobe-factory-reset', async () => {
   return { success };
 });
 
-/**
- * Test Vault connection
- */
-ipcMain.handle('oobe-test-vault-connection', async (event, vaultConfig) => {
-  console.log('[OOBE] Testing Vault connection...');
-  
-  const https = require('https');
-  const http = require('http');
-  const url = require('url');
-  
-  try {
-    const parsedUrl = new URL(vaultConfig.url);
-    const isHttps = parsedUrl.protocol === 'https:';
-    const httpModule = isHttps ? https : http;
-    
-    // Test connection with a simple health check
-    return new Promise((resolve) => {
-      const options = {
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port || (isHttps ? 8200 : 8200),
-        path: '/v1/sys/health',
-        method: 'GET',
-        headers: {
-          'X-Vault-Token': vaultConfig.token
-        },
-        rejectUnauthorized: false, // Allow self-signed certificates
-        timeout: 5000
-      };
-      
-      const req = httpModule.request(options, (res) => {
-        let data = '';
-        
-        res.on('data', (chunk) => {
-          data += chunk;
-        });
-        
-        res.on('end', () => {
-          // Vault health endpoint returns 200 for healthy, but also other codes
-          if (res.statusCode >= 200 && res.statusCode < 600) {
-            // Now test if we can read from the configured path
-            testVaultRead(vaultConfig, httpModule, parsedUrl).then(resolve);
-          } else {
-            resolve({
-              success: false,
-              error: `Vault health check returned status ${res.statusCode}`
-            });
-          }
-        });
-      });
-      
-      req.on('error', (error) => {
-        resolve({
-          success: false,
-          error: `Cannot connect to Vault: ${error.message}`
-        });
-      });
-      
-      req.on('timeout', () => {
-        req.destroy();
-        resolve({
-          success: false,
-          error: 'Connection timeout - Vault server not responding'
-        });
-      });
-      
-      req.end();
-    });
-    
-  } catch (error) {
-    console.error('[OOBE] Vault test error:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-});
-
-/**
- * Helper function to test reading from Vault path
- */
-function testVaultRead(vaultConfig, httpModule, parsedUrl) {
-  return new Promise((resolve) => {
-    const vaultPath = `/v1/${vaultConfig.mount}/data/${vaultConfig.path}`;
-    
-    const options = {
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port || 8200,
-      path: vaultPath,
-      method: 'GET',
-      headers: {
-        'X-Vault-Token': vaultConfig.token
-      },
-      rejectUnauthorized: false,
-      timeout: 5000
-    };
-    
-    const req = httpModule.request(options, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          // Successfully read from Vault
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.data && parsed.data.data) {
-              resolve({
-                success: true,
-                message: 'Successfully connected and read from Vault'
-              });
-            } else {
-              resolve({
-                success: false,
-                error: 'Secret path exists but has no data'
-              });
-            }
-          } catch (e) {
-            resolve({
-              success: false,
-              error: 'Invalid response from Vault'
-            });
-          }
-        } else if (res.statusCode === 404) {
-          resolve({
-            success: false,
-            error: `Secret path not found: ${vaultConfig.path}`
-          });
-        } else if (res.statusCode === 403) {
-          resolve({
-            success: false,
-            error: 'Access denied - check your Vault token permissions'
-          });
-        } else {
-          resolve({
-            success: false,
-            error: `Vault returned status ${res.statusCode}`
-          });
-        }
-      });
-    });
-    
-    req.on('error', (error) => {
-      resolve({
-        success: false,
-        error: `Failed to read from Vault: ${error.message}`
-      });
-    });
-    
-    req.on('timeout', () => {
-      req.destroy();
-      resolve({
-        success: false,
-        error: 'Timeout reading from Vault'
-      });
-    });
-    
-    req.end();
-  });
-}
-
-/**
- * Save Vault configuration
- */
-ipcMain.handle('oobe-save-vault-config', async (event, vaultConfig) => {
-  console.log('[OOBE] Saving Vault configuration...');
-  
-  const fs = require('fs');
-  const os = require('os');
-  
-  try {
-    const configDir = path.join(os.homedir(), '.config', 'taminator-gui');
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
-    }
-    
-    const vaultConfigFile = path.join(configDir, 'vault-config.json');
-    
-    // Save configuration (token is sensitive but stored locally)
-    const config = {
-      url: vaultConfig.url,
-      token: vaultConfig.token,
-      mount: vaultConfig.mount,
-      path: vaultConfig.path,
-      lastVerified: new Date().toISOString()
-    };
-    
-    fs.writeFileSync(vaultConfigFile, JSON.stringify(config, null, 2), 'utf8');
-    
-    console.log('[OOBE] Vault configuration saved successfully');
-    return { success: true };
-    
-  } catch (error) {
-    console.error('[OOBE] Error saving Vault configuration:', error);
-    throw error;
-  }
-});
 
 /**
  * Test JIRA token
@@ -899,19 +703,25 @@ ipcMain.handle('submit-github-issue', async (event, issueData) => {
   });
 });
 
-// Save token handler (for Auth Box / Vault GUI)
+// Save token handler (using system keyring)
 ipcMain.handle('save-token', async (event, data) => {
   console.log('[Save Token] Saving token for type:', data.type);
   
   const { spawn } = require('child_process');
   
   try {
-    // Use tam-vault CLI to save to HashiCorp Vault
-    const vaultPath = '/home/jbyrd/pai/bin/tam-vault';
-    
+    // Use Python keyring to save token securely to system keyring
     return new Promise((resolve, reject) => {
-      // Call: tam-vault set <type> <token>
-      const vaultProcess = spawn(vaultPath, ['set', data.type, data.token], {
+      const pythonScript = `
+import keyring
+try:
+    keyring.set_password('taminator', '${data.type}', '${data.token}')
+    print('SUCCESS')
+except Exception as e:
+    print(f'ERROR: {e}')
+`;
+      
+      const pythonProcess = spawn('python3', ['-c', pythonScript], {
         env: { ...process.env },
         stdio: ['pipe', 'pipe', 'pipe']
       });
@@ -919,28 +729,27 @@ ipcMain.handle('save-token', async (event, data) => {
       let stdout = '';
       let stderr = '';
       
-      vaultProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
+      pythonProcess.stdout.on('data', (chunk) => {
+        stdout += chunk.toString();
       });
       
-      vaultProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
+      pythonProcess.stderr.on('data', (chunk) => {
+        stderr += chunk.toString();
       });
       
-      vaultProcess.on('close', (code) => {
-        if (code === 0) {
-          console.log('[Save Token] Token saved to Vault successfully');
-          console.log('[Save Token] Output:', stdout);
-          resolve({ success: true, message: 'Token saved to Vault' });
+      pythonProcess.on('close', (code) => {
+        if (code === 0 && stdout.includes('SUCCESS')) {
+          console.log('[Save Token] Token saved to system keyring successfully');
+          resolve({ success: true, message: 'Token saved securely' });
         } else {
-          console.error('[Save Token] Vault CLI failed:', stderr);
-          reject(new Error(`Failed to save to Vault: ${stderr}`));
+          console.error('[Save Token] Keyring save failed:', stderr);
+          reject(new Error(`Failed to save token: ${stderr}`));
         }
       });
       
-      vaultProcess.on('error', (err) => {
-        console.error('[Save Token] Vault CLI error:', err.message);
-        reject(new Error(`Vault CLI error: ${err.message}`));
+      pythonProcess.on('error', (err) => {
+        console.error('[Save Token] Python keyring error:', err.message);
+        reject(new Error(`Keyring error: ${err.message}`));
       });
     });
   } catch (error) {
