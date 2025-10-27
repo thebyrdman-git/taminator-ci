@@ -67,32 +67,32 @@ Taminator is the TAM automation platform that actually understands your workflow
 **For Intel/AMD (x86_64):**
 ```bash
 # Download from GitLab releases
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0-x86_64.AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1.AppImage
 
 # Make executable
-chmod +x Taminator-1.10.0-x86_64.AppImage
+chmod +x Taminator-1.10.1.AppImage
 
 # Run
-./Taminator-1.10.0-x86_64.AppImage
+./Taminator-1.10.1.AppImage
 ```
 
 **For ARM64 (Apple Silicon, Graviton):**
 ```bash
 # Download ARM64 build
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0-arm64.AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1-arm64.AppImage
 
 # Make executable
-chmod +x Taminator-1.10.0-arm64.AppImage
+chmod +x Taminator-1.10.1-arm64.AppImage
 
 # Run
-./Taminator-1.10.0-arm64.AppImage
+./Taminator-1.10.1-arm64.AppImage
 ```
 
 **System Integration (Optional):**
 ```bash
 # Install to user Applications directory
 mkdir -p ~/Applications
-cp Taminator-1.10.0-*.AppImage ~/Applications/
+cp Taminator-1.10.1*.AppImage ~/Applications/
 
 # Create desktop entry
 cat > ~/.local/share/applications/taminator.desktop << 'EOF'
@@ -101,7 +101,7 @@ Version=1.0
 Type=Application
 Name=Taminator
 Comment=RFE and Bug Tracking Tool
-Exec=/home/$USER/Applications/Taminator-1.10.0-x86_64.AppImage
+Exec=/home/$USER/Applications/Taminator-1.10.1.AppImage
 Icon=taminator
 Terminal=false
 Categories=Development;Utility;
@@ -115,10 +115,10 @@ update-desktop-database ~/.local/share/applications/
 
 ```bash
 # Download DMG
-curl -O https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.0/Taminator-1.10.0.dmg
+curl -O https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1.dmg
 
 # Mount and install
-open Taminator-1.10.0.dmg
+open Taminator-1.10.1.dmg
 
 # In Finder: Drag Taminator to Applications folder
 # First run: Right-click → Open (to bypass Gatekeeper)
@@ -126,7 +126,7 @@ open Taminator-1.10.0.dmg
 
 #### Windows (NSIS Installer)
 
-1. Download `Taminator-Setup-1.10.0.exe` from GitLab releases
+1. Download `Taminator Setup 1.10.1.exe` from GitLab releases
 2. Run installer with administrator privileges
 3. Follow installation wizard prompts
 4. Launch from Start Menu or Desktop shortcut
@@ -590,7 +590,7 @@ tar -xzf taminator-backup-2025-10-25.tar.gz -C ~/
 **Linux:**
 ```bash
 # Remove AppImage
-rm ~/Applications/Taminator-1.10.0-*.AppImage
+rm ~/Applications/Taminator-1.10.1*.AppImage
 
 # Remove configuration
 rm -rf ~/.config/taminator/
@@ -629,7 +629,7 @@ rm -rf ~/taminator-test-data/
 
 ### Documentation
 - **Getting Started Guide:** [docs/guides/GETTING-STARTED.md](docs/guides/GETTING-STARTED.md)
-- **Installation Guide:** [docs/guides/INSTALLATION-GUIDE-V1.10.0.md](docs/guides/INSTALLATION-GUIDE-V1.10.0.md)
+- **Installation Guide:** [GETTING-STARTED.md](GETTING-STARTED.md)
 - **Quick Reference:** [docs/guides/QUICK-REFERENCE.md](docs/guides/QUICK-REFERENCE.md)
 - **Complete Documentation Index:** [docs/README.md](docs/README.md)
 
@@ -695,5 +695,5 @@ For questions or support, contact: jbyrd@redhat.com
 
 **Document Version:** 1.0  
 **Last Updated:** October 25, 2025  
-**Software Version:** Taminator 1.10.0  
+**Software Version:** Taminator 1.10.1  
 **Status:** General Availability (GA)
