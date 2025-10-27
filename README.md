@@ -616,9 +616,10 @@ rm -rf ~/taminator-test-data/
 ## Additional Resources
 
 ### Documentation
-- **Getting Started Guide:** [GETTING-STARTED.md](GETTING-STARTED.md)
-- **Release Notes:** [RELEASE-NOTES-v1.10.0.md](RELEASE-NOTES-v1.10.0.md)
-- **Tooling Audit:** [COMPREHENSIVE-TOOLING-AUDIT-V1.10.0.md](COMPREHENSIVE-TOOLING-AUDIT-V1.10.0.md)
+- **Getting Started Guide:** [docs/guides/GETTING-STARTED.md](docs/guides/GETTING-STARTED.md)
+- **Installation Guide:** [docs/guides/INSTALLATION-GUIDE-V1.10.0.md](docs/guides/INSTALLATION-GUIDE-V1.10.0.md)
+- **Quick Reference:** [docs/guides/QUICK-REFERENCE.md](docs/guides/QUICK-REFERENCE.md)
+- **Complete Documentation Index:** [docs/README.md](docs/README.md)
 
 ### Support
 - **GitLab Issues:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
