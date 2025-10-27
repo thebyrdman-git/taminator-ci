@@ -3497,7 +3497,7 @@ ${result.error || result.output || 'Post failed'}
         
         // Play a fun alert sound (if available)
         if (window.speechSynthesis) {
-          const utterance = new SpeechSynthesis Utterance('Ski Free! Watch out for the Yeti!');
+          const utterance = new SpeechSynthesisUtterance('Ski Free! Watch out for the Yeti!');
           utterance.rate = 1.5;
           window.speechSynthesis.speak(utterance);
         }
