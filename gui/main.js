@@ -256,6 +256,12 @@ ipcMain.handle('oobe-set-auth-method', async (event, method) => {
  */
 ipcMain.handle('oobe-complete', async () => {
   oobeState.completeOOBE();
+  
+  // Notify all windows that OOBE is complete
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('oobe-completed');
+  });
+  
   return { success: true };
 });
 
@@ -264,6 +270,12 @@ ipcMain.handle('oobe-complete', async () => {
  */
 ipcMain.handle('oobe-skip-setup', async () => {
   oobeState.skipSetup();
+  
+  // Notify all windows that OOBE is complete (skipped)
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('oobe-completed');
+  });
+  
   return { success: true };
 });
 

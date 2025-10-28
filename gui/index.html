@@ -3964,9 +3964,15 @@ ${result.error || result.output || 'Post failed'}
               <p style="color: #6A6E73; font-family: 'Red Hat Text', sans-serif; max-width: 500px; text-align: center; line-height: 1.6;">
                 We've opened the setup wizard in a new window. Complete the setup to get started.
               </p>
-              <p style="color: #999; font-size: 14px;">After setup, restart Taminator to begin.</p>
+              <p style="color: #999; font-size: 14px;">When setup is complete, the main app will load automatically.</p>
             </div>
           `;
+          
+          // Listen for OOBE completion and reload the app
+          ipcRenderer.on('oobe-completed', () => {
+            console.log('[App] OOBE completed, reloading main window...');
+            window.location.reload();
+          });
           
           return true; // First run
         }
