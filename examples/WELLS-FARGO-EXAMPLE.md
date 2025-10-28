@@ -4,21 +4,21 @@
 
 ### Customer Details
 - **Customer Name**: Wells Fargo
-- **Account Number**: 838043
-- **Portal Group ID**: 4357341 (Production Ready)
-- **Confidence Level**: Confirmed (production ready)
+- **Account Number**: 7654321 (example - not real)
+- **Portal Group ID**: 8888888 (example - not real)
+- **Confidence Level**: Sanitized Example
 - **Schedule**: Wednesdays at 9:00 AM EST (day before weekly TAM call)
 
 ## 🎯 What the Tool Does for Wells Fargo
 
 ### Current Manual Process (2-3 hours per week)
 ```
-1. TAM runs: rhcase list 838043 --months 1
+1. TAM runs: rhcase list 7654321 --months 1
 2. TAM manually filters cases by SBR Group (Ansible, OpenShift, etc.)
 3. TAM copies case data into Excel/Word document
 4. TAM formats tables with case numbers, summaries, status
 5. TAM logs into Red Hat customer portal
-6. TAM navigates to Wells Fargo group page (Group 4357341)
+6. TAM navigates to Wells Fargo group page (Group 8888888)
 7. TAM edits page content
 8. TAM pastes formatted tables
 9. TAM unchecks "Send Notifications" 
@@ -30,10 +30,10 @@
 ```
 1. TAM runs: tam-rfe-monitor wellsfargo --daily
 2. Tool automatically:
-   - Discovers all Wells Fargo cases via rhcase list 838043
+   - Discovers all Wells Fargo cases via rhcase list 7654321
    - Filters by SBR Group and status
    - Generates professional 3-table format
-   - Posts to Wells Fargo portal group 4357341
+   - Posts to Wells Fargo portal group 8888888
    - Sends success notification to TAM
 3. TAM reviews notification and confirms success
 ```
@@ -135,10 +135,10 @@ tam-rfe-monitor --status wellsfargo
 ```yaml
 wellsfargo:
   name: "Wells Fargo"
-  group_id: "4357341"
-  account_number: "838043"
+  group_id: "8888888"
+  account_number: "7654321"
   confidence: "confirmed"
-  portal_url: "https://access.redhat.com/groups/4357341/discussions/7047245"
+  portal_url: "https://access.redhat.com/groups/8888888/discussions/7047245"
   schedule:
     day_of_week: "wednesday"
     time: "09:00"
@@ -187,18 +187,18 @@ wellsfargo:
 tam-rfe-verify --test rhcase
 
 # Test Wells Fargo case discovery
-rhcase list 838043 --months 1 --filter "SBR Group:Ansible"
+rhcase list 7654321 --months 1 --filter "SBR Group:Ansible"
 
 # Test Wells Fargo portal access
-curl -I https://access.redhat.com/groups/4357341
+curl -I https://access.redhat.com/groups/8888888
 
 # Run Wells Fargo test automation
 tam-rfe-monitor wellsfargo --test
 ```
 
 ### Expected Results
-- **Case Discovery**: Should find Wells Fargo cases for account 838043
-- **Portal Access**: Should access Wells Fargo group 4357341
+- **Case Discovery**: Should find Wells Fargo cases for account 7654321
+- **Portal Access**: Should access Wells Fargo group 8888888
 - **Content Generation**: Should create 3-table format with executive summary
 - **API Posting**: Should post to Wells Fargo portal (test mode)
 

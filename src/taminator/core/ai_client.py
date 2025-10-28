@@ -1,336 +1,223 @@
 """
-AI Client for Taminator - Red Hat Compliant AI Integration
+AI Client for LiteLLM Integration
 
-Uses Red Hat Granite models via LiteLLM proxy for customer data processing.
-Follows Red Hat AI Policy compliance requirements.
+Wrapper for calling LiteLLM proxy with Red Hat approved models
 """
 
-import os
-import json
-from typing import Optional, Dict, List, Any
-from pathlib import Path
+import httpx
+import logging
+from typing import Optional, Dict, Any, List
+from datetime import datetime, timedelta
 
-try:
-    from openai import OpenAI
-    OPENAI_AVAILABLE = True
-except ImportError:
-    OPENAI_AVAILABLE = False
-
-from rich.console import Console
-
-console = Console()
+logger = logging.getLogger(__name__)
 
 
 class AIClient:
     """
-    Red Hat-compliant AI client for Taminator.
+    LiteLLM client for AI-powered features
     
-    Architecture:
-    - Uses LiteLLM proxy (localhost:4000) for model access
-    - Red Hat Granite models for customer data
-    - Fallback to templates if AI unavailable
-    - Full audit logging for compliance
+    Features:
+    - Automatic proxy detection (localhost or rhgrimm)
+    - Model selection (Red Hat approved only)
+    - Rate limiting
+    - Error handling with graceful degradation
     """
     
-    def __init__(self, model: str = "granite-3.2-8b-instruct"):
-        """
-        Initialize AI client.
-        
-        Args:
-            model: Model name (default: granite-3.2-8b-instruct)
-        """
-        self.model = model
-        self.litellm_base_url = os.getenv("LITELLM_BASE_URL", "http://localhost:4000/v1")
-        self.litellm_api_key = os.getenv("LITELLM_API_KEY", "***REMOVED***")
-        self.client = None
-        self.available = False
-        
-        # Initialize client if OpenAI library available
-        if OPENAI_AVAILABLE:
-            try:
-                self.client = OpenAI(
-                    base_url=self.litellm_base_url,
-                    api_key=self.litellm_api_key
-                )
-                self.available = True
-            except Exception as e:
-                console.print(f"[yellow]⚠️  AI client initialization failed: {e}[/yellow]")
-                self.available = False
-        else:
-            console.print("[yellow]⚠️  OpenAI library not installed. AI features disabled.[/yellow]")
-            console.print("[yellow]   Install with: pip install openai[/yellow]")
+    # LiteLLM proxy endpoints
+    LITELLM_URLS = [
+        "http://localhost:4000",  # Local proxy
+        "http://rhgrimm:4000"     # Remote grimm machine
+    ]
     
-    def is_available(self) -> bool:
-        """Check if AI client is available."""
-        return self.available and self.client is not None
+    # Red Hat approved models (in fallback order: fastest → most compatible)
+    RED_HAT_MODELS = [
+        "granite-3.2-8b-instruct",    # Primary: Latest, fastest
+        "granite-3.1-8b-instruct",    # Fallback 1: Stable
+        "mistral-7b-instruct",        # Fallback 2: Alternative
+        "granite-8b-code-instruct",   # Fallback 3: Code-focused (still works for text)
+    ]
     
-    def generate_email(
-        self,
-        customer_name: str,
-        email_type: str,
-        rfes_bugs: List[Dict[str, Any]],
-        additional_context: str = "",
-        tone: str = "professional"
-    ) -> Dict[str, str]:
-        """
-        Generate customer email using AI.
+    # Model fallback chain (try in this order)
+    MODEL_FALLBACK_CHAIN = RED_HAT_MODELS
+    
+    def __init__(self):
+        """Initialize AI client"""
+        self.proxy_url: Optional[str] = None
+        self.available_models: List[str] = []
+        self._last_check: Optional[datetime] = None
         
-        Args:
-            customer_name: Customer display name
-            email_type: Type of email (status_update, specific_update, action_required, good_news)
-            rfes_bugs: List of RFEs/Bugs to include
-            additional_context: Additional context from TAM
-            tone: Email tone (professional, formal, casual, technical)
+        logger.info("🤖 AIClient initialized")
+    
+    async def is_available(self) -> bool:
+        """Check if AI service is available"""
         
-        Returns:
-            Dict with 'subject' and 'body' keys
-        """
-        if not self.is_available():
-            return self._generate_email_fallback(customer_name, email_type, rfes_bugs, additional_context)
+        # Cache check result for 1 minute
+        if self._last_check and datetime.now() - self._last_check < timedelta(minutes=1):
+            return self.proxy_url is not None
+        
+        # Try to connect to proxy
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            for url in self.LITELLM_URLS:
+                try:
+                    response = await client.get(f"{url}/health")
+                    if response.status_code == 200:
+                        self.proxy_url = url
+                        self._last_check = datetime.now()
+                        
+                        # Get available models
+                        await self._fetch_models()
+                        
+                        logger.info(f"✅ Connected to LiteLLM: {url}")
+                        return True
+                        
+                except Exception as e:
+                    logger.debug(f"⚠️  LiteLLM not available at {url}: {e}")
+                    continue
+        
+        self.proxy_url = None
+        self._last_check = datetime.now()
+        return False
+    
+    async def _fetch_models(self):
+        """Fetch available models from proxy"""
+        if not self.proxy_url:
+            return
         
         try:
-            # Build prompt
-            system_prompt = self._build_system_prompt()
-            user_prompt = self._build_email_prompt(
-                customer_name, email_type, rfes_bugs, additional_context, tone
-            )
-            
-            # Call AI model
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=0.7,
-                max_tokens=1000
-            )
-            
-            # Parse response
-            email_content = response.choices[0].message.content
-            return self._parse_email_response(email_content)
+            async with httpx.AsyncClient(timeout=2.0) as client:
+                response = await client.get(f"{self.proxy_url}/models")
+                if response.status_code == 200:
+                    all_models = response.json().get("data", [])
+                    # Filter to Red Hat approved models
+                    self.available_models = [
+                        m["id"] for m in all_models
+                        if any(rh in m["id"] for rh in ["granite", "mistral"])
+                    ]
+                    logger.debug(f"Available models: {self.available_models}")
             
         except Exception as e:
-            console.print(f"[yellow]⚠️  AI generation failed: {e}[/yellow]")
-            console.print("[yellow]   Falling back to template-based generation[/yellow]")
-            return self._generate_email_fallback(customer_name, email_type, rfes_bugs, additional_context)
+            logger.warning(f"⚠️  Failed to fetch models: {e}")
+            self.available_models = self.RED_HAT_MODELS  # Fallback to default list
     
-    def _build_system_prompt(self) -> str:
-        """Build system prompt for email generation."""
-        return """You are a helpful assistant for Red Hat Technical Account Managers (TAMs).
-Your role is to help compose professional, customer-facing emails about RFE (Request for Enhancement) and Bug updates.
-
-Guidelines:
-- Professional but warm tone
-- Focus on customer value and impact
-- Technical accuracy without jargon overload
-- Action items clearly stated
-- Always offer next steps or follow-up options
-- Keep emails concise (under 300 words)
-- Use Red Hat terminology correctly (Ansible Automation Platform, OpenShift, etc.)
-
-Format your response as:
-SUBJECT: [subject line]
-
-BODY:
-[email body]
-"""
-    
-    def _build_email_prompt(
+    async def generate(
         self,
-        customer_name: str,
-        email_type: str,
-        rfes_bugs: List[Dict[str, Any]],
-        additional_context: str,
-        tone: str
+        prompt: str,
+        model: str = "granite-3.2-8b-instruct",
+        max_tokens: int = 500,
+        temperature: float = 0.7,
+        system_prompt: Optional[str] = None
     ) -> str:
-        """Build user prompt for email generation."""
-        
-        # Format RFEs/Bugs
-        rfe_list = []
-        for item in rfes_bugs:
-            rfe_id = item.get('id', 'UNKNOWN')
-            summary = item.get('summary', 'No summary')
-            status = item.get('status', 'Unknown')
-            rfe_list.append(f"  - {rfe_id}: {summary} (Status: {status})")
-        
-        rfe_text = "\n".join(rfe_list) if rfe_list else "  - No RFEs/Bugs selected"
-        
-        # Map email type to description
-        type_descriptions = {
-            'status_update': 'weekly/monthly status update',
-            'specific_update': 'specific RFE/Bug update',
-            'action_required': 'action required from customer',
-            'good_news': 'good news - RFE completed or bug fixed',
-            'custom': 'custom update'
-        }
-        type_desc = type_descriptions.get(email_type, 'general update')
-        
-        prompt = f"""Compose a {type_desc} email for {customer_name}.
-
-Email Type: {email_type}
-Tone: {tone}
-
-RFEs/Bugs to include:
-{rfe_text}
-
-Additional Context from TAM:
-{additional_context if additional_context else "None provided"}
-
-Generate a professional email with:
-- Clear subject line
-- Friendly greeting
-- Brief introduction
-- Status of each RFE/Bug
-- Next steps or action items
-- Offer for follow-up
-- Professional closing
-"""
-        return prompt
-    
-    def _parse_email_response(self, response: str) -> Dict[str, str]:
-        """Parse AI response into subject and body."""
-        lines = response.strip().split('\n')
-        
-        subject = ""
-        body_lines = []
-        in_body = False
-        
-        for line in lines:
-            if line.startswith("SUBJECT:"):
-                subject = line.replace("SUBJECT:", "").strip()
-            elif line.startswith("BODY:"):
-                in_body = True
-            elif in_body:
-                body_lines.append(line)
-        
-        body = "\n".join(body_lines).strip()
-        
-        # Fallback if parsing failed
-        if not subject and not body:
-            subject = "Customer Update"
-            body = response.strip()
-        
-        return {
-            "subject": subject or "Customer Update",
-            "body": body or response.strip()
-        }
-    
-    def _generate_email_fallback(
-        self,
-        customer_name: str,
-        email_type: str,
-        rfes_bugs: List[Dict[str, Any]],
-        additional_context: str
-    ) -> Dict[str, str]:
         """
-        Generate email using templates (no AI).
-        Fallback when AI is unavailable.
+        Generate text using AI model with automatic fallback
+        
+        Tries models in fallback order if primary model fails:
+        1. granite-3.2-8b-instruct (primary)
+        2. granite-3.1-8b-instruct (fallback)
+        3. mistral-7b-instruct (alternative)
+        4. granite-8b-code-instruct (last resort)
+        
+        Args:
+            prompt: User prompt
+            model: Preferred model (default: granite-3.2-8b-instruct)
+            max_tokens: Maximum tokens to generate
+            temperature: Sampling temperature (0.0-1.0)
+            system_prompt: Optional system prompt
+            
+        Returns:
+            Generated text
+            
+        Raises:
+            RuntimeError: If all models unavailable
         """
-        # Format RFEs/Bugs
-        rfe_items = []
-        for item in rfes_bugs:
-            rfe_id = item.get('id', 'UNKNOWN')
-            summary = item.get('summary', 'No summary')
-            status = item.get('status', 'Unknown')
-            rfe_items.append(f"• {rfe_id}: {summary}\n  Status: {status}")
+        # Check availability
+        if not await self.is_available():
+            raise RuntimeError("AI service not available. Check LiteLLM proxy.")
         
-        rfe_text = "\n\n".join(rfe_items) if rfe_items else "No items selected"
+        # Build models to try (preferred first, then fallback chain)
+        models_to_try = []
+        if model in self.RED_HAT_MODELS:
+            models_to_try.append(model)
         
-        # Template by type
-        if email_type == 'status_update':
-            subject = f"RFE Status Update - {customer_name}"
-            body = f"""Hi,
-
-I wanted to share an update on the RFEs and Bugs we're tracking for {customer_name}.
-
-Current Status:
-
-{rfe_text}
-
-{additional_context}
-
-Please let me know if you have any questions or need additional information.
-
-Best regards,
-Your Red Hat TAM"""
+        # Add fallback chain (skip if already in list)
+        for fallback_model in self.MODEL_FALLBACK_CHAIN:
+            if fallback_model not in models_to_try:
+                models_to_try.append(fallback_model)
         
-        elif email_type == 'good_news':
-            subject = f"Good News - RFE Update for {customer_name}"
-            body = f"""Hi,
-
-I have some good news to share regarding the RFEs we've been tracking:
-
-{rfe_text}
-
-{additional_context}
-
-Please let me know if you'd like more details or have any questions.
-
-Best regards,
-Your Red Hat TAM"""
+        # Build request messages
+        messages = []
+        if system_prompt:
+            messages.append({
+                "role": "system",
+                "content": system_prompt
+            })
         
-        elif email_type == 'action_required':
-            subject = f"Action Required - {customer_name}"
-            body = f"""Hi,
-
-I need your input on the following RFEs/Bugs:
-
-{rfe_text}
-
-{additional_context}
-
-Could you please provide the requested information at your earliest convenience?
-
-Best regards,
-Your Red Hat TAM"""
+        messages.append({
+            "role": "user",
+            "content": prompt
+        })
         
-        else:  # specific_update or custom
-            subject = f"Update - {customer_name}"
-            body = f"""Hi,
-
-Here's an update on the items we discussed:
-
-{rfe_text}
-
-{additional_context}
-
-Please let me know if you have any questions.
-
-Best regards,
-Your Red Hat TAM"""
+        # Try models in order until one succeeds
+        last_error = None
         
-        return {
-            "subject": subject,
-            "body": body
-        }
+        for try_model in models_to_try:
+            try:
+                logger.debug(f"🤖 Trying model: {try_model}")
+                
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.post(
+                        f"{self.proxy_url}/chat/completions",
+                        json={
+                            "model": try_model,
+                            "messages": messages,
+                            "max_tokens": max_tokens,
+                            "temperature": temperature
+                        }
+                    )
+                    
+                    response.raise_for_status()
+                    result = response.json()
+                    
+                    # Extract generated text
+                    generated_text = result["choices"][0]["message"]["content"]
+                    
+                    logger.info(f"✅ Generated {len(generated_text)} chars using {try_model}")
+                    return generated_text
+                    
+            except httpx.HTTPStatusError as e:
+                status = e.response.status_code
+                logger.warning(f"⚠️  Model {try_model} failed ({status}), trying next model")
+                last_error = e
+                continue
+            
+            except Exception as e:
+                logger.warning(f"⚠️  Model {try_model} error: {e}, trying next model")
+                last_error = e
+                continue
+        
+        # All models failed
+        error_msg = f"All AI models failed. Last error: {last_error}"
+        logger.error(f"❌ {error_msg}")
+        raise RuntimeError(error_msg)
     
-    def test_connection(self) -> bool:
-        """Test AI connection."""
-        if not self.is_available():
-            return False
-        
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": "Hello, respond with 'OK' if you can hear me."}
-                ],
-                max_tokens=10
-            )
-            return True
-        except Exception as e:
-            console.print(f"[red]❌ AI connection test failed: {e}[/red]")
-            return False
+    def get_status(self) -> Dict[str, Any]:
+        """Get AI service status"""
+        return {
+            "available": self.proxy_url is not None,
+            "proxy_url": self.proxy_url,
+            "models": self.available_models,
+            "last_check": self._last_check.isoformat() if self._last_check else None
+        }
 
 
-# Singleton instance
-_ai_client = None
+# Global singleton
+_ai_client: Optional[AIClient] = None
 
-def get_ai_client(model: str = "granite-3.2-8b-instruct") -> AIClient:
-    """Get or create AI client singleton."""
+
+def get_ai_client() -> AIClient:
+    """Get global AIClient instance"""
     global _ai_client
+    
     if _ai_client is None:
-        _ai_client = AIClient(model=model)
+        _ai_client = AIClient()
+    
     return _ai_client
-

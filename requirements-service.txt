@@ -1,0 +1,36 @@
+# Taminator API Service Dependencies - v2.0
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+websockets==12.0
+
+# HTTP Client & Async
+httpx==0.25.1
+aiofiles==23.2.1
+httpx[http2]==0.25.1  # For async HTTP with HTTP/2 support
+
+# Data Validation
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Security & Auth
+keyring==24.3.0
+cryptography==41.0.7
+
+# Utilities
+python-dotenv==1.0.0
+psutil==5.9.6
+markdown==3.5.1  # For Portal report formatting
+
+# Google OAuth & APIs
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.110.0
+
+# Existing dependencies (keep for compatibility)
+requests>=2.31.0
+jinja2>=3.1.2
+platformdirs>=3.10.0  # For cross-platform log directory
+pyyaml>=6.0.1

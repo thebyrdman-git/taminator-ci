@@ -1,6 +1,6 @@
 {
   "name": "taminator-gui",
-  "version": "1.10.6",
+  "version": "2.0.0",
   "description": "Taminator RFE Tool - GUI Application",
   "homepage": "https://gitlab.cee.redhat.com/jbyrd/taminator",
   "repository": {
@@ -37,9 +37,11 @@
     },
     "files": [
       "main.js",
+      "service-manager.js",
       "index.html",
       "oobe-state.js",
       "oobe-wizard.html",
+      "logs-viewer.html",
       "public/**/*",
       "themes/**/*",
       "package.json"
@@ -48,6 +50,10 @@
       {
         "from": "../bin/tam-rfe",
         "to": "bin/tam-rfe"
+      },
+      {
+        "from": "../dist/taminator-service",
+        "to": "bin/taminator-service"
       }
     ],
     "mac": {

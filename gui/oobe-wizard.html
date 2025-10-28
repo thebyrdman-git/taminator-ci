@@ -876,9 +876,25 @@
 
     document.getElementById('btnSkip').addEventListener('click', async () => {
       if (confirm('Skip setup?\n\nYou can configure Taminator later from the Settings tab.')) {
+        console.log('[OOBE] Skipping setup...');
         await ipcRenderer.invoke('oobe-skip-setup');
-        // Redirect to main app
-        window.location.href = 'index.html';
+        
+        // Show skip message
+        document.body.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #F5F5F5; flex-direction: column; gap: 24px;">
+            <div style="font-size: 64px;">⏭️</div>
+            <h1 style="color: #151515; font-family: 'Red Hat Display', sans-serif; margin: 0;">Setup Skipped</h1>
+            <p style="color: #6A6E73; font-family: 'Red Hat Text', sans-serif; max-width: 500px; text-align: center; line-height: 1.6;">
+              You can configure Taminator later from the Settings page.
+            </p>
+            <p style="color: #999; font-size: 14px;">Closing wizard...</p>
+          </div>
+        `;
+        
+        // Close wizard window after 2 seconds
+        setTimeout(() => {
+          window.close();
+        }, 2000);
       }
     });
 
@@ -1122,9 +1138,24 @@
       // Mark OOBE as complete
       await ipcRenderer.invoke('oobe-complete');
       
-      // Close wizard window and open main app
-      // For now, just redirect to index.html
-      window.location.href = 'index.html';
+      // Show success message
+      document.getElementById('completion-screen').innerHTML = `
+        <div style="text-align: center; padding: 48px;">
+          <div style="font-size: 72px; margin-bottom: 24px;">✅</div>
+          <h2>Setup Complete!</h2>
+          <p style="color: #6A6E73; margin-bottom: 32px;">
+            Taminator is now configured and ready to use.
+          </p>
+          <p style="color: #6A6E73; font-size: 14px;">
+            Close this window and restart Taminator to begin.
+          </p>
+        </div>
+      `;
+      
+      // Close wizard window after 3 seconds
+      setTimeout(() => {
+        window.close();
+      }, 3000);
     });
 
     // CLI Switcher Functions

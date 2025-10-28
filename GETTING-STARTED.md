@@ -1,514 +1,524 @@
-# Getting Started with Taminator
+# Getting Started with Taminator v2.0
 
-**Product:** Taminator - RFE and Bug Tracking Automation Tool  
-**Version:** 1.10.0  
-**Audience:** Red Hat Technical Account Managers (TAMs)  
-**Time to Complete:** 15 minutes
-
----
-
-## Overview
-
-This guide provides step-by-step instructions for installing, configuring, and using Taminator for the first time. By the end of this guide, you will have:
-
-- ✅ Installed Taminator on your workstation
-- ✅ Configured authentication credentials
-- ✅ Onboarded your first customer
-- ✅ Generated your first RFE/Bug report
+**From zero to productive in 10 minutes**
 
 ---
 
 ## Prerequisites
 
-Before beginning installation, verify you have:
+Before you begin, ensure you have:
 
-| Requirement | Description | Verification |
-|-------------|-------------|--------------|
-| **Red Hat VPN** | Active VPN connection | `ping issues.redhat.com` |
-| **Red Hat Account** | Valid SSO credentials | Login to access.redhat.com |
-| **JIRA API Token** | Personal access token | Generated at access.redhat.com/management/api |
-| **Customer Data** | Account number and product | Obtain from customer relationship records |
+- ✅ **Red Hat VPN access** - Required for JIRA and Customer Portal APIs
+- ✅ **Red Hat SSO account** - Your `@redhat.com` email
+- ✅ **JIRA API token** - Generate at https://access.redhat.com/management/api
+- ✅ **Customer account numbers** - For customers you want to track
 
 ---
 
-## Step 1: Installation
+## Step 1: Installation (2 minutes)
 
-### 1.1 Download Taminator
+### Linux
 
-**Linux (x86_64):**
 ```bash
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1.AppImage
-```
+# Download AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v2.0.0/Taminator-2.0.0.AppImage
 
-**Linux (ARM64 - Apple Silicon Macs):**
-```bash
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1-arm64.AppImage
-```
-
-**macOS:**
-```bash
-curl -O https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v1.10.1/Taminator-1.10.1.dmg
-```
-
-**Windows:**
-Download `Taminator-Setup-1.10.0.exe` from GitLab releases page.
-
----
-
-### 1.2 Install Application
-
-**Linux:**
-```bash
 # Make executable
-chmod +x Taminator-1.10.0-*.AppImage
+chmod +x Taminator-2.0.0.AppImage
 
-# Run directly (no installation required)
-./Taminator-1.10.0-*.AppImage
+# Run
+./Taminator-2.0.0.AppImage
 ```
 
-**Optional - System Integration:**
+**Optional**: Move to Applications folder
 ```bash
-# Install to Applications directory
 mkdir -p ~/Applications
-mv Taminator-1.10.0-*.AppImage ~/Applications/
-
-# Create desktop entry for application launcher
-cat > ~/.local/share/applications/taminator.desktop << 'EOF'
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Taminator
-Comment=RFE and Bug Tracking Tool
-Exec=/home/$USER/Applications/Taminator-1.10.0-x86_64.AppImage
-Icon=taminator
-Terminal=false
-Categories=Development;Utility;
-EOF
-
-# Update desktop database
-update-desktop-database ~/.local/share/applications/
+mv Taminator-2.0.0.AppImage ~/Applications/
 ```
 
-**macOS:**
-```bash
-# Mount DMG
-open Taminator-1.10.0.dmg
+### macOS
 
-# Drag Taminator.app to Applications folder
-# First launch: Right-click → Open (bypass Gatekeeper)
-```
+*(Coming soon - use Linux in VM for now)*
 
-**Windows:**
-```powershell
-# Run installer
-.\Taminator-Setup-1.10.0.exe
+### Windows
 
-# Follow installation wizard
-# Choose installation directory (default: C:\Program Files\Taminator)
-# Select Start Menu integration
-# Complete installation
-```
+*(Coming soon - use Linux in VM for now)*
 
 ---
 
-## Step 2: First Launch (OOBE Wizard)
+## Step 2: First Launch - OOBE Wizard (3 minutes)
 
-### 2.1 Welcome Screen
+When you first launch Taminator, the **Out-of-Box Experience (OOBE) wizard** guides you through setup.
 
-On first launch, Taminator displays an Out-of-Box Experience (OOBE) wizard.
+### OOBE Steps
 
-**What to expect:**
-- Welcome message with feature overview
-- Visual demonstration of tool capabilities
-- Progress indicator (20% → 100%)
+#### 1. Welcome Screen
+- Overview of Taminator features
+- Architecture explanation (v2.0 improvements)
+- Click **"Get Started"**
 
-**Action:** Click **"Next: Set Up Authentication"**
+#### 2. Authentication Setup
+**Choose your token management method**:
 
----
+**Option A: OS Keyring** (Recommended for individual use)
+- Tokens stored in system keyring (Secret Service, KWallet, Keychain)
+- Most secure for single-user
+- Select **"Use OS Keyring"** → **"Continue"**
 
-### 2.2 Authentication Setup
+**Option B: HashiCorp Vault** (Recommended for teams)
+- Centralized token management
+- Requires Vault server
+- Enter Vault URL and token → **"Continue"**
 
-Choose your token storage method:
+#### 3. Add JIRA Token (Required)
 
-#### Option A: Manual Token Setup (Recommended for Individual Users)
+**Get your JIRA token**:
+1. Open https://access.redhat.com/management/api
+2. Click **"Generate Token"** or **"Create Personal Access Token"**
+3. Copy the token (looks like `MTE1NjQyMD...`)
 
-**Description:** Tokens stored locally in `~/.config/taminator/tokens.json`
+**In Taminator**:
+1. Paste token in **"JIRA API Token"** field
+2. Click **"Test Token"** (verifies it works)
+3. ✅ Green checkmark = success
+4. Click **"Continue"**
 
-**Advantages:**
-- ✅ No external dependencies
-- ✅ Works offline
-- ✅ Simple configuration
-- ✅ 5-minute setup
+**Troubleshooting**:
+- ❌ "Connection failed" → Check VPN connection
+- ❌ "Invalid token" → Regenerate at https://access.redhat.com/management/api
+- ❌ "Timeout" → Verify `ping issues.redhat.com` works
 
-**Disadvantages:**
-- ❌ Tokens stored per machine
-- ❌ No team sharing
+#### 4. Add Portal Token (Optional)
 
-**Action:** Click **"Manual Token Setup"** → Proceed to Step 2.3
+**If you post reports to Customer Portal**:
+1. Generate token at https://access.redhat.com/management/api
+2. Paste in **"Portal API Token"** field
+3. Click **"Test Token"**
+4. Click **"Continue"**
 
-#### Option B: HashiCorp Vault (Recommended for Teams)
+**Skip if you don't need it**:
+- Click **"Skip"** → You can add later in Settings
 
-**Description:** Centralized secrets management with audit logging
+#### 5. Onboard First Customer (Optional)
 
-**Prerequisites:**
-- HashiCorp Vault server (version 1.12.0+)
-- Valid Vault token with read/write permissions
-- Network connectivity to Vault server
+**Add your first customer** (or skip and do later):
 
-**Configuration:**
-```bash
-export VAULT_ADDR="http://vault.example.com:8200"
-export VAULT_TOKEN="hvs.CAESII..."
-```
+**Customer details**:
+- **Name**: Display name (e.g., "JPMorgan Chase")
+- **Slug**: Short ID (e.g., "jpmc") - lowercase, no spaces
+- **Your Email**: Your `@redhat.com` email
+- **Account Number**: Customer's Red Hat account number (required)
+- **Product**: Primary product (e.g., "Ansible", "OpenShift", "RHEL")
 
-**Advantages:**
-- ✅ Centralized token management
-- ✅ Team collaboration
-- ✅ Audit logging
-- ✅ Multi-machine access
+**Click "Onboard Customer"** → Taminator will:
+1. Query JIRA for RFEs and Bugs
+2. Generate initial report
+3. Save to `~/taminator-test-data/<slug>.md`
 
-**Disadvantages:**
-- ❌ Requires Vault infrastructure
-- ❌ Initial setup complexity
+**Or click "Skip"** to add customers later.
 
-**Action:** Click **"Set Up Vault"** → Enter connection details
-
----
-
-### 2.3 Token Configuration
-
-#### 2.3.1 Obtain JIRA API Token
-
-1. **Navigate to:** https://access.redhat.com/management/api
-2. **Click:** "Generate Token" or "Create Personal Access Token"
-3. **Copy token:** Format `MTE1NjQyMD...` (long alphanumeric string)
-4. **Save securely:** You'll need this in next step
-
-#### 2.3.2 Add Token to Taminator
-
-**In OOBE Wizard:**
-1. Paste JIRA token in "JIRA API Token" field
-2. (Optional) Paste Portal token in "Portal API Token" field
-3. Click **"Test Tokens"** to verify connectivity
-4. If successful: ✅ Green checkmark appears
-5. If failed: ❌ Red error message with troubleshooting steps
-6. Click **"Next: Add Your First Customer"** (or skip)
-
----
-
-## Step 3: Customer Onboarding
-
-### 3.1 Gather Customer Information
-
-Before onboarding, collect:
-
-| Information | Example | Source |
-|-------------|---------|--------|
-| **Customer Name** | JPMorgan Chase | Customer relationship records |
-| **Account Number** | 334224 | Red Hat account database |
-| **Product** | Ansible Automation Platform | Customer subscription |
-| **Your Email** | jbyrd@redhat.com | Your Red Hat email |
-
----
-
-### 3.2 Add Customer via OOBE
-
-**In OOBE Wizard:**
-1. **Customer Name:** Enter display name (e.g., "JPMorgan Chase")
-2. **Short Name (Slug):** Enter lowercase identifier (e.g., "jpmc")
-3. **Your Email:** Enter your Red Hat email
-4. **Account Number:** Enter customer account number (required)
-5. **Product:** Select from dropdown (Ansible, RHEL, OpenShift, etc.)
-6. Click **"✅ Add Customer"**
-
-**System Actions:**
-- Queries JIRA for open RFEs and Bugs
-- Filters by account number and product (SBR group)
-- Generates initial report template
-- Saves to `~/taminator-test-data/<slug>.md`
-
-**Expected Result:**
-```
-✅ Customer Added Successfully!
-Found 12 open RFEs and Bugs for JPMorgan Chase (Account: 334224, Product: Ansible)
-Report saved to: ~/taminator-test-data/jpmc.md
-```
-
----
-
-### 3.3 Complete OOBE
-
-Click **"Finish"** to exit wizard and enter main application.
-
-**Post-OOBE:**
+#### 6. Completion
+- ✅ Setup complete!
 - Dashboard loads automatically
-- Customer appears in customer list
-- Live JIRA stats displayed (if token configured)
+- You're ready to use Taminator
 
 ---
 
-## Step 4: Using Taminator
+## Step 3: Using Taminator (5 minutes)
 
-### 4.1 Dashboard Overview
+### Dashboard Tab
 
-**Navigation:** Dashboard tab (home icon)
+**What it shows**:
+- All customers at a glance
+- Live JIRA statistics (RFEs, Bugs, Total Issues)
+- Service health status
 
-**Features:**
-- **Summary Cards:** Total customers, RFEs, Bugs, Total Issues
-- **Customer Table:** Detailed view with account, product, counts
-- **Data Source:** 🟢 Live JIRA or 📄 Report fallback
-- **Last Modified:** Report update timestamp
+**Actions**:
+- Click **"🔄 Refresh"** → Update from JIRA
+- Click customer row → Opens customer details
 
-**Actions:**
-- **Refresh Dashboard:** Updates all customer stats from JIRA
-- **Add Customer:** Launch customer onboarding wizard
-- **Manage Tokens:** Navigate to token management
+**Status Bar** (bottom of window):
+- **Service**: Backend health (should be green)
+- **AI**: LiteLLM models available (optional)
+- **Tokens**: JIRA/Portal tokens configured
+- **VPN**: Red Hat VPN connection status
+- **Last Sync**: When data was last refreshed
 
----
+### Customers Tab
 
-### 4.2 Check Report Status
+**Manage customer accounts**:
+- Click **"+ Add Customer"** → Onboard new customer
+- Click **"Edit"** → Modify customer details
+- Click **"Delete"** → Remove customer (keeps report file)
 
-**Purpose:** Compare saved report against current JIRA data
+### Check Tab
 
-**Navigation:** Check tab → Select customer → Click "Compare Report vs. Live JIRA"
+**Compare saved report vs. live JIRA**:
+1. Select customer from dropdown
+2. Click **"Compare Report vs. Live JIRA"**
+3. Review differences
+4. If changes detected → Use **Update** tab to sync
 
-**Output:**
-```
-Checking JIRA for account 334224 (Ansible)...
-Found 12 open RFEs and Bugs
+### Update Tab
 
-✅ 3 status changes detected
-⚠️  [RFE] AAP-12345: In Progress → Post
-└─ Linked to case 03891234
-⚠️  [BUG] AAP-67890: Backlog → In Progress
-└─ Linked to case 03892345
-⚠️  [RFE] AAP-11111: New → Refinement
-└─ Linked to case 03893456
-```
+**Sync report with current JIRA status**:
+1. Select customer
+2. Click **"Update from JIRA"**
+3. Report updated with latest JIRA data
+4. Backup created automatically (`.backup` file)
 
-**Interpretation:**
-- **Green ✅:** Changes detected, update recommended
-- **Yellow ⚠️:** Specific issues with status changes
-- **Red ❌:** Errors or failures
+### Post Tab
 
----
+**Publish report to Customer Portal**:
+1. Select customer
+2. Click **"Preview"** → See what will be posted
+3. Enter **Customer Portal Group ID**
+   - Find in Customer Portal URL: `.../groups/<group-id>`
+4. Click **"Post to Portal"**
+5. ✅ Success message appears
 
-### 4.3 Update Report
+**Prerequisites**:
+- Portal token must be configured
+- Red Hat VPN must be connected
 
-**Purpose:** Synchronize saved report with latest JIRA data
+### rhcase Bot Tab
 
-**Navigation:** Update tab → Select customer → Click "Update from JIRA"
+**Interactive case analysis** (uses `rhcase` CLI):
 
-**Process:**
-1. System fetches current JIRA data
-2. Compares with saved report
-3. Creates backup (`.backup` extension)
-4. Updates report with new statuses
-5. Adds "Last Updated" timestamp
-
-**Safety Features:**
-- ✅ Automatic backup before updating
-- ✅ Preserves custom formatting
-- ✅ Rollback available (restore from `.backup`)
-
----
-
-### 4.4 Post to Customer Portal
-
-**Purpose:** Publish report to Red Hat Customer Portal group
-
-**Prerequisites:**
-- Portal API token configured
-- Customer Portal Group ID
-- Red Hat VPN connection
-
-**Navigation:** Post tab → Select customer → Click "Post to Portal"
-
-**Workflow:**
-1. Enter Customer Portal Group ID
-2. (Optional) Preview report before posting
-3. Click "Publish"
-4. Verify success message with Portal URL
-
-**Example:**
-```
-✅ Posted to Customer Portal
-→ https://access.redhat.com/groups/1234567/discussions/7891011
-```
-
----
-
-## Step 5: Command-Line Usage
-
-### 5.1 CLI Access
-
-**Linux/macOS:**
+**Commands**:
 ```bash
-# Add to PATH (one-time setup)
-ln -s ~/Applications/Taminator-1.10.0-x86_64.AppImage /usr/local/bin/tam-rfe
+# List cases for account
+rhcase list <account-number>
 
-# Verify installation
-tam-rfe --help
+# Get case details
+rhcase show <case-number>
+
+# Search cases
+rhcase search <keyword>
 ```
 
-**Windows:**
-```powershell
-# CLI automatically added to PATH during installation
-tam-rfe --help
+**Example**:
+```bash
+rhcase list 1234567 --months 1
 ```
+
+**Output**: Terminal-style display of case data
+
+### Settings Tab
+
+**Configure Taminator**:
+
+**Authentication**:
+- Add/update JIRA token
+- Add/update Portal token
+- Test tokens
+
+**Debug Logging**:
+- Enable debug for specific features
+- View log level per module
+- Download diagnostic logs
+
+**About**:
+- Version information
+- Service status
+- API documentation link
 
 ---
 
-### 5.2 Common CLI Operations
+## Common Workflows
 
-**View Dashboard:**
+### Workflow 1: Weekly RFE/Bug Report Update
+
+**Before your weekly TAM call**:
+
 ```bash
-tam-rfe dashboard
+# 1. Check for changes
+tam-rfe check <customer-slug>
+
+# 2. Update report (if changes detected)
+tam-rfe update <customer-slug> --yes
+
+# 3. Post to Portal
+tam-rfe post <customer-slug>
 ```
 
-**Check Customer:**
-```bash
-tam-rfe check jpmc
-```
+**Or use GUI**:
+1. Open Taminator
+2. Check tab → Select customer → Compare
+3. Update tab → Update from JIRA
+4. Post tab → Preview → Post
 
-**Update Report:**
-```bash
-tam-rfe update jpmc --yes
-```
+**Time**: 5 minutes per customer (vs 30 minutes manual)
 
-**Post to Portal:**
-```bash
-tam-rfe post jpmc
-```
+### Workflow 2: Onboarding New Customer
 
-**Onboard New Customer:**
+**When you get a new customer**:
+
 ```bash
 tam-rfe onboard <customer-slug> \
-  --email jbyrd@redhat.com \
+  --email your.email@redhat.com \
   --display-name "Customer Name" \
-  --account 123456 \
-  --product Ansible \
-  --non-interactive
+  --account 1234567 \
+  --product "Ansible"
+```
+
+**Or use GUI**:
+1. Customers tab → **"+ Add Customer"**
+2. Fill in details
+3. Click **"Onboard"**
+4. Report generated automatically
+
+**Time**: 2 minutes (vs 45 minutes manual)
+
+### Workflow 3: Case Analysis
+
+**Before customer call**:
+
+```bash
+# In rhcase Bot tab:
+rhcase list 1234567 --months 1
+
+# Review recent cases
+rhcase show 03742156
+
+# Check case severity
+rhcase list 1234567 --severity 1-2
+```
+
+**Time**: 3 minutes (vs 10 minutes in SupportShell)
+
+---
+
+## Pro Tips
+
+### 1. Use Keyboard Shortcuts
+
+- **Ctrl+R** / **Cmd+R** - Refresh dashboard
+- **Ctrl+,** / **Cmd+,** - Open settings
+- **Ctrl+Q** / **Cmd+Q** - Quit
+
+### 2. Enable Debug Logging (when things go wrong)
+
+**In Settings → Debug Logging**:
+- Enable debug for `taminator.services.rhcase_service`
+- Enable debug for `taminator.services.jira_service`
+- Reproduce issue
+- Download logs
+- Attach to GitLab issue
+
+### 3. Check Service Health
+
+**Status Bar (bottom)**:
+- 🟢 Green = Healthy
+- 🟡 Yellow = Warning (partial functionality)
+- 🔴 Red = Error (needs attention)
+
+**Hover over status** → Tooltip shows details
+
+### 4. Automate with Cron
+
+**Daily dashboard check** (8 AM Monday-Friday):
+```cron
+0 8 * * 1-5 /home/$USER/Applications/Taminator-2.0.0.AppImage --cli dashboard --json > /tmp/taminator-daily.json
+```
+
+**Weekly update** (Friday 4 PM):
+```cron
+0 16 * * 5 /home/$USER/Applications/Taminator-2.0.0.AppImage --cli update --all --yes
 ```
 
 ---
 
 ## Troubleshooting
 
-### Issue: OOBE doesn't appear on first launch
+### Issue: "Service Offline"
 
-**Cause:** OOBE state file exists from previous installation
+**Cause**: Backend service crashed or starting up
 
-**Resolution:**
+**Solution**:
+1. Wait 10 seconds (service auto-restarts)
+2. Check logs: `~/.local/state/taminator/log/taminator.log`
+3. If persists, restart Taminator
+
+### Issue: "VPN Not Connected"
+
+**Cause**: Red Hat VPN not active
+
+**Solution**:
 ```bash
-# Remove OOBE state
-rm ~/.config/taminator-gui/oobe-state.json
+# Test VPN
+ping issues.redhat.com
 
-# Relaunch Taminator
-./Taminator-1.10.0-*.AppImage
+# If fails, connect to VPN
+# Then refresh Taminator
 ```
 
----
+### Issue: "JIRA Token Invalid"
 
-### Issue: "JIRA token not configured" error
+**Cause**: Token expired or incorrect
 
-**Cause:** Token not saved or invalid token format
+**Solution**:
+1. Regenerate at https://access.redhat.com/management/api
+2. Settings → Authentication → Update JIRA Token
+3. Test token
 
-**Resolution:**
-1. Navigate to Settings → Vault → Add Token
-2. Service name: `jira-token`
-3. Paste token from https://access.redhat.com/management/api
-4. Click "Save"
-5. Click "Test Token" to verify
+### Issue: "rhcase Command Not Found"
 
----
+**Cause**: `rhcase` not bundled or not in PATH
 
-### Issue: "Connection timeout" when checking JIRA
+**Solution**:
+- v2.0 bundles `rhcase` automatically
+- If missing, download from: https://gitlab.cee.redhat.com/gvaughn/hatter-pai
+- Place in `~/.local/bin/rhcase`
 
-**Cause:** VPN not connected or firewall blocking
+### Issue: "Customer Not Found"
 
-**Resolution:**
-1. Verify VPN connection:
-   ```bash
-   ping issues.redhat.com
-   ```
-2. Verify firewall rules allow HTTPS (port 443)
-3. Increase timeout: Settings → Advanced → JIRA Timeout → 60 seconds
+**Cause**: Customer not onboarded yet
 
----
-
-### Issue: Dashboard shows "No customers yet"
-
-**Cause:** No customer reports exist
-
-**Resolution:**
-1. Onboard at least one customer:
-   ```bash
-   tam-rfe onboard test-customer --account 123456 --product Ansible
-   ```
-2. Verify report created:
-   ```bash
-   ls ~/taminator-test-data/
-   ```
+**Solution**:
+1. Customers tab → **"+ Add Customer"**
+2. Fill in account number
+3. Onboard
 
 ---
 
 ## Next Steps
 
-### Explore Features
-- ✅ **Dashboard:** Monitor all customers at once
-- ✅ **Check:** Verify report accuracy
-- ✅ **Update:** Keep reports current
-- ✅ **Post:** Automate Portal communication
-- ✅ **Help Tab:** In-app documentation
+### 1. Customize Your Setup
 
-### Customize Experience
-- **Themes:** Settings → Theme Gallery (7 themes available)
-- **Focus Mode:** Settings → Toggle for professional mode
-- **Notifications:** Settings → Enable desktop notifications
+**Settings → Preferences**:
+- Set default email
+- Configure auto-update frequency
+- Choose report format (Markdown/HTML/PDF)
 
-### Automation
-- **Weekly Updates:** Schedule cron job for automatic updates
-- **Dashboard Monitoring:** Daily JIRA checks
-- **Report Distribution:** Automate Portal posting
+### 2. Add More Customers
+
+**Onboard all your customers**:
+```bash
+tam-rfe onboard customer1 --account 111111 --product Ansible
+tam-rfe onboard customer2 --account 222222 --product OpenShift
+tam-rfe onboard customer3 --account 333333 --product RHEL
+```
+
+**Or use GUI**: Customers tab → **"+ Add Customer"** (repeat)
+
+### 3. Set Up Automation
+
+**Weekly report automation**:
+1. Create script: `~/bin/weekly-taminator-update.sh`
+2. Add to crontab
+3. Reports update automatically before TAM calls
+
+### 4. Explore Advanced Features
+
+- **API access**: http://127.0.0.1:8765/docs
+- **CLI scripting**: `tam-rfe --help`
+- **Debug logging**: Settings → Debug
+- **Metrics**: Dashboard → Analytics (coming soon)
 
 ---
 
-## Additional Resources
+## Getting Help
 
 ### Documentation
-- **User Guide:** [README.md](README.md)
-- **Release Notes:** [RELEASE-NOTES-v1.10.0.md](RELEASE-NOTES-v1.10.0.md)
-- **CLI Reference:** Run `tam-rfe --help`
+- **README**: Overview and quick reference
+- **TROUBLESHOOTING**: Common issues and solutions
+- **API Docs**: http://127.0.0.1:8765/docs (when service running)
 
 ### Support
-- **GitLab Issues:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
-- **Slack:** `#tam-automation` (internal)
-- **Email:** jbyrd@redhat.com
+- **GitLab Issues**: https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
+- **Email**: jbyrd@redhat.com
+- **Slack**: *(channel TBD)*
 
-### Training
-- **In-App Help:** Help tab (comprehensive documentation)
-- **Video Tutorials:** Coming in v1.11.0
-- **Team Training:** Contact jbyrd@redhat.com
+### Report a Bug
+
+**Collect diagnostics**:
+```bash
+# In Settings → Debug Logging
+# Click "Download Diagnostics"
+# Attach .tar.gz to GitLab issue
+```
+
+**Or manually**:
+```bash
+./tam-collect-logs
+```
+
+**Create issue**:
+1. Go to: https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues/new
+2. Describe problem
+3. Attach diagnostics file
+4. Tag with `bug` label
 
 ---
 
-## Summary
+## FAQ
 
-You have successfully:
-- ✅ Installed Taminator v1.10.0
-- ✅ Completed OOBE wizard
-- ✅ Configured authentication
-- ✅ Onboarded first customer
-- ✅ Learned basic workflows
+### Q: How do I update Taminator?
 
-**Estimated Time Saved:** 2-3 hours per week per customer
+**A**: Download new AppImage from GitLab releases. Your configuration and data are preserved.
 
-**Next Milestone:** Automate weekly update workflow with cron
+### Q: Where is my data stored?
+
+**A**: 
+- Tokens: OS keyring (secure)
+- Customer reports: `~/taminator-test-data/`
+- Logs: `~/.local/state/taminator/log/`
+- Config: `~/.config/taminator/`
+
+### Q: Can I use Taminator without VPN?
+
+**A**: No. JIRA and Customer Portal APIs require Red Hat VPN.
+
+### Q: Is my data secure?
+
+**A**: Yes. Tokens in OS keyring, local-only API, no external services.
+
+### Q: Can I customize reports?
+
+**A**: Yes. Edit templates in `~/.config/taminator/templates/` (coming soon).
+
+### Q: Does Taminator work on Windows?
+
+**A**: Windows build coming soon. Use Linux VM for now.
+
+### Q: Can I run multiple instances?
+
+**A**: No. One instance per user (service runs on fixed port 8765).
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** October 25, 2025  
-**Software Version:** Taminator 1.10.0  
-**Status:** General Availability (GA)
+## Success Checklist
+
+After following this guide, you should be able to:
+
+- ✅ Launch Taminator
+- ✅ See dashboard with service status
+- ✅ Have JIRA token configured (green checkmark)
+- ✅ Onboard at least one customer
+- ✅ Run a "Check" to compare report vs. JIRA
+- ✅ Update a report from JIRA
+- ✅ (Optional) Post a report to Customer Portal
+- ✅ (Optional) Run `rhcase` commands
+
+**If any of these failed**, see **Troubleshooting** section or contact jbyrd@redhat.com.
+
+---
+
+## You're Ready! 🎉
+
+**Congratulations!** You've completed Taminator setup.
+
+**What's next?**:
+1. Add all your customers
+2. Set up weekly automation
+3. Share feedback in GitLab issues
+
+**Enjoy saving 2+ hours per week!** ⏱️ → ☕
+
+---
+
+**Document Version**: 1.0  
+**Last Updated**: October 28, 2025  
+**Software Version**: Taminator 2.0.0  
+**Status**: Alpha

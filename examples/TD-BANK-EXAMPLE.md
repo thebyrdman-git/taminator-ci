@@ -3,11 +3,13 @@
 ## 🏦 TD Bank Configuration
 
 ### Customer Details
-- **Customer Name**: TD Bank
-- **Account Number**: 1912101
-- **Portal Group ID**: 7028358 (Sandbox/Testing)
-- **Confidence Level**: Extracted (ready for testing)
+- **Customer Name**: Example Bank (TD Bank)
+- **Account Number**: 1234567 (example - not real)
+- **Portal Group ID**: 9999999 (example - not real)
+- **Confidence Level**: Sanitized Example
 - **Schedule**: Thursdays at 10:00 AM EST (pre-call preparation)
+
+> **Note**: This is a sanitized example. Real account numbers and group IDs have been replaced with fake values for security.
 
 ## 🎯 What the Tool Does for TD Bank
 

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Taminator</title>
   <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@5/patternfly.css">
+  <link rel="stylesheet" href="public/css/toast-notifications.css">
+  <link rel="stylesheet" href="public/css/loading-states.css">
   <style>
     /* ============================================================ */
     /* 🎨 THEME SYSTEM - CSS VARIABLES */
@@ -403,12 +405,76 @@
       align-items: center;
       font-size: 13px;
       color: #6A6E73;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+      z-index: 100;
     }
 
     .status-bar-left {
       display: flex;
-      gap: 24px;
+      gap: 16px;
       align-items: center;
+    }
+
+    .status-bar-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .status-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+
+    .status-item.status-link {
+      cursor: pointer;
+      color: #0066CC;
+    }
+
+    .status-item.status-link:hover {
+      color: #EE0000;
+      text-decoration: underline;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #999;
+      display: inline-block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.status-healthy {
+      background-color: #3E8635;
+      animation: none;
+    }
+
+    .status-dot.status-warning {
+      background-color: #F0AB00;
+    }
+
+    .status-dot.status-error {
+      background-color: #C9190B;
+      animation: pulse-error 1s ease-in-out infinite;
+    }
+
+    .status-separator {
+      color: #D2D2D2;
+      user-select: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes pulse-error {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
     }
 
     /* Loading spinner */
@@ -504,11 +570,33 @@
 
       <div class="status-bar">
         <div class="status-bar-left">
-          <span id="auth-status">✅ All authentication OK</span>
-          <span>|</span>
-          <span id="last-check">Last check: Loading...</span>
+          <span id="service-status" class="status-item" title="Backend service health">
+            <span class="status-dot"></span> Service: Starting...
+          </span>
+          <span class="status-separator">|</span>
+          <span id="ai-status" class="status-item" title="AI model availability">
+            <span class="status-dot"></span> AI: Checking...
+          </span>
+          <span class="status-separator">|</span>
+          <span id="token-status" class="status-item" title="Authentication tokens">
+            <span class="status-dot"></span> Tokens: Checking...
+          </span>
+          <span class="status-separator">|</span>
+          <span id="vpn-status" class="status-item" title="VPN connection status">
+            <span class="status-dot"></span> VPN: Checking...
+          </span>
+          <span class="status-separator">|</span>
+          <span id="last-sync" class="status-item" title="Last successful sync">
+            🕐 Last sync: Never
+          </span>
         </div>
-        <div>Taminator v2.0.0-alpha</div>
+        <div class="status-bar-right">
+          <span onclick="require('electron').ipcRenderer.invoke('open-logs-viewer')" class="status-item status-link" title="View service logs">
+            📝 Logs
+          </span>
+          <span class="status-separator">|</span>
+          <span class="status-item">Taminator v2.0.0</span>
+        </div>
       </div>
     </div>
   </div>
@@ -611,18 +699,20 @@
       document.getElementById('page-title').textContent = 'Dashboard';
       setActiveNav(0);
       
-      // Show loading state
+      // Show loading state with new system
       document.getElementById('content').innerHTML = `
         <h2 style="margin-bottom: 24px; font-size: 28px; font-weight: 700;">📊 Customer Dashboard</h2>
         
         <div class="card">
           <div class="card-title">Live Customer Stats</div>
-          <div class="card-content" style="text-align: center; padding: 40px;">
-            <div class="spinner" style="margin: 0 auto 16px;"></div>
-            <p style="color: #6A6E73;">Loading customer data...</p>
+          <div id="dashboard-container" class="card-content" style="min-height: 200px;">
+            <!-- Loading will be shown here -->
           </div>
         </div>
       `;
+      
+      // Show professional loading state
+      window.loadingStates.show('dashboard-container', 'Loading customer data...', 'medium');
 
       try {
         // Fetch dashboard data from backend with timeout
@@ -631,8 +721,12 @@
           new Promise((_, reject) => setTimeout(() => reject(new Error('Dashboard load timed out')), 5000))
         ]);
         
+        // Hide loading
+        window.loadingStates.hide('dashboard-container');
+        
         if (result.success && result.data && result.data.length > 0) {
           // Render dashboard with real data
+          const dashboardContainer = document.getElementById('dashboard-container');
           let customersHTML = '';
           let totalRFEs = 0;
           let totalBugs = 0;
@@ -809,16 +903,17 @@
       resultsDiv.style.display = 'block';
       
       const resultsContent = document.querySelector('#check-results .card-content');
-      resultsContent.innerHTML = `
-        <div style="text-align: center; padding: 40px;">
-          <div class="spinner" style="margin: 0 auto 16px;"></div>
-          <p style="color: #6A6E73;">Running tam-rfe check ${customer}...</p>
-        </div>
-      `;
+      resultsContent.innerHTML = '<div id="check-report-loader" style="min-height: 150px;"></div>';
+      
+      // Show professional loading state
+      window.loadingStates.show('check-report-loader', `Checking ${customer} report vs. live JIRA...`, 'medium');
       
       try {
         // Call backend to check report
         const result = await ipcRenderer.invoke('check-report', { customer });
+        
+        // Hide loading
+        window.loadingStates.hide('check-report-loader');
         
         if (result.success) {
           // Display CLI output in terminal-style display
@@ -1435,6 +1530,44 @@ ${result.error || result.output || 'Post failed'}
           </div>
           
           <div class="card" style="margin-top: 24px;">
+            <div class="card-title">🔐 Google Workspace Integration</div>
+            <div class="card-content">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #F5F5F5; border-radius: 4px; margin-bottom: 12px;">
+                <div style="flex: 1;">
+                  <strong>Google Account</strong>
+                  <p style="margin: 4px 0 0 0; color: #6A6E73; font-size: 14px;" id="google-auth-description">
+                    Sign in with your @redhat.com account to enable Drive and Gmail features
+                  </p>
+                  <p style="margin: 8px 0 0 0; color: #0066CC; font-size: 13px;" id="google-auth-email"></p>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span id="google-auth-status" class="status-badge">Checking...</span>
+                  <button id="google-auth-btn" class="btn btn-primary" onclick="handleGoogleAuth()" style="white-space: nowrap;">
+                    🔐 Sign In
+                  </button>
+                </div>
+              </div>
+              
+              <div id="google-features" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #D2D2D2;">
+                <p style="margin: 0 0 12px 0; color: #6A6E73; font-size: 14px;">
+                  <strong>Connected Features:</strong>
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                  <button class="btn btn-secondary" onclick="window.open('drive-storage-settings.html')" style="font-size: 13px;">
+                    ☁️ Drive Storage
+                  </button>
+                  <button class="btn btn-secondary" onclick="window.open('clippy-gmail-assistant.html')" style="font-size: 13px;">
+                    📧 Gmail Assistant
+                  </button>
+                  <button class="btn btn-secondary" onclick="alert('Calendar integration coming soon!')" style="font-size: 13px;">
+                    📅 Calendar (Soon)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-top: 24px;">
             <div class="card-title">Network Authentication</div>
             <div class="card-content">
               <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #F5F5F5; border-radius: 4px; margin-bottom: 12px;">
@@ -1477,6 +1610,72 @@ ${result.error || result.output || 'Post failed'}
       
       document.getElementById('auth-krb-status').className = status.kerberos ? 'status-badge success' : 'status-badge error';
       document.getElementById('auth-krb-status').textContent = status.kerberos ? '✓ Valid' : '✗ Expired';
+      
+      // Load Google auth status
+      loadGoogleAuthStatus();
+    }
+    
+    async function loadGoogleAuthStatus() {
+      try {
+        const response = await fetch('http://localhost:8765/api/google/status');
+        const status = await response.json();
+        
+        const statusBadge = document.getElementById('google-auth-status');
+        const authBtn = document.getElementById('google-auth-btn');
+        const emailEl = document.getElementById('google-auth-email');
+        const featuresEl = document.getElementById('google-features');
+        
+        if (status.authenticated) {
+          // Authenticated
+          statusBadge.className = 'status-badge success';
+          statusBadge.textContent = '✓ Connected';
+          authBtn.textContent = '🚪 Sign Out';
+          authBtn.className = 'btn btn-secondary';
+          emailEl.textContent = `Signed in as ${status.user_email}`;
+          featuresEl.style.display = 'block';
+        } else {
+          // Not authenticated
+          statusBadge.className = 'status-badge error';
+          statusBadge.textContent = '✗ Not Connected';
+          authBtn.textContent = '🔐 Sign In';
+          authBtn.className = 'btn btn-primary';
+          emailEl.textContent = '';
+          featuresEl.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Failed to load Google auth status:', error);
+        document.getElementById('google-auth-status').className = 'status-badge error';
+        document.getElementById('google-auth-status').textContent = '✗ Error';
+      }
+    }
+    
+    async function handleGoogleAuth() {
+      try {
+        const response = await fetch('http://localhost:8765/api/google/status');
+        const status = await response.json();
+        
+        if (status.authenticated) {
+          // Sign out
+          if (confirm('Sign out from Google?')) {
+            await fetch('http://localhost:8765/api/google/auth/revoke', { method: 'POST' });
+            await loadGoogleAuthStatus();
+            alert('✅ Signed out successfully');
+          }
+        } else {
+          // Sign in - use googleAuth handler
+          if (window.googleAuth) {
+            const success = await googleAuth.signIn();
+            if (success) {
+              await loadGoogleAuthStatus();
+            }
+          } else {
+            alert('⚠️  Google auth handler not loaded. Please restart the application.');
+          }
+        }
+      } catch (error) {
+        console.error('Google auth error:', error);
+        alert(`❌ Error: ${error.message}`);
+      }
     }
     
     function toggleTokenVisibility(inputId) {
@@ -1600,22 +1799,42 @@ ${result.error || result.output || 'Post failed'}
       output.scrollTop = output.scrollHeight;
       
       try {
-        const { exec } = require('child_process');
-        const util = require('util');
-        const execPromise = util.promisify(exec);
-        
-        const result = await execPromise(`rhcase ${command} 2>&1`, { maxBuffer: 1024 * 1024 * 10 });
+        // Call backend API instead of direct shell execution
+        const result = await apiClient.post('/rhcase/execute', {
+          command: command,
+          timeout: 60
+        });
         
         // Remove "Executing..." line
-        const lines = output.innerHTML.split('\\n');
+        const lines = output.innerHTML.split('\n');
         lines.pop();
-        output.innerHTML = lines.join('\\n');
+        output.innerHTML = lines.join('\n');
         
-        // Add result
-        output.innerHTML += `<div style="white-space: pre-wrap;">${result.stdout || result.stderr || 'Command completed'}</div>`;
+        // Add result (prioritize output, then error)
+        const resultText = result.output || result.error || 'Command completed';
+        const isError = !result.success;
+        const color = isError ? '#C9190B' : '#D4D4D4';
+        
+        output.innerHTML += `<div style="white-space: pre-wrap; color: ${color};">${resultText}</div>`;
+        
+        // Show warning if failed
+        if (isError) {
+          output.innerHTML += `<div style="color: #F0AB00; margin-top: 8px;">⚠️  Command exited with code ${result.exit_code}</div>`;
+        }
         
       } catch (error) {
-        output.innerHTML += `<div style="color: #C9190B;">Error: ${error.message}</div>`;
+        // Remove "Executing..." line
+        const lines = output.innerHTML.split('\n');
+        lines.pop();
+        output.innerHTML = lines.join('\n');
+        
+        // Show error
+        output.innerHTML += `<div style="color: #C9190B;">❌ Error: ${error.message || 'Unknown error'}</div>`;
+        
+        // Show help if rhcase not available
+        if (error.message && error.message.includes('not found')) {
+          output.innerHTML += `<div style="color: #F0AB00; margin-top: 8px;">💡 Tip: Ensure rhcase is installed and bundled with Taminator</div>`;
+        }
       }
       
       output.scrollTop = output.scrollHeight;
@@ -2252,36 +2471,60 @@ ${result.error || result.output || 'Post failed'}
     }
     
     function showClippy() {
-      document.getElementById('page-title').textContent = 'Clippy Email Assistant';
+      document.getElementById('page-title').textContent = 'Clippy Gmail Assistant';
       setActiveNav(8);
       
       document.getElementById('content').innerHTML = `
         <div class="clippy-container">
-          <h2 style="margin-bottom: 24px;">📎 Clippy Email Assistant</h2>
+          <h2 style="margin-bottom: 24px;">📧 Clippy Gmail Assistant</h2>
+          
+          <div class="card" style="margin-bottom: 24px;">
+            <div class="card-title">🔐 Authentication Status</div>
+            <div class="card-content">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #F5F5F5; border-radius: 4px;">
+                <div style="flex: 1;">
+                  <strong>Google Account</strong>
+                  <p style="margin: 4px 0 0 0; color: #6A6E73; font-size: 14px;" id="clippy-google-description">
+                    Gmail integration required for email draft creation
+                  </p>
+                  <p style="margin: 8px 0 0 0; color: #0066CC; font-size: 13px;" id="clippy-google-email"></p>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <span id="clippy-google-status" class="status-badge">Checking...</span>
+                  <button id="clippy-google-btn" class="btn btn-primary" onclick="handleClippyGoogleAuth()" style="white-space: nowrap;">
+                    🔐 Sign In
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div class="card">
             <div class="card-content" style="text-align: center; padding: 48px 24px;">
               <div style="font-size: 64px; margin-bottom: 16px;">📎</div>
-              <h3 style="color: #6A6E73; margin-bottom: 16px;">In Development</h3>
-              <p style="color: #6A6E73; max-width: 500px; margin: 0 auto;">
-                Clippy, your favorite office assistant, will help you compose professional customer emails with AI-powered suggestions. 
-                This feature is planned for a future release.
+              <h3 style="color: #151515; margin-bottom: 16px;">AI-Powered Email Drafting</h3>
+              <p style="color: #6A6E73; max-width: 600px; margin: 0 auto 24px;">
+                Clippy helps you create professional Gmail drafts from clipboard content. 
+                Paste your case notes, JIRA updates, or meeting notes and let AI generate a polished email.
               </p>
               
-              <div style="margin-top: 32px; padding: 24px; background: #F5F5F5; border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                <h4 style="margin-bottom: 12px;">✨ Planned Features:</h4>
-                <ul style="text-align: left; color: #6A6E73;">
-                  <li>AI-powered email composition</li>
-                  <li>Customer context awareness</li>
-                  <li>Professional tone suggestions</li>
-                  <li>Classic Clippy personality & animations</li>
-                  <li>Email templates for common scenarios</li>
-                  <li>Windows XP theme integration</li>
+              <div style="margin-top: 32px; padding: 24px; background: #F5F5F5; border-radius: 8px; max-width: 600px; margin-left: auto; margin-right: auto; text-align: left;">
+                <h4 style="margin-bottom: 12px; text-align: center;">✨ Features:</h4>
+                <ul style="color: #6A6E73;">
+                  <li><strong>AI-powered draft generation</strong> - Uses Red Hat approved Granite models</li>
+                  <li><strong>Context detection</strong> - Automatically identifies RFE, Bug, Customer Update</li>
+                  <li><strong>Professional formatting</strong> - Red Hat TAM tone and signature</li>
+                  <li><strong>Gmail integration</strong> - Saves drafts directly to Gmail</li>
+                  <li><strong>Preview before sending</strong> - Review and edit before saving</li>
+                  <li><strong>Clipboard workflow</strong> - Paste any content and generate</li>
                 </ul>
               </div>
               
-              <div style="margin-top: 24px;">
-                <button class="btn btn-secondary" onclick="showDashboard()">
+              <div style="margin-top: 32px;">
+                <button class="btn btn-primary" onclick="openClippyFullscreen()" style="padding: 15px 40px; font-size: 16px;">
+                  🚀 Launch Clippy Gmail Assistant
+                </button>
+                <button class="btn btn-secondary" onclick="showDashboard()" style="margin-left: 12px;">
                   ← Back to Dashboard
                 </button>
               </div>
@@ -2289,6 +2532,56 @@ ${result.error || result.output || 'Post failed'}
           </div>
         </div>
       `;
+      
+      // Load Google auth status for Clippy
+      loadClippyGoogleStatus();
+    }
+    
+    async function loadClippyGoogleStatus() {
+      try {
+        const response = await fetch('http://localhost:8765/api/google/status');
+        const status = await response.json();
+        
+        const statusBadge = document.getElementById('clippy-google-status');
+        const authBtn = document.getElementById('clippy-google-btn');
+        const emailEl = document.getElementById('clippy-google-email');
+        
+        if (status.authenticated) {
+          statusBadge.className = 'status-badge success';
+          statusBadge.textContent = '✓ Connected';
+          authBtn.textContent = '✅ Ready';
+          authBtn.className = 'btn btn-success';
+          authBtn.disabled = true;
+          emailEl.textContent = `Signed in as ${status.user_email}`;
+        } else {
+          statusBadge.className = 'status-badge error';
+          statusBadge.textContent = '✗ Not Connected';
+          authBtn.textContent = '🔐 Sign In';
+          authBtn.className = 'btn btn-primary';
+          authBtn.disabled = false;
+          emailEl.textContent = '';
+        }
+      } catch (error) {
+        console.error('Failed to load Clippy Google auth status:', error);
+        document.getElementById('clippy-google-status').className = 'status-badge error';
+        document.getElementById('clippy-google-status').textContent = '✗ Error';
+      }
+    }
+    
+    async function handleClippyGoogleAuth() {
+      if (window.googleAuth) {
+        const success = await googleAuth.signIn();
+        if (success) {
+          await loadClippyGoogleStatus();
+        }
+      } else {
+        alert('⚠️  Google auth handler not loaded. Please restart the application.');
+      }
+    }
+    
+    function openClippyFullscreen() {
+      // Open Clippy in new window
+      window.open('clippy-gmail-assistant.html', '_blank');
     }
 
     function showReportIssue() {
@@ -3630,6 +3923,197 @@ ${result.error || result.output || 'Post failed'}
       }
     }
 
+  </script>
+
+  <!-- API Client SDK -->
+  <script src="public/js/api-client.js"></script>
+  <script src="public/js/error-handler.js"></script>
+  <script src="public/js/loading-states.js"></script>
+  <script src="public/js/button-loading.js"></script>
+  <script src="public/js/success-animations.js"></script>
+  <script src="public/js/startup-splash.js"></script>
+  
+  <script>
+    // Check for first run (OOBE wizard)
+    const { ipcRenderer } = require('electron');
+    
+    // Initialize API client for use throughout the app
+    const apiClient = new TaminatorApiClient('http://127.0.0.1:8765');
+    console.log('[App] ✅ API Client initialized');
+    console.log('[App] ✅ Error Handler initialized');
+    
+    // Check if we should show OOBE wizard
+    async function checkFirstRun() {
+      try {
+        const isFirstRun = await ipcRenderer.invoke('oobe-is-first-run');
+        
+        if (isFirstRun) {
+          console.log('[App] 👋 First run detected - launching OOBE wizard');
+          
+          // Hide main app content
+          document.getElementById('app-container').style.display = 'none';
+          
+          // Open OOBE wizard in new window
+          window.open('oobe-wizard.html', '_blank', 'width=900,height=700');
+          
+          // Show message in main window
+          document.body.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center; height: 100vh; background: #F5F5F5; flex-direction: column; gap: 24px;">
+              <div style="font-size: 64px;">👋</div>
+              <h1 style="color: #151515; font-family: 'Red Hat Display', sans-serif; margin: 0;">Welcome to Taminator!</h1>
+              <p style="color: #6A6E73; font-family: 'Red Hat Text', sans-serif; max-width: 500px; text-align: center; line-height: 1.6;">
+                We've opened the setup wizard in a new window. Complete the setup to get started.
+              </p>
+              <p style="color: #999; font-size: 14px;">After setup, restart Taminator to begin.</p>
+            </div>
+          `;
+          
+          return true; // First run
+        }
+        
+        return false; // Not first run
+        
+      } catch (error) {
+        console.error('[App] ❌ Failed to check first run:', error);
+        return false; // Default to not first run on error
+      }
+    }
+    
+    // Show startup splash (only if not first run)
+    checkFirstRun().then(isFirstRun => {
+      if (!isFirstRun) {
+        window.startupSplash.show();
+      }
+    });
+
+    // Status monitoring
+    let healthCheckInterval = null;
+
+    async function updateStatusBar() {
+      try {
+        const health = await apiClient.health();
+        
+        // Update service status
+        const serviceStatus = document.getElementById('service-status');
+        const serviceDot = serviceStatus.querySelector('.status-dot');
+        if (health.status === 'healthy') {
+          serviceStatus.innerHTML = '<span class="status-dot status-healthy"></span> Service: Healthy';
+          serviceStatus.style.color = '#3E8635';
+        } else {
+          serviceStatus.innerHTML = '<span class="status-dot status-error"></span> Service: Unhealthy';
+          serviceStatus.style.color = '#C9190B';
+        }
+        
+        // Update AI status
+        const aiStatus = document.getElementById('ai-status');
+        if (health.ai && health.ai.available) {
+          const modelCount = health.ai.models.length;
+          aiStatus.innerHTML = `<span class="status-dot status-healthy"></span> AI: ${modelCount} models`;
+          aiStatus.style.color = '#3E8635';
+          aiStatus.title = `Available models: ${health.ai.models.join(', ')}`;
+        } else {
+          aiStatus.innerHTML = '<span class="status-dot status-warning"></span> AI: Setup Required';
+          aiStatus.style.color = '#F0AB00';
+          aiStatus.title = 'AI features require LiteLLM setup (10 min)';
+        }
+        
+        // Update token status
+        const tokenStatus = document.getElementById('token-status');
+        const jiraOk = health.authentication.jira;
+        const portalOk = health.authentication.portal;
+        
+        if (jiraOk && portalOk) {
+          tokenStatus.innerHTML = '<span class="status-dot status-healthy"></span> Tokens: All OK';
+          tokenStatus.style.color = '#3E8635';
+        } else if (jiraOk || portalOk) {
+          tokenStatus.innerHTML = '<span class="status-dot status-warning"></span> Tokens: Partial';
+          tokenStatus.style.color = '#F0AB00';
+          tokenStatus.title = `JIRA: ${jiraOk ? 'OK' : 'Missing'}, Portal: ${portalOk ? 'OK' : 'Missing'}`;
+        } else {
+          tokenStatus.innerHTML = '<span class="status-dot status-warning"></span> Tokens: Missing';
+          tokenStatus.style.color = '#F0AB00';
+          tokenStatus.title = 'Configure tokens in settings';
+        }
+        
+        // Update VPN status (check via auth endpoint)
+        const vpnStatus = document.getElementById('vpn-status');
+        const vpnSeparator = vpnStatus.previousElementSibling; // Get the "|" separator before it
+        
+        try {
+          const authCheck = await ipcRenderer.invoke('check-auth');
+          if (authCheck.vpn) {
+            vpnStatus.innerHTML = '<span class="status-dot status-healthy"></span> VPN: Connected';
+            vpnStatus.style.color = '#3E8635';
+            vpnStatus.style.display = 'inline-flex';
+            if (vpnSeparator) vpnSeparator.style.display = 'inline';
+          } else {
+            vpnStatus.innerHTML = '<span class="status-dot status-warning"></span> VPN: Disconnected';
+            vpnStatus.style.color = '#F0AB00';
+            vpnStatus.style.display = 'inline-flex';
+            if (vpnSeparator) vpnSeparator.style.display = 'inline';
+          }
+        } catch (e) {
+          // Hide VPN status if we can't check it
+          vpnStatus.style.display = 'none';
+          if (vpnSeparator) vpnSeparator.style.display = 'none';
+        }
+        
+        // Update last sync time
+        const lastSync = document.getElementById('last-sync');
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        lastSync.innerHTML = `🕐 Last sync: ${timeStr}`;
+        lastSync.title = `Last updated: ${now.toLocaleString()}`;
+        
+      } catch (error) {
+        console.error('[Status] Health check failed:', error);
+        
+        // Service unreachable
+        const serviceStatus = document.getElementById('service-status');
+        serviceStatus.innerHTML = '<span class="status-dot status-error"></span> Service: Offline';
+        serviceStatus.style.color = '#C9190B';
+        
+        document.getElementById('ai-status').innerHTML = '<span class="status-dot"></span> AI: Not Connected';
+        document.getElementById('token-status').innerHTML = '<span class="status-dot"></span> Tokens: Not Connected';
+        
+        // Hide VPN status when service is offline
+        const vpnStatus = document.getElementById('vpn-status');
+        const vpnSeparator = vpnStatus?.previousElementSibling;
+        if (vpnStatus) vpnStatus.style.display = 'none';
+        if (vpnSeparator) vpnSeparator.style.display = 'none';
+        
+        // Show error toast (only on first failure)
+        if (!window.serviceOfflineNotified) {
+          window.errorHandler.showWarning(
+            'Service is offline - will retry automatically',
+            5000
+          );
+          window.serviceOfflineNotified = true;
+        }
+      }
+    }
+
+    // Start health monitoring (only if not first run)
+    checkFirstRun().then(isFirstRun => {
+      if (!isFirstRun) {
+        setTimeout(() => {
+          updateStatusBar(); // Initial check
+          healthCheckInterval = setInterval(updateStatusBar, 10000); // Every 10s
+          
+          // Hide splash after service is ready
+          setTimeout(() => {
+            window.startupSplash.hide();
+          }, 500);
+        }, 2000); // Wait 2s for service to start
+      }
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (healthCheckInterval) {
+        clearInterval(healthCheckInterval);
+      }
+    });
   </script>
 
 </body>

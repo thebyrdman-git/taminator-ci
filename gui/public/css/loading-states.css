@@ -1,0 +1,237 @@
+/**
+ * Loading States CSS
+ * Professional loading indicators
+ */
+
+/* Loading Overlay (full container) */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: opacity 0.3s;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loading-message {
+  color: #6A6E73;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Spinner Sizes */
+.spinner {
+  border: 3px solid #F0F0F0;
+  border-top: 3px solid #EE0000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinner.loader-small, .spinner-small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.spinner.loader-medium {
+  width: 40px;
+  height: 40px;
+  border-width: 3px;
+}
+
+.spinner.loader-large {
+  width: 60px;
+  height: 60px;
+  border-width: 4px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Inline Loading (for buttons, small areas) */
+.loading-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #6A6E73;
+  font-size: 14px;
+}
+
+.spinner-small {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #F0F0F0;
+  border-top-color: #EE0000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Progress Bar */
+.loading-progress {
+  padding: 24px;
+  background: #F5F5F5;
+  border-radius: 8px;
+}
+
+.progress-message {
+  color: #151515;
+  font-weight: 500;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: #E0E0E0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #EE0000 0%, #FF4444 100%);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progress-percent {
+  text-align: right;
+  color: #6A6E73;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Button Loading State */
+.btn.loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn.loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid #F0F0F0;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Skeleton Loading (for content placeholders) */
+.skeleton {
+  background: linear-gradient(90deg, #F0F0F0 25%, #E0E0E0 50%, #F0F0F0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.skeleton-text.skeleton-title {
+  height: 24px;
+  width: 60%;
+}
+
+.skeleton-text.skeleton-paragraph {
+  height: 14px;
+  width: 100%;
+}
+
+.skeleton-text.skeleton-paragraph:last-child {
+  width: 80%;
+}
+
+.skeleton-card {
+  height: 200px;
+  width: 100%;
+}
+
+/* Pulse Animation (for loading states) */
+.pulse {
+  animation: pulse-animation 2s ease-in-out infinite;
+}
+
+@keyframes pulse-animation {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Loading Badge (for status indicators) */
+.loading-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: #FFF4F4;
+  border: 1px solid #EE0000;
+  border-radius: 12px;
+  color: #EE0000;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.loading-badge .spinner-small {
+  border-color: #FFD4D4;
+  border-top-color: #EE0000;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .loading-overlay {
+  background: rgba(30, 30, 30, 0.95);
+}
+
+[data-theme="dark"] .loading-message,
+[data-theme="dark"] .loading-inline {
+  color: #D4D4D4;
+}
+
+[data-theme="dark"] .spinner,
+[data-theme="dark"] .spinner-small {
+  border-color: #404040;
+  border-top-color: #FF6B6B;
+}
+
+[data-theme="dark"] .progress-bar-container {
+  background: #404040;
+}
+
+[data-theme="dark"] .progress-bar {
+  background: linear-gradient(90deg, #FF6B6B 0%, #FF8888 100%);
+}
+
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(90deg, #2D2D2D 25%, #404040 50%, #2D2D2D 75%);
+  background-size: 200% 100%;
+}
+

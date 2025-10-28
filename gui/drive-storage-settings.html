@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive Storage Settings - Taminator</title>
+    <link rel="stylesheet" href="../themes/theme-redhat.css">
+    <style>
+        body {
+            font-family: "Red Hat Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #ee0000;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #ee0000;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            color: #999;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .status-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .status-icon {
+            font-size: 48px;
+        }
+
+        .status-info h3 {
+            margin: 0 0 5px 0;
+            color: #fff;
+        }
+
+        .status-info p {
+            margin: 0;
+            color: #999;
+        }
+
+        .storage-backend {
+            margin-bottom: 30px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .radio-option:hover {
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(238, 0, 0, 0.3);
+        }
+
+        .radio-option.selected {
+            background: rgba(238, 0, 0, 0.1);
+            border-color: #ee0000;
+        }
+
+        .radio-option input[type="radio"] {
+            margin-right: 15px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .option-content h4 {
+            margin: 0 0 5px 0;
+            color: #fff;
+        }
+
+        .option-content p {
+            margin: 0;
+            color: #999;
+            font-size: 14px;
+        }
+
+        .storage-quota {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .quota-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .quota-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ee0000, #ff6b6b);
+            transition: width 0.3s ease;
+        }
+
+        .sync-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #ee0000 0%, #cc0000 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(238, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        button.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .toggle-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #ee0000;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        select {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(-5px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ee0000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='index.html'">← Back to Dashboard</button>
+
+    <div class="container">
+        <div class="card">
+            <h1>☁️ Drive Storage Settings</h1>
+            <p class="subtitle">Unlimited cloud storage with automatic multi-device sync</p>
+
+            <div id="status-section" class="status-section">
+                <div class="status-icon">🔄</div>
+                <div class="status-info">
+                    <h3>Loading Drive status...</h3>
+                    <p>Please wait</p>
+                </div>
+            </div>
+
+            <div class="storage-backend">
+                <h2>Storage Backend</h2>
+                
+                <div class="radio-option" id="backend-local">
+                    <input type="radio" name="backend" value="local" checked>
+                    <div class="option-content">
+                        <h4>📁 Local Filesystem</h4>
+                        <p>Store data on local disk (~/Documents/rh/)</p>
+                    </div>
+                </div>
+
+                <div class="radio-option" id="backend-drive">
+                    <input type="radio" name="backend" value="drive">
+                    <div class="option-content">
+                        <h4>☁️ Google Drive (Unlimited)</h4>
+                        <p>Store data in Google Drive with automatic sync across devices</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="drive-section" style="display: none;">
+                <h2>Drive Information</h2>
+                
+                <div class="storage-quota">
+                    <div style="flex: 1;">
+                        <h3>Storage Used</h3>
+                        <div class="quota-bar">
+                            <div class="quota-fill" id="quota-fill" style="width: 0%;"></div>
+                        </div>
+                        <p id="quota-text">0 MB / Unlimited</p>
+                    </div>
+                </div>
+
+                <h2>Sync Controls</h2>
+                
+                <div class="sync-controls">
+                    <button id="sync-upload" onclick="syncToCloud()">
+                        📤 Upload Local → Drive
+                    </button>
+                    <button id="sync-download" class="secondary" onclick="syncFromCloud()">
+                        📥 Download Drive → Local
+                    </button>
+                </div>
+
+                <div class="toggle-section">
+                    <div>
+                        <h4>Auto-Sync</h4>
+                        <p style="color: #999; margin: 5px 0 0 0;">Automatically sync changes every</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="toggle-switch" id="auto-sync-toggle" onclick="toggleAutoSync()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                        <select id="sync-interval">
+                            <option value="1">1 minute</option>
+                            <option value="5" selected>5 minutes</option>
+                            <option value="10">10 minutes</option>
+                            <option value="30">30 minutes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <p style="color: #999; font-size: 14px; margin-top: 20px;">
+                    Last synced: <span id="last-sync">Never</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script>
+        const api = new TaminatorAPI();
+        let driveEnabled = false;
+
+        // Load Drive status
+        async function loadDriveStatus() {
+            try {
+                const status = await api.request('/api/drive/status');
+                
+                if (status.authenticated) {
+                    driveEnabled = true;
+                    updateStatusSection('✅', 'Drive Connected', `Connected as ${status.quota.user}`);
+                    
+                    // Show Drive section
+                    document.getElementById('drive-section').style.display = 'block';
+                    
+                    // Update quota
+                    updateQuota(status.quota);
+                    
+                    // Enable Drive backend option
+                    document.getElementById('backend-drive').classList.remove('disabled');
+                    
+                } else {
+                    updateStatusSection('⚠️', 'Drive Not Connected', 'Please sign in with Google first');
+                    document.getElementById('backend-drive').classList.add('disabled');
+                }
+                
+            } catch (error) {
+                console.error('Failed to load Drive status:', error);
+                updateStatusSection('❌', 'Drive Error', error.message);
+            }
+        }
+
+        function updateStatusSection(icon, title, subtitle) {
+            document.getElementById('status-section').innerHTML = `
+                <div class="status-icon">${icon}</div>
+                <div class="status-info">
+                    <h3>${title}</h3>
+                    <p>${subtitle}</p>
+                </div>
+            `;
+        }
+
+        function updateQuota(quota) {
+            if (quota.unlimited) {
+                document.getElementById('quota-text').textContent = 
+                    `${formatBytes(quota.used)} / Unlimited`;
+                document.getElementById('quota-fill').style.width = '5%'; // Just show something
+            } else {
+                const percent = (quota.used / quota.total) * 100;
+                document.getElementById('quota-text').textContent = 
+                    `${formatBytes(quota.used)} / ${formatBytes(quota.total)}`;
+                document.getElementById('quota-fill').style.width = `${percent}%`;
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function syncToCloud() {
+            const button = document.getElementById('sync-upload');
+            button.disabled = true;
+            button.textContent = '📤 Uploading...';
+            
+            try {
+                const result = await api.request('/api/drive/sync/local-to-drive', {
+                    method: 'POST'
+                });
+                
+                alert(`✅ Sync complete! ${result.files_synced} files uploaded.`);
+                updateLastSync();
+                
+            } catch (error) {
+                alert(`❌ Sync failed: ${error.message}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = '📤 Upload Local → Drive';
+            }
+        }
+
+        async function syncFromCloud() {
+            const button = document.getElementById('sync-download');
+            button.disabled = true;
+            button.textContent = '📥 Downloading...';
+            
+            try {
+                const result = await api.request('/api/drive/sync/drive-to-local', {
+                    method: 'POST'
+                });
+                
+                alert(`✅ Sync complete! ${result.files_synced} files downloaded.`);
+                updateLastSync();
+                
+            } catch (error) {
+                alert(`❌ Sync failed: ${error.message}`);
+            } finally {
+                button.disabled = false;
+                button.textContent = '📥 Download Drive → Local';
+            }
+        }
+
+        function toggleAutoSync() {
+            const toggle = document.getElementById('auto-sync-toggle');
+            toggle.classList.toggle('active');
+            
+            // TODO: Implement auto-sync logic
+        }
+
+        function updateLastSync() {
+            document.getElementById('last-sync').textContent = 'Just now';
+        }
+
+        // Radio button handling
+        document.querySelectorAll('.radio-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.radio-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                option.querySelector('input[type="radio"]').checked = true;
+                
+                // TODO: Save backend preference
+            });
+        });
+
+        // Initialize
+        loadDriveStatus();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""
+Taminator - Main CLI Entry Point
+
+Unified command-line interface for TAM automation.
+Follows Red Hat CLI conventions and the Unified Philosophy.
+"""
+
+import sys
+import os
+from pathlib import Path
+
+# Add src to path
+src_path = Path(__file__).parent.parent / "src"
+sys.path.insert(0, str(src_path))
+
+from taminator.cli.help_text import show_help
+
+
+def main():
+    """Main entry point"""
+    
+    # Parse arguments
+    args = sys.argv[1:]
+    
+    # Handle --help
+    if '--help' in args or '-h' in args or len(args) == 0:
+        show_help('taminator')
+        sys.exit(0)
+    
+    # Handle --version
+    if '--version' in args or '-v' in args:
+        print("Taminator v2.0.0")
+        print("Professional TAM Automation Tool")
+        print("")
+        print("Copyright © 2025 Red Hat, Inc.")
+        print("Unified Architecture · Enterprise Quality")
+        sys.exit(0)
+    
+    # Handle --gui (launch Electron GUI)
+    if '--gui' in args:
+        print("🚀 Launching Taminator GUI...")
+        print("")
+        print("Note: GUI must be launched from the installed AppImage/dmg/exe")
+        print("      or by running the Electron application directly.")
+        sys.exit(1)
+    
+    # Unknown command
+    print(f"Unknown command: {args[0]}")
+    print("")
+    print("Run 'taminator --help' for usage information.")
+    sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
+

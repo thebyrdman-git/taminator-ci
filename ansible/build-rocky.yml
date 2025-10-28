@@ -1,0 +1,174 @@
+---
+# Ansible Playbook: Build Taminator on Rocky Linux VM
+# Purpose: Automated build on target platform for glibc compatibility
+# Usage: ansible-playbook -i inventory.ini build-rocky.yml
+
+- name: Build Taminator AppImage on Rocky Linux
+  hosts: rocky_build
+  become: false
+  vars:
+    source_dir: /home/jbyrd/TAMINATOR
+    vm_build_dir: /home/testuser/taminator-build
+
+  tasks:
+    - name: Install build dependencies
+      become: true
+      dnf:
+        name:
+          - "@Development Tools"
+          - nodejs
+          - npm
+          - python3
+          - python3-pip
+          - python3-devel
+          - fuse
+          - fuse-libs
+          - zlib-devel
+          - bzip2-devel
+          - openssl-devel
+        state: present
+      tags: [deps]
+
+    - name: Create build directory
+      file:
+        path: "{{ vm_build_dir }}"
+        state: directory
+        mode: '0755'
+      tags: [setup]
+
+    - name: Sync source code to VM
+      synchronize:
+        src: "{{ source_dir }}/"
+        dest: "{{ vm_build_dir }}/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=node_modules"
+          - "--exclude=gui/node_modules"
+          - "--exclude=gui/dist"
+          - "--exclude=.git"
+          - "--exclude=__pycache__"
+          - "--exclude=*.pyc"
+      tags: [sync]
+
+    - name: Install Python dependencies
+      pip:
+        requirements: "{{ vm_build_dir }}/requirements-service.txt"
+        executable: pip3
+        extra_args: --user
+      tags: [python]
+
+    - name: Install PyInstaller
+      pip:
+        name: pyinstaller
+        executable: pip3
+        extra_args: --user
+      tags: [python]
+
+    - name: Make build script executable
+      file:
+        path: "{{ vm_build_dir }}/build-service.sh"
+        mode: '0755'
+      tags: [build]
+
+    - name: Build Python service with PyInstaller
+      shell: |
+        cd {{ vm_build_dir }}
+        ./build-service.sh
+      register: service_build
+      tags: [build]
+
+    - name: Display service build output
+      debug:
+        var: service_build.stdout_lines
+      tags: [build]
+
+    - name: Check service binary exists
+      stat:
+        path: "{{ vm_build_dir }}/dist/taminator-service"
+      register: service_binary
+      tags: [build]
+
+    - name: Fail if service binary not created
+      fail:
+        msg: "Service binary was not created!"
+      when: not service_binary.stat.exists
+      tags: [build]
+
+    - name: Install Node dependencies
+      shell: |
+        cd {{ vm_build_dir }}/gui
+        npm install
+      register: npm_install
+      tags: [node]
+
+    - name: Display npm install output
+      debug:
+        var: npm_install.stdout_lines
+      tags: [node]
+
+    - name: Build Electron AppImage
+      shell: |
+        cd {{ vm_build_dir }}/gui
+        npm run build
+      register: appimage_build
+      tags: [appimage]
+
+    - name: Display AppImage build output
+      debug:
+        var: appimage_build.stdout_lines
+      tags: [appimage]
+
+    - name: Check AppImage exists
+      stat:
+        path: "{{ vm_build_dir }}/gui/dist/Taminator-2.0.0.AppImage"
+      register: appimage_file
+      tags: [appimage]
+
+    - name: Fail if AppImage not created
+      fail:
+        msg: "AppImage was not created!"
+      when: not appimage_file.stat.exists
+      tags: [appimage]
+
+    - name: Get AppImage info
+      stat:
+        path: "{{ vm_build_dir }}/gui/dist/Taminator-2.0.0.AppImage"
+      register: appimage_stat
+      tags: [verify]
+
+    - name: Display AppImage info
+      debug:
+        msg:
+          - "AppImage created successfully!"
+          - "Path: {{ vm_build_dir }}/gui/dist/Taminator-2.0.0.AppImage"
+          - "Size: {{ (appimage_stat.stat.size / 1024 / 1024) | round(1) }} MB"
+      tags: [verify]
+
+    - name: Test AppImage for glibc errors (extract only)
+      shell: |
+        cd {{ vm_build_dir }}/gui/dist
+        ./Taminator-2.0.0.AppImage --appimage-extract
+        ldd squashfs-root/resources/bin/taminator-service | grep GLIBC || echo "No problematic GLIBC symbols"
+      register: glibc_check
+      tags: [verify]
+
+    - name: Display glibc check
+      debug:
+        var: glibc_check.stdout_lines
+      tags: [verify]
+
+    - name: Fetch AppImage back to laptop
+      fetch:
+        src: "{{ vm_build_dir }}/gui/dist/Taminator-2.0.0.AppImage"
+        dest: "{{ source_dir }}/gui/dist/Taminator-2.0.0-rocky.AppImage"
+        flat: yes
+      tags: [fetch]
+
+    - name: Build summary
+      debug:
+        msg:
+          - "✅ Build complete!"
+          - "AppImage: {{ source_dir }}/gui/dist/Taminator-2.0.0-rocky.AppImage"
+          - "Next: Test on Rocky VM desktop or transfer to TAMs"
+      tags: [summary]
+

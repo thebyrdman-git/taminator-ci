@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Account Settings - Taminator</title>
+    <link rel="stylesheet" href="../themes/theme-redhat.css">
+    <style>
+        body {
+            font-family: "Red Hat Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: #ee0000;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #999;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .auth-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .auth-icon {
+            font-size: 64px;
+        }
+
+        .auth-info h3 {
+            margin: 0 0 10px 0;
+            color: #fff;
+        }
+
+        .auth-info p {
+            margin: 5px 0;
+            color: #999;
+        }
+
+        .user-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .user-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .user-info-label {
+            color: #999;
+        }
+
+        .user-info-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #ee0000 0%, #cc0000 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(238, 0, 0, 0.3);
+        }
+
+        button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        button.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        button.danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card h4 {
+            color: #fff;
+            margin: 10px 0;
+        }
+
+        .feature-card p {
+            color: #999;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(-5px);
+        }
+
+        /* Auth Modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: #ee0000;
+            margin-bottom: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #ee0000;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='index.html'">← Back to Dashboard</button>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal"></div>
+
+    <div class="container">
+        <div class="card">
+            <h1>🔐 Google Account</h1>
+            <p class="subtitle">Connect your @redhat.com Google Workspace account</p>
+
+            <div id="auth-status" class="auth-status">
+                <div class="auth-icon">🔄</div>
+                <div class="auth-info">
+                    <h3>Checking authentication status...</h3>
+                    <p>Please wait</p>
+                </div>
+            </div>
+
+            <!-- Not Authenticated View -->
+            <div id="not-authenticated" style="display: none;">
+                <h2 style="color: #fff;">Why Sign In?</h2>
+                <p style="color: #999; margin-bottom: 20px;">
+                    Unlock powerful Google Workspace integrations for your TAM workflows.
+                </p>
+
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">☁️</div>
+                        <h4>Google Drive</h4>
+                        <p>Unlimited storage for customer data with automatic sync</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📧</div>
+                        <h4>Gmail Drafts</h4>
+                        <p>AI-powered email drafts saved directly to Gmail</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📅</div>
+                        <h4>Calendar</h4>
+                        <p>View and manage customer meetings</p>
+                    </div>
+                </div>
+
+                <button onclick="startSignIn()" style="width: 100%; margin-top: 30px;">
+                    🔐 Sign In with Google
+                </button>
+
+                <p style="color: #666; font-size: 12px; margin-top: 15px; text-align: center;">
+                    Only @redhat.com accounts are allowed. Authentication opens in your browser.
+                </p>
+            </div>
+
+            <!-- Authenticated View -->
+            <div id="authenticated" style="display: none;">
+                <h2 style="color: #fff;">Account Information</h2>
+                
+                <div id="user-info" class="user-info">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <h2 style="color: #fff; margin-top: 30px;">Connected Services</h2>
+                
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">☁️</div>
+                        <h4>Google Drive</h4>
+                        <p>Connected ✅</p>
+                        <button class="secondary" onclick="window.location.href='drive-storage-settings.html'" style="margin-top: 10px; padding: 10px 20px; font-size: 14px;">
+                            Configure
+                        </button>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📧</div>
+                        <h4>Gmail</h4>
+                        <p>Connected ✅</p>
+                        <button class="secondary" onclick="window.location.href='clippy-gmail-assistant.html'" style="margin-top: 10px; padding: 10px 20px; font-size: 14px;">
+                            Open Clippy
+                        </button>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📅</div>
+                        <h4>Calendar</h4>
+                        <p>Connected ✅</p>
+                        <button class="secondary" style="margin-top: 10px; padding: 10px 20px; font-size: 14px;" disabled>
+                            Coming Soon
+                        </button>
+                    </div>
+                </div>
+
+                <button class="danger" onclick="signOut()" style="margin-top: 30px;">
+                    🚪 Sign Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script src="google-auth-handler.js"></script>
+    <script>
+        // Load authentication status
+        async function loadAuthStatus() {
+            try {
+                const status = await googleAuth.checkStatus();
+                updateUI(status);
+            } catch (error) {
+                console.error('Failed to load auth status:', error);
+                showError();
+            }
+        }
+
+        function updateUI(status) {
+            const authStatusDiv = document.getElementById('auth-status');
+            const notAuthDiv = document.getElementById('not-authenticated');
+            const authDiv = document.getElementById('authenticated');
+
+            if (status.authenticated) {
+                // Show authenticated view
+                authStatusDiv.innerHTML = `
+                    <div class="auth-icon">✅</div>
+                    <div class="auth-info">
+                        <h3>Connected to Google</h3>
+                        <p>Signed in as ${status.user_email}</p>
+                    </div>
+                `;
+                notAuthDiv.style.display = 'none';
+                authDiv.style.display = 'block';
+
+                // Update user info
+                const userInfoDiv = document.getElementById('user-info');
+                userInfoDiv.innerHTML = `
+                    <div class="user-info-row">
+                        <span class="user-info-label">Name:</span>
+                        <span class="user-info-value">${status.user_name || 'N/A'}</span>
+                    </div>
+                    <div class="user-info-row">
+                        <span class="user-info-label">Email:</span>
+                        <span class="user-info-value">${status.user_email}</span>
+                    </div>
+                    <div class="user-info-row">
+                        <span class="user-info-label">Storage:</span>
+                        <span class="user-info-value">${status.storage || 'Keyring'}</span>
+                    </div>
+                `;
+
+            } else {
+                // Show not authenticated view
+                authStatusDiv.innerHTML = `
+                    <div class="auth-icon">🔒</div>
+                    <div class="auth-info">
+                        <h3>Not Connected</h3>
+                        <p>Sign in to unlock Google Workspace features</p>
+                    </div>
+                `;
+                notAuthDiv.style.display = 'block';
+                authDiv.style.display = 'none';
+            }
+        }
+
+        function showError() {
+            const authStatusDiv = document.getElementById('auth-status');
+            authStatusDiv.innerHTML = `
+                <div class="auth-icon">❌</div>
+                <div class="auth-info">
+                    <h3>Error Loading Status</h3>
+                    <p>Please check service connection</p>
+                </div>
+            `;
+        }
+
+        async function startSignIn() {
+            const success = await googleAuth.signIn();
+            if (success) {
+                // Reload status
+                await loadAuthStatus();
+            }
+        }
+
+        async function signOut() {
+            if (!confirm('Are you sure you want to sign out from Google?')) {
+                return;
+            }
+
+            const success = await googleAuth.signOut();
+            if (success) {
+                // Reload status
+                await loadAuthStatus();
+            }
+        }
+
+        // Initialize
+        loadAuthStatus();
+    </script>
+</body>
+</html>
+

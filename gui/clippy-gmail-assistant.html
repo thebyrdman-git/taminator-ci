@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clippy Gmail Assistant - Taminator</title>
+    <link rel="stylesheet" href="../themes/theme-redhat.css">
+    <style>
+        body {
+            font-family: "Red Hat Text", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        h1 {
+            color: #ee0000;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: #ee0000;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            color: #999;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .clippy-icon {
+            font-size: 64px;
+            text-align: center;
+            margin: 20px 0;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #ee0000 0%, #cc0000 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(238, 0, 0, 0.3);
+        }
+
+        button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        button.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .context-info {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .context-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            background: rgba(238, 0, 0, 0.2);
+            border: 1px solid rgba(238, 0, 0, 0.4);
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .draft-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .draft-preview h3 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .draft-preview .subject {
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .draft-preview .body {
+            color: #ccc;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .draft-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .draft-item {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .draft-item:hover {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .draft-snippet {
+            flex: 1;
+            color: #999;
+            font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .draft-actions button {
+            padding: 5px 15px;
+            font-size: 14px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(-5px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #ee0000;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <button class="back-button" onclick="window.location.href='index.html'">← Back to Dashboard</button>
+
+    <div class="container">
+        <div class="card full-width">
+            <h1>📧 Clippy Gmail Assistant</h1>
+            <p class="subtitle">AI-powered Gmail draft creation from clipboard content</p>
+            
+            <!-- Google Auth Status -->
+            <div id="google-auth-section" style="display: none; margin-bottom: 20px;">
+                <div style="background: rgba(238, 0, 0, 0.1); border: 1px solid rgba(238, 0, 0, 0.3); border-radius: 8px; padding: 20px; text-align: center;">
+                    <h3 style="color: #ee0000; margin: 0 0 10px 0;">🔐 Google Authentication Required</h3>
+                    <p style="color: #999; margin: 0 0 15px 0;">
+                        Clippy needs access to your Gmail to create drafts.
+                    </p>
+                    <button onclick="startGoogleAuth()" style="margin: 0;">
+                        🔐 Sign In with Google
+                    </button>
+                </div>
+            </div>
+            
+            <div class="status-indicator">
+                <div class="status-dot" id="ai-status-dot"></div>
+                <span id="ai-status-text">AI Service: Checking...</span>
+            </div>
+            
+            <div class="status-indicator" style="margin-top: 10px;">
+                <div class="status-dot" id="google-status-dot" style="background: #999;"></div>
+                <span id="google-status-text">Google: Checking...</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Clipboard Content</h2>
+            
+            <div class="clippy-icon">📎</div>
+            
+            <textarea id="clipboard-content" placeholder="Paste content here...
+
+Examples:
+- Customer case notes
+- JIRA issue updates
+- Meeting notes
+- Technical findings
+
+Clippy will detect the context and generate a professional email draft using AI."></textarea>
+            
+            <button id="paste-btn" onclick="pasteFromClipboard()">
+                📋 Paste from Clipboard
+            </button>
+            <button class="secondary" onclick="clearClipboard()">
+                🗑️  Clear
+            </button>
+            
+            <div id="detected-context" class="context-info" style="display: none;">
+                <h3 style="color: #fff; margin-bottom: 10px;">🔍 Detected Context</h3>
+                <div id="context-badges"></div>
+            </div>
+            
+            <button id="generate-btn" onclick="generateDraft()" disabled style="width: 100%; margin-top: 20px;">
+                🤖 Generate Draft with AI
+            </button>
+        </div>
+
+        <div class="card">
+            <h2>✉️ Draft Preview</h2>
+            
+            <div id="draft-preview" class="draft-preview" style="display: none;">
+                <h3>Subject:</h3>
+                <div class="subject" id="draft-subject"></div>
+                
+                <h3>Body:</h3>
+                <div class="body" id="draft-body"></div>
+                
+                <button onclick="saveDraft()" style="width: 100%; margin-top: 20px;">
+                    💾 Save to Gmail
+                </button>
+            </div>
+            
+            <div id="no-draft" style="text-align: center; padding: 40px; color: #666;">
+                <div style="font-size: 48px; margin-bottom: 20px;">✉️</div>
+                <p>No draft yet. Paste content and generate a draft.</p>
+            </div>
+        </div>
+
+        <div class="card full-width">
+            <h2>📝 Recent Drafts</h2>
+            
+            <ul id="draft-list" class="draft-list">
+                <li class="loading">Loading drafts...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script src="google-auth-handler.js"></script>
+    <script>
+        const api = new TaminatorAPI();
+        let currentDraft = null;
+        let detectedContext = null;
+        let googleAuthenticated = false;
+
+        // Check Google authentication
+        async function checkGoogleAuth() {
+            try {
+                const status = await api.request('/api/google/status');
+                
+                if (status.authenticated) {
+                    googleAuthenticated = true;
+                    document.getElementById('google-status-dot').style.background = '#4caf50';
+                    document.getElementById('google-status-text').textContent = 
+                        `Google: Connected as ${status.user_email}`;
+                    document.getElementById('google-auth-section').style.display = 'none';
+                } else {
+                    googleAuthenticated = false;
+                    document.getElementById('google-status-dot').style.background = '#ff9800';
+                    document.getElementById('google-status-text').textContent = 
+                        'Google: Not Connected';
+                    document.getElementById('google-auth-section').style.display = 'block';
+                    
+                    // Disable features that need Google
+                    document.getElementById('generate-btn').disabled = true;
+                    document.getElementById('generate-btn').title = 'Google authentication required';
+                }
+            } catch (error) {
+                document.getElementById('google-status-dot').style.background = '#f44336';
+                document.getElementById('google-status-text').textContent = 
+                    'Google: Error';
+            }
+        }
+
+        // Start Google Sign-In
+        async function startGoogleAuth() {
+            const success = await googleAuth.signIn();
+            if (success) {
+                await checkGoogleAuth();
+            }
+        }
+
+        // Check AI service availability
+        async function checkAIStatus() {
+            try {
+                const health = await api.request('/health');
+                const ai = health.ai;
+                
+                if (ai.available) {
+                    document.getElementById('ai-status-dot').style.background = '#4caf50';
+                    document.getElementById('ai-status-text').textContent = 
+                        `AI Service: Online (${ai.models.length} models available)`;
+                } else {
+                    document.getElementById('ai-status-dot').style.background = '#ff9800';
+                    document.getElementById('ai-status-text').textContent = 
+                        'AI Service: Offline (Template mode)';
+                }
+            } catch (error) {
+                document.getElementById('ai-status-dot').style.background = '#f44336';
+                document.getElementById('ai-status-text').textContent = 
+                    'AI Service: Error';
+            }
+        }
+
+        // Paste from clipboard
+        async function pasteFromClipboard() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('clipboard-content').value = text;
+                
+                // Detect context
+                await detectContext(text);
+                
+                // Enable generate button
+                document.getElementById('generate-btn').disabled = false;
+            } catch (error) {
+                alert('Failed to read clipboard. Please paste manually (Ctrl+V).');
+            }
+        }
+
+        // Detect context from content
+        async function detectContext(content) {
+            if (!content.trim()) return;
+            
+            try {
+                const result = await api.request('/api/gmail/detect-context', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ content })
+                });
+                
+                detectedContext = result.context;
+                
+                // Display context
+                const contextDiv = document.getElementById('detected-context');
+                const badgesDiv = document.getElementById('context-badges');
+                
+                badgesDiv.innerHTML = '';
+                
+                // Add badges
+                badgesDiv.innerHTML += `<span class="context-badge">Type: ${detectedContext.type}</span>`;
+                
+                if (detectedContext.customer) {
+                    badgesDiv.innerHTML += `<span class="context-badge">Customer: ${detectedContext.customer}</span>`;
+                }
+                
+                if (detectedContext.issue_keys.length > 0) {
+                    badgesDiv.innerHTML += `<span class="context-badge">Issues: ${detectedContext.issue_keys.join(', ')}</span>`;
+                }
+                
+                badgesDiv.innerHTML += `<span class="context-badge">Urgency: ${detectedContext.urgency}</span>`;
+                
+                contextDiv.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Context detection failed:', error);
+            }
+        }
+
+        // Generate draft with AI
+        async function generateDraft() {
+            // Check Google auth first
+            if (!googleAuthenticated) {
+                alert('⚠️  Please sign in with Google first to create Gmail drafts.');
+                return;
+            }
+            
+            const content = document.getElementById('clipboard-content').value;
+            if (!content.trim()) return;
+            
+            const btn = document.getElementById('generate-btn');
+            btn.disabled = true;
+            btn.textContent = '🤖 Generating with AI...';
+            
+            try {
+                const result = await api.request('/api/gmail/draft/from-clipboard', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        clipboard_content: content,
+                        context: detectedContext
+                    })
+                });
+                
+                currentDraft = result;
+                
+                // Display preview
+                document.getElementById('draft-subject').textContent = result.subject;
+                document.getElementById('draft-body').textContent = result.preview;
+                document.getElementById('draft-preview').style.display = 'block';
+                document.getElementById('no-draft').style.display = 'none';
+                
+                // Show success message
+                alert('✅ Draft generated! Review and save to Gmail.');
+                
+            } catch (error) {
+                alert(`❌ Failed to generate draft: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🤖 Generate Draft with AI';
+            }
+        }
+
+        // Save draft to Gmail
+        async function saveDraft() {
+            if (!currentDraft) return;
+            
+            try {
+                // Draft already saved by backend
+                window.open(currentDraft.draft_url, '_blank');
+                
+                alert('✅ Draft saved to Gmail! Opening in new tab.');
+                
+                // Reload draft list
+                loadDrafts();
+                
+            } catch (error) {
+                alert(`❌ Failed to save draft: ${error.message}`);
+            }
+        }
+
+        // Clear clipboard
+        function clearClipboard() {
+            document.getElementById('clipboard-content').value = '';
+            document.getElementById('detected-context').style.display = 'none';
+            document.getElementById('draft-preview').style.display = 'none';
+            document.getElementById('no-draft').style.display = 'block';
+            document.getElementById('generate-btn').disabled = true;
+            currentDraft = null;
+            detectedContext = null;
+        }
+
+        // Load drafts from Gmail
+        async function loadDrafts() {
+            // Skip if not authenticated
+            if (!googleAuthenticated) {
+                document.getElementById('draft-list').innerHTML = 
+                    '<li style="text-align: center; color: #666;">Sign in with Google to view drafts</li>';
+                return;
+            }
+            
+            try {
+                const drafts = await api.request('/api/gmail/drafts');
+                
+                const listEl = document.getElementById('draft-list');
+                
+                if (drafts.length === 0) {
+                    listEl.innerHTML = '<li style="text-align: center; color: #666;">No drafts found</li>';
+                    return;
+                }
+                
+                listEl.innerHTML = '';
+                
+                drafts.forEach(draft => {
+                    const item = document.createElement('li');
+                    item.className = 'draft-item';
+                    item.innerHTML = `
+                        <div class="draft-snippet">${draft.snippet}</div>
+                        <div class="draft-actions">
+                            <button onclick="openDraft('${draft.id}')">Open</button>
+                            <button class="secondary" onclick="deleteDraft('${draft.id}')">Delete</button>
+                        </div>
+                    `;
+                    listEl.appendChild(item);
+                });
+                
+            } catch (error) {
+                document.getElementById('draft-list').innerHTML = 
+                    '<li style="text-align: center; color: #f44336;">Failed to load drafts</li>';
+            }
+        }
+
+        function openDraft(draftId) {
+            window.open(`https://mail.google.com/mail/u/0/#drafts/${draftId}`, '_blank');
+        }
+
+        async function deleteDraft(draftId) {
+            if (!confirm('Delete this draft?')) return;
+            
+            try {
+                await api.request(`/api/gmail/drafts/${draftId}`, {
+                    method: 'DELETE'
+                });
+                
+                alert('✅ Draft deleted');
+                loadDrafts();
+                
+            } catch (error) {
+                alert(`❌ Failed to delete draft: ${error.message}`);
+            }
+        }
+
+        // Enable paste on textarea
+        document.getElementById('clipboard-content').addEventListener('input', (e) => {
+            const content = e.target.value;
+            if (content.trim()) {
+                detectContext(content);
+                document.getElementById('generate-btn').disabled = false;
+            } else {
+                document.getElementById('generate-btn').disabled = true;
+            }
+        });
+
+        // Initialize
+        checkGoogleAuth();
+        checkAIStatus();
+        loadDrafts();
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Logs - Taminator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Red Hat Text', system-ui, sans-serif;
+      background: #151515;
+      color: #FFFFFF;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: #EE0000;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      background: white;
+      color: #151515;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #f5f5f5;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: #C9190B;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #A30000;
+    }
+
+    .stats-bar {
+      background: #252525;
+      padding: 12px 24px;
+      display: flex;
+      gap: 24px;
+      font-size: 14px;
+      border-bottom: 1px solid #404040;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-label {
+      color: #999;
+    }
+
+    .stat-value {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .logs-container {
+      flex: 1;
+      overflow: auto;
+      padding: 16px 24px;
+      background: #1a1a1a;
+    }
+
+    .log-line {
+      font-family: 'Red Hat Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 4px 0;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .log-line:hover {
+      background: #252525;
+    }
+
+    /* Log level colors */
+    .log-line:has(.log-level-INFO) {
+      color: #7ec1ff;
+    }
+
+    .log-line:has(.log-level-WARNING) {
+      color: #F0AB00;
+    }
+
+    .log-line:has(.log-level-ERROR),
+    .log-line:has(.log-level-CRITICAL) {
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.05);
+    }
+
+    .log-line:has(.log-level-DEBUG) {
+      color: #999;
+    }
+
+    .log-timestamp {
+      color: #666;
+    }
+
+    .log-level {
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .log-level-INFO {
+      background: rgba(126, 193, 255, 0.2);
+      color: #7ec1ff;
+    }
+
+    .log-level-WARNING {
+      background: rgba(240, 171, 0, 0.2);
+      color: #F0AB00;
+    }
+
+    .log-level-ERROR,
+    .log-level-CRITICAL {
+      background: rgba(255, 107, 107, 0.2);
+      color: #ff6b6b;
+    }
+
+    .log-level-DEBUG {
+      background: rgba(153, 153, 153, 0.2);
+      color: #999;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px;
+      color: #666;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 48px;
+      color: #999;
+    }
+
+    .auto-scroll-toggle {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #EE0000;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(238, 0, 0, 0.4);
+      transition: all 0.2s;
+    }
+
+    .auto-scroll-toggle:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(238, 0, 0, 0.5);
+    }
+
+    .auto-scroll-toggle.active {
+      background: #3E8635;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📝 Service Logs</h1>
+    <div class="header-actions">
+      <button class="btn" onclick="refreshLogs()">🔄 Refresh</button>
+      <button class="btn btn-danger" onclick="clearLogs()">🗑️ Clear Logs</button>
+      <button class="btn" onclick="window.close()">✕ Close</button>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-label">Total Lines:</span>
+      <span class="stat-value" id="total-lines">-</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">File Size:</span>
+      <span class="stat-value" id="file-size">-</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Location:</span>
+      <span class="stat-value" id="log-path">-</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Last Updated:</span>
+      <span class="stat-value" id="last-updated">-</span>
+    </div>
+  </div>
+
+  <div class="logs-container" id="logs-container">
+    <div class="loading">Loading logs...</div>
+  </div>
+
+  <button class="auto-scroll-toggle" id="auto-scroll-toggle" onclick="toggleAutoScroll()">
+    📌 Auto-scroll: OFF
+  </button>
+
+  <script>
+    let autoScroll = false;
+    let refreshInterval = null;
+    const apiClient = new (require('./public/js/api-client.js').TaminatorApiClient)('http://127.0.0.1:8765');
+
+    async function loadLogs() {
+      try {
+        const response = await fetch('http://127.0.0.1:8765/api/logs/recent?lines=500');
+        const data = await response.json();
+
+        const container = document.getElementById('logs-container');
+        
+        if (data.lines.length === 0) {
+          container.innerHTML = '<div class="empty-state">No logs available</div>';
+          return;
+        }
+
+        // Render logs
+        container.innerHTML = data.lines.map(line => formatLogLine(line)).join('');
+
+        // Update stats
+        document.getElementById('total-lines').textContent = data.total_lines;
+
+        // Auto-scroll to bottom if enabled
+        if (autoScroll) {
+          container.scrollTop = container.scrollHeight;
+        }
+
+        // Load stats
+        loadStats();
+
+      } catch (error) {
+        console.error('Failed to load logs:', error);
+        document.getElementById('logs-container').innerHTML = 
+          '<div class="empty-state">❌ Failed to load logs</div>';
+      }
+    }
+
+    async function loadStats() {
+      try {
+        const response = await fetch('http://127.0.0.1:8765/api/logs/stats');
+        const stats = await response.json();
+
+        document.getElementById('file-size').textContent = `${stats.size_mb} MB`;
+        document.getElementById('log-path').textContent = stats.path;
+        document.getElementById('last-updated').textContent = new Date(stats.modified).toLocaleString();
+
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+      }
+    }
+
+    function formatLogLine(line) {
+      // Parse log line: [timestamp] LEVEL name - message
+      const match = line.match(/\[(.*?)\]\s+(\w+)\s+(.*?)\s+-\s+(.*)/);
+      
+      if (match) {
+        const [, timestamp, level, name, message] = match;
+        return `
+          <div class="log-line">
+            <span class="log-timestamp">[${timestamp}]</span>
+            <span class="log-level log-level-${level}">${level}</span>
+            <span class="log-name">${name}</span>
+            <span class="log-message">- ${message}</span>
+          </div>
+        `;
+      }
+
+      // Fallback for unparsed lines
+      return `<div class="log-line">${line}</div>`;
+    }
+
+    function refreshLogs() {
+      console.log('Refreshing logs...');
+      loadLogs();
+    }
+
+    async function clearLogs() {
+      if (!confirm('Are you sure you want to clear all logs? This cannot be undone.')) {
+        return;
+      }
+
+      try {
+        await fetch('http://127.0.0.1:8765/api/logs/clear', { method: 'DELETE' });
+        console.log('Logs cleared');
+        loadLogs();
+      } catch (error) {
+        console.error('Failed to clear logs:', error);
+        alert('Failed to clear logs');
+      }
+    }
+
+    function toggleAutoScroll() {
+      autoScroll = !autoScroll;
+      const btn = document.getElementById('auto-scroll-toggle');
+      
+      if (autoScroll) {
+        btn.textContent = '📌 Auto-scroll: ON';
+        btn.classList.add('active');
+        // Scroll to bottom immediately
+        document.getElementById('logs-container').scrollTop = 
+          document.getElementById('logs-container').scrollHeight;
+      } else {
+        btn.textContent = '📌 Auto-scroll: OFF';
+        btn.classList.remove('active');
+      }
+    }
+
+    // Initial load
+    loadLogs();
+
+    // Auto-refresh every 5 seconds
+    refreshInterval = setInterval(loadLogs, 5000);
+
+    // Cleanup on close
+    window.addEventListener('beforeunload', () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    });
+  </script>
+</body>
+</html>
+

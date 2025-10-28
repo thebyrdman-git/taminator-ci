@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taminator Documentation - Red Hat TAM Automation</title>
+    <link rel="stylesheet" href="assets/css/redhat-docs.css">
+    <link rel="stylesheet" href="assets/css/search.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Red+Hat+Text:wght@400;500;600;700&family=Red+Hat+Display:wght@700;900&family=Red+Hat+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="docs-header">
+        <div class="header-container">
+            <div class="header-left">
+                <a href="/" class="logo">
+                    <img src="assets/images/redhat-logo.svg" alt="Red Hat" height="24">
+                    <span class="product-name">Taminator Documentation</span>
+                </a>
+            </div>
+            
+            <div class="header-center">
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <input type="text" 
+                           id="search-input" 
+                           class="search-input" 
+                           placeholder="Search documentation..."
+                           autocomplete="off">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20">
+                        <path d="M14.386 14.386l4.088 4.088-1.414 1.414-4.088-4.088A7.5 7.5 0 1 1 14.386 14.386zM8.5 14A5.5 5.5 0 1 0 8.5 3a5.5 5.5 0 0 0 0 11z" fill="currentColor"/>
+                    </svg>
+                    <div id="search-results" class="search-results"></div>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <a href="https://gitlab.cee.redhat.com/jbyrd/taminator" class="header-link" target="_blank">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 0C4.477 0 0 4.477 0 10c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0110 4.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C17.137 18.163 20 14.418 20 10c0-5.523-4.477-10-10-10z"/>
+                    </svg>
+                    GitLab
+                </a>
+                <a href="https://access.redhat.com/support" class="header-link" target="_blank">
+                    Support
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title">Taminator Documentation</h1>
+            <p class="hero-subtitle">Professional TAM automation for Red Hat Technical Account Managers</p>
+            <p class="hero-description">
+                Find answers, get step-by-step guidance, and learn how to use Taminator to streamline your TAM workflows.
+            </p>
+        </div>
+    </section>
+
+    <!-- Popular Products Section -->
+    <section class="products-section">
+        <div class="container">
+            <h2 class="section-title">Explore popular features</h2>
+            
+            <div class="products-grid">
+                <a href="features/rfe-tracking.html" class="product-card">
+                    <div class="product-icon">🎯</div>
+                    <h3>RFE Tracking</h3>
+                    <p>Create, manage, and track RFE (Request for Enhancement) submissions for customers.</p>
+                </a>
+                
+                <a href="features/bug-management.html" class="product-card">
+                    <div class="product-icon">🐛</div>
+                    <h3>Bug Management</h3>
+                    <p>Track and report customer-facing bugs with automated JIRA synchronization.</p>
+                </a>
+                
+                <a href="features/customer-portal.html" class="product-card">
+                    <div class="product-icon">📤</div>
+                    <h3>Customer Portal Integration</h3>
+                    <p>Post reports and updates directly to customer portal groups with one click.</p>
+                </a>
+                
+                <a href="integrations/google-workspace.html" class="product-card">
+                    <div class="product-icon">☁️</div>
+                    <h3>Google Workspace</h3>
+                    <p>Integrate with Gmail, Drive, and Calendar for seamless workflow automation.</p>
+                </a>
+                
+                <a href="features/clippy-assistant.html" class="product-card">
+                    <div class="product-icon">📧</div>
+                    <h3>Clippy Gmail Assistant</h3>
+                    <p>AI-powered email draft generation from clipboard content using Granite models.</p>
+                </a>
+                
+                <a href="integrations/jira.html" class="product-card">
+                    <div class="product-icon">🔗</div>
+                    <h3>JIRA Integration</h3>
+                    <p>Real-time synchronization with JIRA for automated status updates and tracking.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Common Use Cases -->
+    <section class="use-cases-section">
+        <div class="container">
+            <h2 class="section-title">Explore common use cases</h2>
+            
+            <div class="use-cases-list">
+                <a href="guides/getting-started.html" class="use-case-item">
+                    <h3>Getting started with Taminator</h3>
+                    <p>Install, configure, and launch your first RFE report in minutes.</p>
+                </a>
+                
+                <a href="guides/create-rfe.html" class="use-case-item">
+                    <h3>Creating your first RFE</h3>
+                    <p>Step-by-step guide to creating and submitting RFE reports for customers.</p>
+                </a>
+                
+                <a href="guides/jira-sync.html" class="use-case-item">
+                    <h3>Synchronizing with JIRA</h3>
+                    <p>Keep your reports in sync with JIRA status updates automatically.</p>
+                </a>
+                
+                <a href="guides/google-auth.html" class="use-case-item">
+                    <h3>Authenticate with Google Workspace</h3>
+                    <p>Connect your @redhat.com account to unlock Drive and Gmail features.</p>
+                </a>
+                
+                <a href="guides/clippy-email.html" class="use-case-item">
+                    <h3>Generate professional emails with AI</h3>
+                    <p>Use Clippy to transform case notes into polished customer emails.</p>
+                </a>
+                
+                <a href="guides/portal-posting.html" class="use-case-item">
+                    <h3>Posting to Customer Portal</h3>
+                    <p>Publish reports and updates to customer groups with markdown support.</p>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Learning Resources -->
+    <section class="learning-section">
+        <div class="container">
+            <h2 class="section-title">Explore learning resources</h2>
+            
+            <div class="learning-grid">
+                <a href="reference/cli.html" class="learning-card">
+                    <div class="learning-icon">⌨️</div>
+                    <h3>CLI Reference</h3>
+                    <p>Complete command-line interface reference with examples and options.</p>
+                    <span class="learning-link">View CLI docs →</span>
+                </a>
+                
+                <a href="architecture/overview.html" class="learning-card">
+                    <div class="learning-icon">🏗️</div>
+                    <h3>Architecture Guide</h3>
+                    <p>Understand Taminator's architecture, components, and design decisions.</p>
+                    <span class="learning-link">Explore architecture →</span>
+                </a>
+                
+                <a href="integrations/index.html" class="learning-card">
+                    <div class="learning-icon">🔗</div>
+                    <h3>Integration Guides</h3>
+                    <p>Learn how to integrate with JIRA, Portal, Google Workspace, and more.</p>
+                    <span class="learning-link">View integrations →</span>
+                </a>
+                
+                <a href="troubleshooting/index.html" class="learning-card">
+                    <div class="learning-icon">🔧</div>
+                    <h3>Troubleshooting</h3>
+                    <p>Common issues, solutions, and debugging techniques for Taminator.</p>
+                    <span class="learning-link">Get help →</span>
+                </a>
+                
+                <a href="api/index.html" class="learning-card">
+                    <div class="learning-icon">📡</div>
+                    <h3>API Reference</h3>
+                    <p>Complete REST API documentation for programmatic access.</p>
+                    <span class="learning-link">API docs →</span>
+                </a>
+                
+                <a href="reference/configuration.html" class="learning-card">
+                    <div class="learning-icon">⚙️</div>
+                    <h3>Configuration Reference</h3>
+                    <p>Configuration files, environment variables, and customization options.</p>
+                    <span class="learning-link">View config →</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="docs-footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>Learn</h4>
+                    <ul>
+                        <li><a href="guides/getting-started.html">Getting Started</a></li>
+                        <li><a href="guides/index.html">User Guides</a></li>
+                        <li><a href="reference/index.html">Reference</a></li>
+                        <li><a href="troubleshooting/index.html">Troubleshooting</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>Integrate</h4>
+                    <ul>
+                        <li><a href="integrations/jira.html">JIRA</a></li>
+                        <li><a href="integrations/portal.html">Customer Portal</a></li>
+                        <li><a href="integrations/google-workspace.html">Google Workspace</a></li>
+                        <li><a href="api/index.html">API Reference</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>Architecture</h4>
+                    <ul>
+                        <li><a href="architecture/overview.html">System Overview</a></li>
+                        <li><a href="architecture/components.html">Components</a></li>
+                        <li><a href="architecture/diagrams.html">Architecture Diagrams</a></li>
+                        <li><a href="architecture/security.html">Security</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues" target="_blank">Report a bug</a></li>
+                        <li><a href="https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues/new" target="_blank">Request a feature</a></li>
+                        <li><a href="mailto:jbyrd@redhat.com">Contact support</a></li>
+                        <li><a href="changelog.html">Changelog</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Red Hat, Inc. | Taminator v2.0.0</p>
+                <p>
+                    <a href="https://www.redhat.com/en/about/privacy-policy" target="_blank">Privacy Policy</a> |
+                    <a href="https://www.redhat.com/en/about/terms-use" target="_blank">Terms of Use</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Search Engine -->
+    <script src="https://unpkg.com/lunr/lunr.js"></script>
+    <script src="assets/js/search-index.js"></script>
+    <script src="assets/js/search.js"></script>
+</body>
+</html>
+

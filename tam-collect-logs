@@ -1,0 +1,115 @@
+#!/bin/bash
+# Taminator Log Collection Tool
+# Collects logs and system info for GitLab issue reporting
+
+set -e
+
+BOLD='\033[1m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo -e "${BOLD}📦 Taminator Log Collection${NC}\n"
+
+# Check if service is running
+SERVICE_URL="http://127.0.0.1:8765"
+
+if curl -s "${SERVICE_URL}/health" > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ Service is running - collecting via API${NC}"
+    
+    # Collect via API
+    TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    OUTPUT_FILE="taminator-diagnostics-${TIMESTAMP}.tar.gz"
+    
+    echo "Collecting diagnostics..."
+    curl -s -X POST "${SERVICE_URL}/api/diagnostics/collect" \
+        -o "$OUTPUT_FILE"
+    
+    if [ -f "$OUTPUT_FILE" ]; then
+        SIZE=$(du -h "$OUTPUT_FILE" | cut -f1)
+        echo -e "\n${GREEN}✅ Diagnostics package created${NC}"
+        echo -e "   File: ${BOLD}$OUTPUT_FILE${NC}"
+        echo -e "   Size: $SIZE"
+        echo ""
+        echo -e "${BLUE}📋 To attach to GitLab issue:${NC}"
+        echo "   1. Go to: https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues/new"
+        echo "   2. Describe your issue"
+        echo "   3. Drag $OUTPUT_FILE to attach"
+        echo "   4. Submit"
+        echo ""
+        echo -e "${YELLOW}⚠️  Review the package contents first:${NC}"
+        echo "   tar -tzf $OUTPUT_FILE"
+        echo "   (contains logs which may have customer names/case IDs)"
+    else
+        echo -e "${YELLOW}❌ Failed to create diagnostics package${NC}"
+        exit 1
+    fi
+    
+else
+    echo -e "${YELLOW}⚠️  Service is not running - collecting manually${NC}"
+    
+    # Manual collection
+    TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+    PKG_DIR="taminator-diagnostics-${TIMESTAMP}"
+    OUTPUT_FILE="${PKG_DIR}.tar.gz"
+    
+    mkdir -p "$PKG_DIR"
+    
+    # System info
+    echo "Collecting system information..."
+    cat > "$PKG_DIR/system-info.txt" <<EOF
+Generated: $(date -Iseconds)
+Hostname: $(hostname)
+OS: $(uname -s) $(uname -r)
+Python: $(python3 --version 2>&1)
+rhcase: $(which rhcase 2>&1 || echo "not found")
+rhcase version: $(rhcase --version 2>&1 || echo "not installed")
+EOF
+    
+    # Logs
+    echo "Collecting logs..."
+    LOG_DIR="$HOME/.local/state/taminator/log"
+    if [ -d "$LOG_DIR" ]; then
+        tail -1000 "$LOG_DIR"/*.log > "$PKG_DIR/logs.txt" 2>&1 || true
+    else
+        echo "No logs found at $LOG_DIR" > "$PKG_DIR/logs.txt"
+    fi
+    
+    # Debug settings
+    DEBUG_FILE="$HOME/.config/taminator/debug_settings.json"
+    if [ -f "$DEBUG_FILE" ]; then
+        cp "$DEBUG_FILE" "$PKG_DIR/debug-settings.json"
+    fi
+    
+    # README
+    cat > "$PKG_DIR/README.txt" <<EOF
+Taminator Diagnostics Package (Manual Collection)
+
+Generated: $(date -Iseconds)
+
+Contents:
+- system-info.txt - System information
+- logs.txt - Recent log files  
+- debug-settings.json - Debug configuration
+
+To attach to GitLab issue:
+1. Go to: https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues/new
+2. Describe your issue
+3. Drag $OUTPUT_FILE to attach
+4. Submit
+EOF
+    
+    # Create tarball
+    tar -czf "$OUTPUT_FILE" "$PKG_DIR"
+    rm -rf "$PKG_DIR"
+    
+    SIZE=$(du -h "$OUTPUT_FILE" | cut -f1)
+    echo -e "\n${GREEN}✅ Diagnostics package created${NC}"
+    echo -e "   File: ${BOLD}$OUTPUT_FILE${NC}"
+    echo -e "   Size: $SIZE"
+    echo ""
+    echo -e "${BLUE}📋 To attach to GitLab issue:${NC}"
+    echo "   https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues/new"
+fi
+
