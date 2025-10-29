@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor Extension - Taminator</title>
+    <link rel="stylesheet" href="public/css/style.css">
+    <style>
+        .extension-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .extension-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .extension-icon {
+            width: 64px;
+            height: 64px;
+            margin-right: 20px;
+        }
+        .extension-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .extension-version {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .install-button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+        }
+        .install-button:hover {
+            background: #005a9e;
+        }
+        .install-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status-message {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            display: none;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .feature-list li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cursor IDE Extension</h1>
+        
+        <div class="extension-card">
+            <div class="extension-header">
+                <svg class="extension-icon" viewBox="0 0 100 100">
+                    <rect width="100" height="100" fill="#007acc" rx="10"/>
+                    <text x="50" y="65" font-size="60" fill="white" text-anchor="middle" font-family="monospace">T</text>
+                </svg>
+                <div>
+                    <h2 class="extension-title">{{ extension_config.displayName }}</h2>
+                    <p class="extension-version">Version {{ extension_version }}</p>
+                </div>
+            </div>
+            
+            <p>{{ extension_config.description }}</p>
+            
+            <div id="status-message" class="status-message"></div>
+            
+            <div>
+                <button id="install-btn" class="install-button" onclick="installExtension()">
+                    Install in Cursor IDE
+                </button>
+                <button class="install-button" onclick="openExtensionLocation()" style="background: #6c757d;">
+                    Open Extension Folder
+                </button>
+            </div>
+            
+            <h3>Features</h3>
+            <ul class="feature-list">
+                <li>AI-powered email analysis directly in your IDE</li>
+                <li>Automatic case number extraction</li>
+                <li>Case history sidebar with quick access</li>
+                <li>Keyboard shortcuts for fast workflow</li>
+                <li>Right-click context menu integration</li>
+                <li>Real-time connection status in status bar</li>
+                <li>Inline hints and decorations</li>
+            </ul>
+            
+            <h3>Requirements</h3>
+            <ul>
+                <li>Cursor IDE or VS Code installed</li>
+                <li>Taminator Intelligence service running</li>
+                <li>Service accessible at http://localhost:8080</li>
+            </ul>
+            
+            <h3>After Installation</h3>
+            <ol>
+                <li>Restart Cursor IDE</li>
+                <li>Open Command Palette (Ctrl+Shift+P)</li>
+                <li>Type "Taminator" to see available commands</li>
+                <li>Use Ctrl+Shift+T to analyze emails</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script src="public/js/extension-installer.js"></script>
+</body>
+</html>
+

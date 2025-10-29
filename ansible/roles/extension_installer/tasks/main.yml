@@ -1,0 +1,147 @@
+---
+# Extension Installer Role - Main Tasks
+
+- name: Check if extension VSIX exists
+  stat:
+    path: "{{ extension_vsix_path }}"
+  register: vsix_stat
+
+- name: Build extension if not exists
+  include_role:
+    name: cursor_extension
+  when: not vsix_stat.stat.exists
+
+- name: Create extension installer HTML
+  template:
+    src: settings-extension.html.j2
+    dest: "{{ gui_dir }}/{{ installer_button_html }}"
+    mode: '0644'
+
+- name: Create extension installer JavaScript
+  template:
+    src: extension-installer.js.j2
+    dest: "{{ gui_dir }}/public/js/{{ installer_script }}"
+    mode: '0644'
+
+- name: Check if main.js has extension IPC handlers
+  shell: grep -q "install-cursor-extension" "{{ ipc_handler_file }}"
+  register: ipc_check
+  failed_when: false
+  changed_when: false
+
+- name: Add IPC handlers to main.js
+  blockinfile:
+    path: "{{ ipc_handler_file }}"
+    marker: "// {mark} ANSIBLE MANAGED - Extension Installer IPC"
+    block: |
+      // ============================================================================
+      // CURSOR EXTENSION INSTALLER IPC Handlers
+      // ============================================================================
+      
+      /**
+       * Install Cursor IDE extension
+       */
+      ipcMain.handle('install-cursor-extension', async (event) => {
+        console.log('[Extension] Installing Cursor extension...');
+        
+        const vsixPath = path.join(__dirname, '../cursor-extension/{{ extension_name }}-{{ extension_version }}.vsix');
+        
+        if (!fs.existsSync(vsixPath)) {
+          return {
+            success: false,
+            message: 'Extension package not found. Build extension first.'
+          };
+        }
+        
+        return new Promise((resolve) => {
+          const process = spawn('code', ['--install-extension', vsixPath], {
+            stdio: ['pipe', 'pipe', 'pipe']
+          });
+          
+          let stdout = '';
+          let stderr = '';
+          
+          process.stdout.on('data', (data) => {
+            stdout += data.toString();
+          });
+          
+          process.stderr.on('data', (data) => {
+            stderr += data.toString();
+          });
+          
+          process.on('close', (code) => {
+            if (code === 0) {
+              console.log('[Extension] ✅ Installation complete');
+              resolve({
+                success: true,
+                message: 'Extension installed successfully. Restart Cursor IDE to activate.'
+              });
+            } else {
+              console.error('[Extension] ❌ Installation failed:', stderr);
+              resolve({
+                success: false,
+                message: `Installation failed: ${stderr || 'Unknown error'}`
+              });
+            }
+          });
+          
+          process.on('error', (err) => {
+            console.error('[Extension] ❌ Process error:', err);
+            resolve({
+              success: false,
+              message: `Failed to run installer: ${err.message}`
+            });
+          });
+        });
+      });
+      
+      /**
+       * Check if Cursor IDE is installed
+       */
+      ipcMain.handle('check-cursor-installed', async (event) => {
+        return new Promise((resolve) => {
+          const process = spawn('which', ['code'], {
+            stdio: ['pipe', 'pipe', 'pipe']
+          });
+          
+          process.on('close', (code) => {
+            resolve({ installed: code === 0 });
+          });
+          
+          process.on('error', () => {
+            resolve({ installed: false });
+          });
+        });
+      });
+      
+      /**
+       * Open extension VSIX location
+       */
+      ipcMain.handle('open-extension-location', async (event) => {
+        const vsixPath = path.join(__dirname, '../cursor-extension');
+        shell.openPath(vsixPath);
+        return { success: true };
+      });
+    insertafter: "// INTELLIGENCE ENGINE IPC Handlers"
+  when: ipc_check.rc != 0
+
+- name: Add settings menu item for extension
+  lineinfile:
+    path: "{{ gui_dir }}/index.html"
+    insertafter: '<a href="settings.html">'
+    line: '            <a href="{{ installer_button_html }}" class="nav-link">Cursor Extension</a>'
+    state: present
+
+- name: Display installation info
+  debug:
+    msg:
+      - "✅ Extension Installer Integration Complete"
+      - ""
+      - "GUI Integration:"
+      - "  - Settings → Cursor Extension"
+      - "  - One-click install button"
+      - "  - Automatic detection of Cursor IDE"
+      - ""
+      - "Extension Location:"
+      - "  {{ extension_vsix_path }}"
+

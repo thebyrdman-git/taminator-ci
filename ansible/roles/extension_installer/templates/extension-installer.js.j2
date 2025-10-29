@@ -1,0 +1,107 @@
+/**
+ * Extension Installer Client
+ * Handles Cursor IDE extension installation from Taminator GUI
+ */
+
+const { ipcRenderer } = require('electron');
+
+let installing = false;
+
+/**
+ * Check if Cursor IDE is installed
+ */
+async function checkCursorInstalled() {
+    try {
+        const result = await ipcRenderer.invoke('check-cursor-installed');
+        return result.installed;
+    } catch (error) {
+        console.error('Failed to check Cursor installation:', error);
+        return false;
+    }
+}
+
+/**
+ * Install Cursor extension
+ */
+async function installExtension() {
+    if (installing) {
+        return;
+    }
+    
+    const btn = document.getElementById('install-btn');
+    const statusDiv = document.getElementById('status-message');
+    
+    // Check if Cursor is installed
+    const cursorInstalled = await checkCursorInstalled();
+    if (!cursorInstalled) {
+        showStatus('error', 'Cursor IDE not found. Please install Cursor IDE first.');
+        return;
+    }
+    
+    installing = true;
+    btn.disabled = true;
+    btn.textContent = 'Installing...';
+    
+    showStatus('info', 'Installing extension. This may take a moment...');
+    
+    try {
+        const result = await ipcRenderer.invoke('install-cursor-extension');
+        
+        if (result.success) {
+            showStatus('success', result.message);
+            btn.textContent = 'Installed ✓';
+            
+            // Show restart reminder after 2 seconds
+            setTimeout(() => {
+                showStatus('info', 'Remember to restart Cursor IDE to activate the extension.');
+            }, 2000);
+        } else {
+            showStatus('error', result.message);
+            btn.disabled = false;
+            btn.textContent = 'Install in Cursor IDE';
+        }
+    } catch (error) {
+        showStatus('error', `Installation failed: ${error.message}`);
+        btn.disabled = false;
+        btn.textContent = 'Install in Cursor IDE';
+    } finally {
+        installing = false;
+    }
+}
+
+/**
+ * Open extension location in file manager
+ */
+async function openExtensionLocation() {
+    try {
+        await ipcRenderer.invoke('open-extension-location');
+    } catch (error) {
+        showStatus('error', `Failed to open location: ${error.message}`);
+    }
+}
+
+/**
+ * Show status message
+ */
+function showStatus(type, message) {
+    const statusDiv = document.getElementById('status-message');
+    statusDiv.className = `status-message status-${type}`;
+    statusDiv.textContent = message;
+    statusDiv.style.display = 'block';
+}
+
+/**
+ * Initialize on page load
+ */
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if Cursor is installed
+    const cursorInstalled = await checkCursorInstalled();
+    
+    if (!cursorInstalled) {
+        showStatus('error', 'Cursor IDE not detected. Install Cursor IDE to use this extension.');
+        document.getElementById('install-btn').disabled = true;
+    } else {
+        showStatus('success', 'Cursor IDE detected. Ready to install extension.');
+    }
+});
+

@@ -1,0 +1,41 @@
+---
+# Context Manager Role - Default Variables
+
+# Available contexts
+contexts:
+  taminator:
+    name: "Taminator"
+    description: "TAM case management and intelligence"
+    rules_file: "{{ project_root }}/.cursorrules"
+    agents_file: "{{ project_root }}/AGENTS.md"
+    tools:
+      - tam-rfe
+      - taminator-service
+      - intelligence-analyzer
+    
+  redhat:
+    name: "Red Hat General"
+    description: "Red Hat compliance and workflows"
+    rules_file: "{{ lookup('env', 'HOME') }}/pai/.cursorrules"
+    agents_file: "{{ lookup('env', 'HOME') }}/pai/AGENTS.md"
+    tools:
+      - pai-case-processor
+      - pai-supportshell
+      - pai-compliance-check
+  
+  sysadmin:
+    name: "System Administration"
+    description: "Infrastructure and automation"
+    rules_file: "{{ lookup('env', 'HOME') }}/pai/contexts/sysadmin/.cursorrules"
+    agents_file: "{{ lookup('env', 'HOME') }}/pai/contexts/sysadmin/AGENTS.md"
+    tools:
+      - ansible-playbook
+      - podman
+      - systemctl
+
+# Default context
+default_context: "taminator"
+
+# Context storage
+context_state_file: "{{ lookup('env', 'HOME') }}/.config/taminator/current-context"
+

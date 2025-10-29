@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+#
+# Taminator Context Switcher
+#
+# Usage:
+#   tam-context                    # Show current context
+#   tam-context list               # List available contexts
+#   tam-context taminator          # Switch to taminator context
+#   tam-context redhat             # Switch to redhat context
+#   tam-context sysadmin           # Switch to sysadmin context
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PLAYBOOK="$PROJECT_ROOT/ansible/playbooks/switch-context.yml"
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+show_usage() {
+    cat << EOF
+${BLUE}Taminator Context Switcher${NC}
+
+Usage:
+    tam-context                    Show current context
+    tam-context list               List available contexts
+    tam-context <name>             Switch to context
+
+Available Contexts:
+    taminator                      TAM case management and intelligence
+    redhat                         Red Hat compliance and workflows
+    sysadmin                       Infrastructure and automation
+
+Examples:
+    tam-context                    # Show current
+    tam-context list               # List all
+    tam-context taminator          # Switch to taminator
+    tam-context redhat             # Switch to redhat
+
+EOF
+}
+
+# No arguments - show current context
+if [ $# -eq 0 ]; then
+    ansible-playbook "$PLAYBOOK" 2>/dev/null | grep -A 3 "Current Context:" || echo "No context set"
+    exit 0
+fi
+
+# List contexts
+if [ "$1" = "list" ] || [ "$1" = "-l" ] || [ "$1" = "--list" ]; then
+    ansible-playbook "$PLAYBOOK" -e list_contexts=true 2>/dev/null | grep -A 10 "Available Contexts:"
+    exit 0
+fi
+
+# Help
+if [ "$1" = "help" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    show_usage
+    exit 0
+fi
+
+# Switch context
+CONTEXT="$1"
+
+echo -e "${BLUE}🔄 Switching to ${CONTEXT} context...${NC}"
+echo ""
+
+if ansible-playbook "$PLAYBOOK" -e "switch_to_context=$CONTEXT" 2>&1 | tee /tmp/tam-context.log | grep -q "Switched to"; then
+    echo ""
+    echo -e "${GREEN}✅ Context switched successfully${NC}"
+    echo ""
+    echo "Restart your IDE to apply new context rules"
+else
+    echo ""
+    echo -e "${YELLOW}⚠️  Context switch failed. Check /tmp/tam-context.log${NC}"
+    exit 1
+fi
+

@@ -1,0 +1,65 @@
+---
+# Cursor Extension Role - Default Variables
+
+extension_name: "taminator-intelligence"
+extension_version: "2.0.0"
+extension_publisher: "redhat-tam"
+
+# Paths
+project_root: "{{ playbook_dir | dirname }}"
+extension_dir: "{{ project_root }}/cursor-extension"
+build_dir: "{{ extension_dir }}/out"
+dist_dir: "{{ extension_dir }}/dist"
+
+# Node.js settings
+node_version: "20"
+npm_install_args: "--production=false"
+
+# Build settings
+compile_on_build: true
+run_tests: false
+package_extension: true
+
+# Extension configuration
+extension_config:
+  displayName: "Taminator Intelligence"
+  description: "AI-powered case analysis for Red Hat TAMs"
+  categories:
+    - "Other"
+    - "Machine Learning"
+  keywords:
+    - "taminator"
+    - "red hat"
+    - "tam"
+    - "case analysis"
+    - "ai"
+
+# Source files to template
+source_files:
+  - name: "api/taminator-client.ts"
+    template: "taminator-client.ts.j2"
+  - name: "extension.ts"
+    template: "extension.ts.j2"
+  - name: "commands/analyze.ts"
+    template: "analyze.ts.j2"
+  - name: "commands/extract.ts"
+    template: "extract.ts.j2"
+  - name: "sidebar/history-provider.ts"
+    template: "history-provider.ts.j2"
+  - name: "sidebar/stats-provider.ts"
+    template: "stats-provider.ts.j2"
+
+# Dependencies
+dependencies:
+  - "axios@^1.6.2"
+
+dev_dependencies:
+  - "@types/node@^20.10.0"
+  - "@types/vscode@^1.85.0"
+  - "@typescript-eslint/eslint-plugin@^6.13.0"
+  - "@typescript-eslint/parser@^6.13.0"
+  - "@vscode/test-electron@^2.3.8"
+  - "@vscode/vsce@^2.22.0"
+  - "eslint@^8.54.0"
+  - "typescript@^5.3.3"
+

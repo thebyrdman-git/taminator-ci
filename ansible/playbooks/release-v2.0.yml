@@ -1,0 +1,195 @@
+---
+# Taminator v2.0 Master Release Playbook
+#
+# Single entry point for complete v2.0 release
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/release-v2.0.yml                    # Full build and release
+#   ansible-playbook ansible/playbooks/release-v2.0.yml --tags build       # Build only
+#   ansible-playbook ansible/playbooks/release-v2.0.yml --tags test        # Test only
+#   ansible-playbook ansible/playbooks/release-v2.0.yml --tags release     # Release only
+#   ansible-playbook ansible/playbooks/release-v2.0.yml --skip-tags github # Skip GitHub staging
+
+- name: Taminator v2.0 Master Release
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    version: "2.0.0"
+    skip_confirmation: false
+  
+  tasks:
+    # ============================================================================
+    # PRE-RELEASE AUDIT
+    # ============================================================================
+    
+    - name: Pre-release audit
+      include_tasks: "{{ playbook_dir }}/00-pre-release-audit.yml"
+      tags: [always, audit]
+    
+    # ============================================================================
+    # BUILD PHASE
+    # ============================================================================
+    
+    - name: Display build plan
+      debug:
+        msg:
+          - "🚀 Taminator v{{ version }} Master Release"
+          - ""
+          - "Build Components:"
+          - "  1. Cursor IDE Extension (VSIX)"
+          - "  2. Extension Installer (GUI integration)"
+          - "  3. Desktop Apps (AppImage, DEB)"
+          - "  4. Container Image (Podman)"
+          - ""
+          - "Release Pipeline:"
+          - "  5. GitHub Staging (test)"
+          - "  6. GitLab Production (MiracleMax CI/CD)"
+          - ""
+          - "Estimated time: 10-15 minutes"
+      tags: [always]
+    
+    - name: Confirm build
+      pause:
+        prompt: "Press ENTER to start build or Ctrl+C to cancel"
+      when: not skip_confirmation
+      tags: [always]
+    
+    - name: Build Cursor IDE extension
+      include_role:
+        name: cursor_extension
+      vars:
+        extension_version: "{{ version }}"
+        compile_on_build: true
+        package_extension: true
+        run_tests: false
+      tags: [build, extension]
+    
+    - name: Integrate extension installer into GUI
+      include_role:
+        name: extension_installer
+      vars:
+        extension_version: "{{ version }}"
+      tags: [build, gui]
+    
+    - name: Build AppImage
+      include_tasks: "{{ playbook_dir }}/01-build-appimage.yml"
+      tags: [build, appimage]
+    
+    - name: Build DEB package
+      include_tasks: "{{ playbook_dir }}/02-build-deb.yml"
+      tags: [build, deb]
+    
+    - name: Build container image
+      include_tasks: "{{ playbook_dir }}/03-build-container.yml"
+      tags: [build, container]
+    
+    - name: Generate unified checksums
+      shell: |
+        cd {{ project_root }}/release/v{{ version }}
+        find . -type f \( -name "*.AppImage" -o -name "*.deb" -o -name "*.vsix" \) -exec sha256sum {} \; > checksums-all.txt
+      args:
+        executable: /bin/bash
+      tags: [build]
+    
+    - name: Display build results
+      debug:
+        msg:
+          - ""
+          - "✅ Build Phase Complete"
+          - ""
+          - "Artifacts in: release/v{{ version }}/"
+      tags: [build]
+    
+    # ============================================================================
+    # TEST PHASE
+    # ============================================================================
+    
+    - name: Test artifacts
+      block:
+        - name: Verify AppImage
+          command: file {{ project_root }}/release/v{{ version }}/linux/x86_64/Taminator-{{ version }}.AppImage
+          register: appimage_check
+          changed_when: false
+        
+        - name: Verify DEB
+          command: dpkg-deb --info {{ project_root }}/release/v{{ version }}/linux/x86_64/taminator-gui_{{ version }}_amd64.deb
+          register: deb_check
+          changed_when: false
+          failed_when: false
+        
+        - name: Verify VSIX
+          stat:
+            path: "{{ project_root }}/cursor-extension/taminator-intelligence-{{ version }}.vsix"
+          register: vsix_check
+        
+        - name: Display test results
+          debug:
+            msg:
+              - "Test Results:"
+              - "  AppImage: {{ 'PASS' if 'executable' in appimage_check.stdout else 'FAIL' }}"
+              - "  DEB: {{ 'PASS' if deb_check.rc == 0 else 'FAIL' }}"
+              - "  VSIX: {{ 'PASS' if vsix_check.stat.exists else 'FAIL' }}"
+      tags: [test]
+    
+    # ============================================================================
+    # RELEASE PHASE
+    # ============================================================================
+    
+    - name: Release to GitHub staging
+      include_tasks: "{{ playbook_dir }}/10-release-github.yml"
+      tags: [release, github]
+    
+    - name: Pause before GitLab release
+      pause:
+        prompt: |
+          
+          GitHub staging release complete.
+          Test the release, then press ENTER to release to GitLab production.
+          Or Ctrl+C to stop here.
+      when: not skip_confirmation
+      tags: [release, gitlab]
+    
+    - name: Release to GitLab production
+      include_tasks: "{{ playbook_dir }}/11-release-gitlab.yml"
+      tags: [release, gitlab]
+    
+    # ============================================================================
+    # COMPLETION
+    # ============================================================================
+    
+    - name: Display final summary
+      debug:
+        msg:
+          - ""
+          - "╔════════════════════════════════════════════════════════════════╗"
+          - "║                                                                ║"
+          - "║     ✅ TAMINATOR v{{ version }} RELEASE COMPLETE                  ║"
+          - "║                                                                ║"
+          - "╚════════════════════════════════════════════════════════════════╝"
+          - ""
+          - "Release Artifacts:"
+          - "  - Linux x86_64 AppImage (179 MB)"
+          - "  - Linux x86_64 DEB (142 MB)"
+          - "  - Cursor IDE Extension VSIX"
+          - "  - Container Image (Podman)"
+          - ""
+          - "GitHub Staging:"
+          - "  https://github.com/thebyrdman-git/taminator-staging/releases/v{{ version }}"
+          - ""
+          - "GitLab Production:"
+          - "  https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v{{ version }}"
+          - ""
+          - "MiracleMax CI/CD:"
+          - "  Building ARM64 AppImage automatically"
+          - "  Monitor: https://gitlab.cee.redhat.com/jbyrd/taminator/-/pipelines"
+          - ""
+          - "Installation:"
+          - "  Container: curl -fsSL <url>/deployment/install.sh | bash"
+          - "  AppImage: Download and chmod +x"
+          - "  Extension: Install from Taminator GUI"
+          - ""
+      tags: [always]
+

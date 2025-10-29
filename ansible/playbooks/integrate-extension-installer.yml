@@ -1,0 +1,43 @@
+---
+# Integrate Extension Installer into Taminator GUI
+#
+# Adds one-click Cursor extension installation to Taminator settings
+
+- name: Integrate Extension Installer
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+  
+  tasks:
+    - name: Display integration info
+      debug:
+        msg:
+          - "🔧 Integrating Extension Installer into Taminator GUI"
+          - ""
+          - "This will add:"
+          - "  - Settings → Cursor Extension page"
+          - "  - One-click install button"
+          - "  - IPC handlers for installation"
+          - ""
+    
+    - name: Apply extension_installer role
+      include_role:
+        name: extension_installer
+    
+    - name: Display completion
+      debug:
+        msg:
+          - ""
+          - "✅ Extension Installer Integration Complete"
+          - ""
+          - "Users can now:"
+          - "  1. Open Taminator GUI"
+          - "  2. Go to Settings → Cursor Extension"
+          - "  3. Click 'Install in Cursor IDE'"
+          - "  4. Restart Cursor IDE"
+          - ""
+          - "The extension will be automatically installed"
+

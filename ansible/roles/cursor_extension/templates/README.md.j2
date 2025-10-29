@@ -1,0 +1,120 @@
+# {{ extension_config.displayName }}
+
+{{ extension_config.description }}
+
+## Features
+
+- **Email Analysis**: Analyze customer emails with AI-powered intelligence
+- **Case Extraction**: Automatically extract case numbers from text
+- **History Tracking**: View recent case analyses
+- **Quick Actions**: Right-click context menu for fast analysis
+- **Status Bar**: Real-time connection status and statistics
+
+## Requirements
+
+- Taminator Intelligence service running (container or desktop app)
+- Service accessible at `http://localhost:8080` (configurable)
+
+## Installation
+
+### From VSIX
+
+```bash
+code --install-extension {{ extension_name }}-{{ extension_version }}.vsix
+```
+
+### From Source
+
+```bash
+cd cursor-extension
+npm install
+npm run compile
+npm run package
+code --install-extension *.vsix
+```
+
+## Usage
+
+### Analyze Email
+
+1. Open a file or select text containing an email
+2. Press `Ctrl+Shift+T` (or `Cmd+Shift+T` on Mac)
+3. View analysis results
+
+### Extract Case Number
+
+1. Select text containing case numbers
+2. Press `Ctrl+Shift+C` (or `Cmd+Shift+C` on Mac)
+3. Case number copied to clipboard
+
+### View History
+
+- Click Taminator icon in Activity Bar
+- Browse recent case analyses
+- Click case to view details
+
+## Configuration
+
+Configure in VS Code settings:
+
+```json
+{
+  "taminator.serviceUrl": "http://localhost:8080",
+  "taminator.autoDetect": true,
+  "taminator.showInlineHints": true,
+  "taminator.statusBarEnabled": true,
+  "taminator.defaultTags": ["all"]
+}
+```
+
+## Commands
+
+- `Taminator: Analyze Email` - Analyze selected text
+- `Taminator: Extract Case Number` - Extract case number
+- `Taminator: Show Case History` - View history
+- `Taminator: Check Connection` - Test service connection
+
+## Keyboard Shortcuts
+
+- `Ctrl+Shift+T` / `Cmd+Shift+T` - Analyze Email
+- `Ctrl+Shift+C` / `Cmd+Shift+C` - Extract Case Number
+
+## Troubleshooting
+
+### Extension Not Connecting
+
+1. Verify Taminator Intelligence service is running:
+   ```bash
+   curl http://localhost:8080/api/v1/health
+   ```
+
+2. Check service URL in settings
+
+3. Restart VS Code
+
+### Analysis Fails
+
+1. Check status bar for connection status
+2. Run "Taminator: Check Connection" command
+3. View Output panel (Taminator) for errors
+
+## Support
+
+- **Issues**: https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
+- **Documentation**: https://gitlab.cee.redhat.com/jbyrd/taminator
+- **Email**: jbyrd@redhat.com
+
+## Release Notes
+
+### {{ extension_version }}
+
+- Initial release
+- Email analysis integration
+- Case history tracking
+- Quick actions and keyboard shortcuts
+
+---
+
+**Built for Red Hat TAMs**  
+Part of the Taminator Intelligence platform
+

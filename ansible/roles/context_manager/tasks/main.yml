@@ -1,0 +1,66 @@
+---
+# Context Manager Role - Main Tasks
+
+- name: Ensure context config directory exists
+  file:
+    path: "{{ context_state_file | dirname }}"
+    state: directory
+    mode: '0755'
+
+- name: Get current context
+  slurp:
+    src: "{{ context_state_file }}"
+  register: current_context_file
+  ignore_errors: yes
+
+- name: Set current context fact
+  set_fact:
+    current_context: "{{ (current_context_file.content | b64decode).strip() if current_context_file is succeeded else default_context }}"
+
+- name: Display current context
+  debug:
+    msg:
+      - "Current Context: {{ current_context }}"
+      - "Name: {{ contexts[current_context].name }}"
+      - "Description: {{ contexts[current_context].description }}"
+
+- name: Switch context (if requested)
+  block:
+    - name: Validate requested context
+      assert:
+        that:
+          - switch_to_context in contexts.keys()
+        fail_msg: "Invalid context: {{ switch_to_context }}. Available: {{ contexts.keys() | list }}"
+        success_msg: "Switching to {{ switch_to_context }}"
+    
+    - name: Write new context
+      copy:
+        content: "{{ switch_to_context }}"
+        dest: "{{ context_state_file }}"
+        mode: '0644'
+    
+    - name: Update current context fact
+      set_fact:
+        current_context: "{{ switch_to_context }}"
+    
+    - name: Display switch confirmation
+      debug:
+        msg:
+          - "✅ Switched to {{ contexts[switch_to_context].name }}"
+          - ""
+          - "Rules: {{ contexts[switch_to_context].rules_file }}"
+          - "Agents: {{ contexts[switch_to_context].agents_file }}"
+          - "Tools: {{ contexts[switch_to_context].tools | join(', ') }}"
+  
+  when: switch_to_context is defined
+
+- name: List available contexts
+  debug:
+    msg:
+      - "Available Contexts:"
+      - ""
+      - "{% for ctx_name, ctx in contexts.items() %}{{ '→ ' if ctx_name == current_context else '  ' }}{{ ctx_name }}: {{ ctx.name }} - {{ ctx.description }}{% endfor %}"
+      - ""
+      - "Switch with: ansible-playbook playbooks/switch-context.yml -e switch_to_context=<name>"
+  when: list_contexts | default(false)
+

@@ -1,0 +1,66 @@
+---
+# Build Taminator Cursor IDE Extension
+#
+# Generates all source code from templates and builds VSIX package
+
+- name: Build Cursor IDE Extension
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+  
+  tasks:
+    - name: Display build info
+      debug:
+        msg:
+          - "🏗️  Building Taminator Cursor IDE Extension"
+          - ""
+          - "Project: {{ project_root }}"
+          - "Version: {{ extension_version | default('2.0.0') }}"
+          - "Compile: {{ compile_on_build | default(true) }}"
+          - "Package: {{ package_extension | default(true) }}"
+          - "Tests: {{ run_tests | default(false) }}"
+    
+    - name: Check Node.js installation
+      command: node --version
+      register: node_version
+      changed_when: false
+      failed_when: false
+    
+    - name: Verify Node.js available
+      assert:
+        that:
+          - node_version.rc == 0
+        fail_msg: "Node.js not found. Install Node.js 18+ first."
+        success_msg: "Node.js {{ node_version.stdout }} detected"
+    
+    - name: Check npm installation
+      command: npm --version
+      register: npm_version
+      changed_when: false
+    
+    - name: Display npm version
+      debug:
+        msg: "npm {{ npm_version.stdout }} detected"
+    
+    - name: Apply cursor_extension role
+      include_role:
+        name: cursor_extension
+    
+    - name: Display completion message
+      debug:
+        msg:
+          - "✅ Cursor Extension Build Complete"
+          - ""
+          - "Extension built and ready for installation"
+          - ""
+          - "Install in Cursor IDE:"
+          - "  code --install-extension {{ project_root }}/cursor-extension/*.vsix"
+          - ""
+          - "Or install manually:"
+          - "  1. Open Cursor IDE"
+          - "  2. Extensions → ... → Install from VSIX"
+          - "  3. Select: {{ project_root }}/cursor-extension/*.vsix"
+

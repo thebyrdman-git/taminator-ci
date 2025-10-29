@@ -1,0 +1,146 @@
+{
+  "name": "{{ extension_name }}",
+  "displayName": "{{ extension_config.displayName }}",
+  "description": "{{ extension_config.description }}",
+  "version": "{{ extension_version }}",
+  "publisher": "{{ extension_publisher }}",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": {{ extension_config.categories | to_json }},
+  "keywords": {{ extension_config.keywords | to_json }},
+  "activationEvents": [
+    "onCommand:taminator.analyzeEmail",
+    "onView:taminatorHistory"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "taminator.analyzeEmail",
+        "title": "Analyze Email",
+        "category": "Taminator"
+      },
+      {
+        "command": "taminator.openAnalyzer",
+        "title": "Open Analyzer",
+        "category": "Taminator"
+      },
+      {
+        "command": "taminator.showHistory",
+        "title": "Show Case History",
+        "category": "Taminator"
+      },
+      {
+        "command": "taminator.extractCaseNumber",
+        "title": "Extract Case Number",
+        "category": "Taminator"
+      },
+      {
+        "command": "taminator.checkConnection",
+        "title": "Check Connection",
+        "category": "Taminator"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "taminator.analyzeEmail",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "taminator.extractCaseNumber",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "editorTextFocus"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "taminator",
+          "title": "Taminator Intelligence",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "taminator": [
+        {
+          "id": "taminatorHistory",
+          "name": "Case History"
+        },
+        {
+          "id": "taminatorStats",
+          "name": "Statistics"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Taminator Intelligence",
+      "properties": {
+        "taminator.serviceUrl": {
+          "type": "string",
+          "default": "http://localhost:8080",
+          "description": "Taminator Intelligence service URL"
+        },
+        "taminator.autoDetect": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically detect emails in open files"
+        },
+        "taminator.showInlineHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show inline hints for case numbers"
+        },
+        "taminator.statusBarEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Taminator status in status bar"
+        },
+        "taminator.defaultTags": {
+          "type": "array",
+          "default": ["all"],
+          "description": "Default tags for analysis"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "taminator.analyzeEmail",
+          "when": "editorHasSelection",
+          "group": "taminator"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+{% for dep in dev_dependencies %}
+    "{{ dep.split('@')[0] }}": "{{ dep.split('@')[1] }}"{{ "," if not loop.last else "" }}
+{% endfor %}
+  },
+  "dependencies": {
+{% for dep in dependencies %}
+    "{{ dep.split('@')[0] }}": "{{ dep.split('@')[1] }}"{{ "," if not loop.last else "" }}
+{% endfor %}
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.cee.redhat.com/jbyrd/taminator.git"
+  },
+  "license": "ISC"
+}
+

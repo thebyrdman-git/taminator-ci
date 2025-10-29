@@ -1,0 +1,139 @@
+---
+# Cursor Extension Role - Main Tasks
+
+- name: Create extension directory structure
+  file:
+    path: "{{ extension_dir }}/{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - src/api
+    - src/commands
+    - src/sidebar
+    - src/utils
+    - src/panels
+    - media
+    - webview
+    - out
+    - dist
+
+- name: Template package.json
+  template:
+    src: package.json.j2
+    dest: "{{ extension_dir }}/package.json"
+    mode: '0644'
+
+- name: Template tsconfig.json
+  template:
+    src: tsconfig.json.j2
+    dest: "{{ extension_dir }}/tsconfig.json"
+    mode: '0644'
+
+- name: Template .eslintrc.json
+  template:
+    src: eslintrc.json.j2
+    dest: "{{ extension_dir }}/.eslintrc.json"
+    mode: '0644'
+
+- name: Template .vscodeignore
+  template:
+    src: vscodeignore.j2
+    dest: "{{ extension_dir }}/.vscodeignore"
+    mode: '0644'
+
+- name: Template source files
+  template:
+    src: "{{ item.template }}"
+    dest: "{{ extension_dir }}/src/{{ item.name }}"
+    mode: '0644'
+  loop: "{{ source_files }}"
+
+- name: Template README.md
+  template:
+    src: README.md.j2
+    dest: "{{ extension_dir }}/README.md"
+    mode: '0644'
+
+- name: Template CHANGELOG.md
+  template:
+    src: CHANGELOG.md.j2
+    dest: "{{ extension_dir }}/CHANGELOG.md"
+    mode: '0644'
+
+- name: Check if node_modules exists
+  stat:
+    path: "{{ extension_dir }}/node_modules"
+  register: node_modules_stat
+
+- name: Install npm dependencies
+  command: npm install {{ npm_install_args }}
+  args:
+    chdir: "{{ extension_dir }}"
+  when: not node_modules_stat.stat.exists or force_install | default(false)
+  register: npm_install_result
+  changed_when: npm_install_result.rc == 0
+
+- name: Run npm audit fix
+  command: npm audit fix
+  args:
+    chdir: "{{ extension_dir }}"
+  ignore_errors: yes
+  when: npm_install_result.changed
+
+- name: Compile TypeScript
+  command: npm run compile
+  args:
+    chdir: "{{ extension_dir }}"
+  when: compile_on_build
+  register: compile_result
+  changed_when: compile_result.rc == 0
+
+- name: Run tests
+  command: npm test
+  args:
+    chdir: "{{ extension_dir }}"
+  when: run_tests
+  ignore_errors: yes
+
+- name: Package extension
+  command: npm run package
+  args:
+    chdir: "{{ extension_dir }}"
+  when: package_extension
+  register: package_result
+  changed_when: package_result.rc == 0
+
+- name: Find packaged VSIX file
+  find:
+    paths: "{{ extension_dir }}"
+    patterns: "*.vsix"
+  register: vsix_files
+  when: package_extension
+
+- name: Copy VSIX to release directory
+  copy:
+    src: "{{ item.path }}"
+    dest: "{{ project_root }}/release/v{{ extension_version }}/cursor-extension/"
+    mode: '0644'
+    remote_src: yes
+  loop: "{{ vsix_files.files }}"
+  when: package_extension and vsix_files.files | length > 0
+
+- name: Generate SHA256 checksum
+  shell: |
+    cd {{ project_root }}/release/v{{ extension_version }}/cursor-extension/
+    sha256sum *.vsix > checksums.txt
+  when: package_extension and vsix_files.files | length > 0
+
+- name: Display build summary
+  debug:
+    msg:
+      - "✅ Cursor Extension Build Complete"
+      - ""
+      - "Extension: {{ extension_name }}"
+      - "Version: {{ extension_version }}"
+      - "Location: {{ extension_dir }}"
+      - "VSIX: {{ vsix_files.files[0].path if vsix_files.files | length > 0 else 'Not packaged' }}"
+      - ""
+      - "Install: code --install-extension {{ vsix_files.files[0].path if vsix_files.files | length > 0 else '<path-to-vsix>' }}"
+

@@ -1,0 +1,35 @@
+---
+# Cursor Extension Role - Metadata
+
+galaxy_info:
+  author: Jimmy Byrd
+  description: Build and package Taminator Cursor IDE extension
+  company: Red Hat
+  license: ISC
+  min_ansible_version: "2.9"
+  
+  platforms:
+    - name: Fedora
+      versions:
+        - 38
+        - 39
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: EL
+      versions:
+        - 8
+        - 9
+
+  galaxy_tags:
+    - development
+    - vscode
+    - cursor
+    - ide
+    - extension
+    - typescript
+    - nodejs
+
+dependencies: []
+

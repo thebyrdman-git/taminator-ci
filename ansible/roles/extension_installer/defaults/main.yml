@@ -1,0 +1,28 @@
+---
+# Extension Installer Role - Default Variables
+
+# GUI integration
+gui_dir: "{{ project_root }}/gui"
+installer_button_html: "settings-extension.html"
+installer_script: "extension-installer.js"
+
+# Extension details
+extension_name: "taminator-intelligence"
+extension_version: "2.0.0"
+extension_vsix_path: "{{ project_root }}/cursor-extension/{{ extension_name }}-{{ extension_version }}.vsix"
+
+# Installation methods
+install_methods:
+  - name: "Cursor IDE"
+    command: "code --install-extension"
+    icon: "cursor-logo.svg"
+  - name: "VS Code"
+    command: "code --install-extension"
+    icon: "vscode-logo.svg"
+  - name: "Manual"
+    command: "open"
+    icon: "folder-icon.svg"
+
+# IPC handler
+ipc_handler_file: "{{ gui_dir }}/main.js"
+

@@ -1,0 +1,35 @@
+---
+# Switch Taminator Context
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/switch-context.yml -e switch_to_context=taminator
+#   ansible-playbook ansible/playbooks/switch-context.yml -e switch_to_context=redhat
+#   ansible-playbook ansible/playbooks/switch-context.yml -e switch_to_context=sysadmin
+#   ansible-playbook ansible/playbooks/switch-context.yml -e list_contexts=true
+
+- name: Switch Context
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+  
+  tasks:
+    - name: Display header
+      debug:
+        msg:
+          - "🔄 Context Manager"
+          - ""
+    
+    - name: Apply context_manager role
+      include_role:
+        name: context_manager
+    
+    - name: Display completion
+      debug:
+        msg:
+          - ""
+          - "✅ Context operation complete"
+      when: switch_to_context is defined or list_contexts | default(false)
+
