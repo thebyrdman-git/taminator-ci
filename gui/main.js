@@ -1179,3 +1179,247 @@ ipcMain.handle('onboard-generate', async (event) => {
   });
 });
 
+// ============================================================================
+// INTELLIGENCE ENGINE IPC Handlers
+// ============================================================================
+
+/**
+ * Get path to intelligence IPC bridge
+ */
+function getIntelligenceBridge() {
+  const fs = require('fs');
+  
+  // Priority 1: Bundled Python source (production)
+  const bundledPath = app.isPackaged 
+    ? path.join(process.resourcesPath, 'taminator', 'core', 'ipc_bridge.py')
+    : path.join(__dirname, '../src/taminator/core/ipc_bridge.py');
+    
+  if (fs.existsSync(bundledPath)) {
+    console.log('[Intelligence] Using bundled IPC bridge:', bundledPath);
+    return bundledPath;
+  }
+  
+  // Priority 2: Development mode
+  const devPath = path.join(__dirname, '../src/taminator/core/ipc_bridge.py');
+  if (fs.existsSync(devPath)) {
+    console.log('[Intelligence] Using development IPC bridge:', devPath);
+    return devPath;
+  }
+  
+  throw new Error('Intelligence IPC bridge not found');
+}
+
+/**
+ * Spawn intelligence IPC bridge
+ */
+function spawnIntelligence(command, args = {}) {
+  const bridgePath = getIntelligenceBridge();
+  const pythonArgs = [bridgePath, command];
+  
+  // Add arguments as JSON
+  for (const [key, value] of Object.entries(args)) {
+    pythonArgs.push(`--${key}`);
+    if (typeof value === 'object') {
+      pythonArgs.push(JSON.stringify(value));
+    } else {
+      pythonArgs.push(String(value));
+    }
+  }
+  
+  console.log('[Intelligence] Spawning:', 'python3', pythonArgs.join(' '));
+  
+  return spawn('python3', pythonArgs, {
+    env: { 
+      ...process.env,
+      PYTHONPATH: app.isPackaged 
+        ? path.join(process.resourcesPath)
+        : path.join(__dirname, '../src')
+    },
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+}
+
+/**
+ * Analyze email with intelligence engine
+ */
+ipcMain.handle('analyze-email', async (event, emailText, tags) => {
+  console.log('[Intelligence] Analyzing email...');
+  
+  return new Promise((resolve, reject) => {
+    const process = spawnIntelligence('analyze', {
+      email: emailText,
+      tags: tags || ['all']
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    process.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    process.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    process.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const intelligence = JSON.parse(stdout);
+          console.log('[Intelligence] ✅ Analysis complete');
+          resolve(intelligence);
+        } catch (error) {
+          console.error('[Intelligence] ❌ Failed to parse JSON:', error);
+          reject(new Error(`Failed to parse intelligence: ${error.message}`));
+        }
+      } else {
+        console.error('[Intelligence] ❌ Analysis failed:', stderr);
+        reject(new Error(`Analysis failed: ${stderr || 'Unknown error'}`));
+      }
+    });
+
+    process.on('error', (err) => {
+      console.error('[Intelligence] ❌ Process error:', err);
+      reject(new Error(`Failed to spawn intelligence engine: ${err.message}`));
+    });
+  });
+});
+
+/**
+ * Get case history from database
+ */
+ipcMain.handle('get-case-history', async (event, limit) => {
+  console.log('[Intelligence] Getting case history (limit:', limit, ')');
+  
+  return new Promise((resolve, reject) => {
+    const process = spawnIntelligence('history', {
+      limit: limit || 50
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    process.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    process.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    process.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const history = JSON.parse(stdout);
+          console.log('[Intelligence] ✅ History retrieved:', history.cases.length, 'cases');
+          resolve(history);
+        } catch (error) {
+          console.error('[Intelligence] ❌ Failed to parse history:', error);
+          reject(new Error(`Failed to parse history: ${error.message}`));
+        }
+      } else {
+        console.error('[Intelligence] ❌ History retrieval failed:', stderr);
+        reject(new Error(`History retrieval failed: ${stderr || 'Unknown error'}`));
+      }
+    });
+
+    process.on('error', (err) => {
+      console.error('[Intelligence] ❌ Process error:', err);
+      reject(new Error(`Failed to get history: ${err.message}`));
+    });
+  });
+});
+
+/**
+ * Record feedback on AI recommendation
+ */
+ipcMain.handle('record-feedback', async (event, caseNumber, feedback) => {
+  console.log('[Intelligence] Recording feedback for case:', caseNumber);
+  
+  return new Promise((resolve, reject) => {
+    const process = spawnIntelligence('feedback', {
+      case_number: caseNumber,
+      decision: feedback.decision,
+      ai_followed: feedback.aiFollowed,
+      notes: feedback.notes || ''
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    process.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    process.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    process.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const result = JSON.parse(stdout);
+          console.log('[Intelligence] ✅ Feedback recorded');
+          resolve(result);
+        } catch (error) {
+          console.error('[Intelligence] ❌ Failed to parse feedback result:', error);
+          reject(new Error(`Failed to parse feedback result: ${error.message}`));
+        }
+      } else {
+        console.error('[Intelligence] ❌ Feedback recording failed:', stderr);
+        reject(new Error(`Feedback recording failed: ${stderr || 'Unknown error'}`));
+      }
+    });
+
+    process.on('error', (err) => {
+      console.error('[Intelligence] ❌ Process error:', err);
+      reject(new Error(`Failed to record feedback: ${err.message}`));
+    });
+  });
+});
+
+/**
+ * Get accuracy statistics
+ */
+ipcMain.handle('get-statistics', async (event, days) => {
+  console.log('[Intelligence] Getting statistics (days:', days, ')');
+  
+  return new Promise((resolve, reject) => {
+    const process = spawnIntelligence('statistics', {
+      days: days || 7
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    process.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    process.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    process.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const stats = JSON.parse(stdout);
+          console.log('[Intelligence] ✅ Statistics retrieved');
+          resolve(stats);
+        } catch (error) {
+          console.error('[Intelligence] ❌ Failed to parse statistics:', error);
+          reject(new Error(`Failed to parse statistics: ${error.message}`));
+        }
+      } else {
+        console.error('[Intelligence] ❌ Statistics retrieval failed:', stderr);
+        reject(new Error(`Statistics retrieval failed: ${stderr || 'Unknown error'}`));
+      }
+    });
+
+    process.on('error', (err) => {
+      console.error('[Intelligence] ❌ Process error:', err);
+      reject(new Error(`Failed to get statistics: ${err.message}`));
+    });
+  });
+});
+

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Intelligence Analyzer - Taminator</title>
+  <link rel="stylesheet" href="https://unpkg.com/@patternfly/patternfly@5/patternfly.css">
+  <style>
+    body {
+      font-family: 'Red Hat Text', sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #EE0000;
+    }
+    
+    .header h1 {
+      margin: 0;
+      color: #151515;
+      font-size: 28px;
+    }
+    
+    .email-input-section {
+      margin-bottom: 30px;
+    }
+    
+    .email-input-section label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #151515;
+    }
+    
+    #emailInput {
+      width: 100%;
+      min-height: 200px;
+      padding: 15px;
+      border: 2px solid #D2D2D2;
+      border-radius: 4px;
+      font-family: 'Red Hat Mono', monospace;
+      font-size: 14px;
+      resize: vertical;
+    }
+    
+    #emailInput:focus {
+      outline: none;
+      border-color: #EE0000;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: #EE0000;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #CC0000;
+    }
+    
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    
+    #loadingIndicator {
+      display: none;
+      text-align: center;
+      padding: 40px;
+      color: #6c757d;
+    }
+    
+    #loadingIndicator.active {
+      display: block;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #EE0000;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    #resultsContainer {
+      display: none;
+    }
+    
+    #resultsContainer.active {
+      display: block;
+    }
+    
+    .error-message {
+      padding: 15px;
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      color: #721c24;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧠 Email Intelligence Analyzer</h1>
+    </div>
+    
+    <div class="email-input-section">
+      <label for="emailInput">
+        📧 Paste Email Content:
+      </label>
+      <textarea 
+        id="emailInput" 
+        placeholder="Paste your case email here...
+
+Example:
+From: customer@company.com
+Subject: Case 12345678 - Issue with product
+
+Hi,
+We need help with...
+"
+      ></textarea>
+    </div>
+    
+    <div class="actions">
+      <button id="analyzeBtn" class="btn btn-primary">
+        🧠 Analyze Email
+      </button>
+      <button id="clearBtn" class="btn btn-secondary">
+        🗑️ Clear
+      </button>
+      <button id="historyBtn" class="btn btn-secondary">
+        📋 View History
+      </button>
+    </div>
+    
+    <div id="loadingIndicator">
+      <div class="spinner"></div>
+      <div>Analyzing email with AI...</div>
+      <div style="font-size: 14px; margin-top: 10px;">This usually takes 1-2 seconds</div>
+    </div>
+    
+    <div id="errorContainer"></div>
+    
+    <div id="resultsContainer"></div>
+  </div>
+  
+  <script src="public/js/intelligence-client.js"></script>
+  <script>
+    const emailInput = document.getElementById('emailInput');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const historyBtn = document.getElementById('historyBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const errorContainer = document.getElementById('errorContainer');
+    
+    // Analyze button click
+    analyzeBtn.addEventListener('click', async () => {
+      const emailText = emailInput.value.trim();
+      
+      if (!emailText) {
+        showError('Please paste email content first');
+        return;
+      }
+      
+      // Show loading
+      loadingIndicator.classList.add('active');
+      resultsContainer.classList.remove('active');
+      errorContainer.innerHTML = '';
+      analyzeBtn.disabled = true;
+      
+      try {
+        // Call intelligence engine
+        const intelligence = await window.intelligenceClient.analyzeEmail(emailText);
+        
+        // Display results
+        window.intelligenceClient.displayIntelligence(intelligence, resultsContainer);
+        resultsContainer.classList.add('active');
+        
+      } catch (error) {
+        console.error('Analysis failed:', error);
+        showError('Analysis failed: ' + error.message);
+      } finally {
+        loadingIndicator.classList.remove('active');
+        analyzeBtn.disabled = false;
+      }
+    });
+    
+    // Clear button click
+    clearBtn.addEventListener('click', () => {
+      emailInput.value = '';
+      resultsContainer.classList.remove('active');
+      errorContainer.innerHTML = '';
+    });
+    
+    // History button click
+    historyBtn.addEventListener('click', async () => {
+      try {
+        const history = await window.intelligenceClient.getCaseHistory(50);
+        alert(`Found ${history.cases.length} analyzed cases. History view coming soon!`);
+        console.log('Case history:', history);
+      } catch (error) {
+        showError('Failed to load history: ' + error.message);
+      }
+    });
+    
+    // Show error message
+    function showError(message) {
+      errorContainer.innerHTML = `
+        <div class="error-message">
+          ❌ ${message}
+        </div>
+      `;
+    }
+    
+    // Load test email (for development)
+    if (window.location.search.includes('test=true')) {
+      emailInput.value = `From: ganesh.kasthurirangan@jpmchase.com
+Subject: Case 04293185 - Subscription renewal
+
+Hi Jimmy,
+
+Can you please review and let us know how we can leverage the required licenses for NEAT from the overall JPMC AAP subscriptions that should be available for the license renewal?
+
+It is currently slated to expire on Dec 31st, 2025 and we cannot afford any outages or customer impacts.
+
+Thanks,
+Ganesh Kasthurirangan
+VP/Senior Manager of Software Engineering
+JP Morgan Chase`;
+    }
+  </script>
+</body>
+</html>
+

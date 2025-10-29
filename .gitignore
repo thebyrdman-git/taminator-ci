@@ -162,3 +162,6 @@ gui/dist/
 *~
 *.orig
 releases/
+# Test files with real customer data
+tests/test_jpmc_email.txt
+tests/*_real_*.txt

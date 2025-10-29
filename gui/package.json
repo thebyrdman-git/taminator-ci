@@ -1,7 +1,7 @@
 {
   "name": "taminator-gui",
-  "version": "2.0.0",
-  "description": "Taminator RFE Tool - GUI Application",
+  "version": "2.1.0",
+  "description": "Taminator Intelligence - AI-Augmented TAM Assistant",
   "homepage": "https://gitlab.cee.redhat.com/jbyrd/taminator",
   "repository": {
     "type": "git",
@@ -11,6 +11,9 @@
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",
+    "build:linux": "electron-builder --linux",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
     "dev": "electron . --dev",
     "test:oobe": "node test-oobe-simulator.js",
     "test:oobe:interactive": "node test-oobe-interactive.js"
@@ -42,6 +45,7 @@
       "oobe-state.js",
       "oobe-wizard.html",
       "logs-viewer.html",
+      "intelligence-analyzer.html",
       "public/**/*",
       "themes/**/*",
       "package.json"
@@ -54,6 +58,11 @@
       {
         "from": "../dist/taminator-service",
         "to": "bin/taminator-service"
+      },
+      {
+        "from": "../src/taminator",
+        "to": "taminator",
+        "filter": ["**/*", "!**/*.pyc", "!**/__pycache__"]
       }
     ],
     "mac": {

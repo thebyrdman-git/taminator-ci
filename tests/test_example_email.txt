@@ -1,0 +1,36 @@
+Smith, John
+Attachments
+8:45 AM (1 hour ago)
+to me, team@example.com, Manager
+
+Hi TAM,
+
+Good Morning.
+
+Can you please review and let us know how we can leverage the required licenses for our automation platform from the overall subscriptions that should be available for the license renewal?
+
+It is currently slated to expire on Dec 31st, 2025 and we cannot afford any outages or customer impacts.
+
+I have opened a case# 12345678 as well.
+
+Thanks much in advance.
+
+Regards,
+
+John Smith | VP/Senior Manager of Engineering | Infrastructure Services | Example Corp | 1234 Main Street, City, ST, 12345, USA | M: 555-123-4567 | john.smith@example.com
+
+From: Doe, Jane <jane.doe@example.com>
+Sent: Tuesday, October 28, 2025 6:21 PM
+To: tam@redhat.com
+Cc: team <team@example.com>
+Subject: Subscription renewal
+
+@tam@redhat.com –
+
+Need some help with Ansible Automation Platform subscription renewal.
+
+Current subscription is set to expire on Dec 31 2025.
+
+Thanks,
+Jane
+

@@ -1,0 +1,48 @@
+# Taminator Intelligence - Systemd User Service
+#
+# Install: cp taminator-intelligence.service ~/.config/systemd/user/
+# Enable:  systemctl --user enable --now taminator-intelligence
+# Status:  systemctl --user status taminator-intelligence
+# Logs:    journalctl --user -u taminator-intelligence -f
+
+[Unit]
+Description=Taminator Intelligence Service
+Documentation=https://gitlab.cee.redhat.com/jbyrd/taminator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10s
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+# Environment
+Environment=TAMINATOR_DB_PATH=%h/.local/share/taminator/intelligence.db
+Environment=PYTHONUNBUFFERED=1
+
+# Create data directory
+ExecStartPre=/usr/bin/mkdir -p %h/.local/share/taminator
+
+# Pull latest image (optional - comment out for offline)
+# ExecStartPre=/usr/bin/podman pull localhost/taminator-intelligence:2.1.0
+
+# Run container
+ExecStart=/usr/bin/podman run --rm \
+  --name taminator-intelligence \
+  -p 127.0.0.1:8080:8080 \
+  -v %h/.local/share/taminator:/app/data:Z \
+  -e TAMINATOR_DB_PATH=/app/data/intelligence.db \
+  -e PYTHONUNBUFFERED=1 \
+  taminator-intelligence:2.1.0
+
+# Stop container gracefully
+ExecStop=/usr/bin/podman stop -t 10 taminator-intelligence
+
+# Cleanup on failure
+ExecStopPost=/usr/bin/podman rm -f taminator-intelligence
+
+[Install]
+WantedBy=default.target
+

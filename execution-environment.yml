@@ -1,0 +1,47 @@
+---
+# Taminator Intelligence - Execution Environment Definition
+# 
+# Based on Ansible Automation Platform Execution Environment philosophy
+# Provides consistent, portable, self-contained runtime environment
+
+version: 3
+
+images:
+  base_image:
+    name: registry.access.redhat.com/ubi9/python-311:latest
+
+dependencies:
+  galaxy: requirements.yml
+  python:
+    - sqlite3  # Built into Python
+  system:
+    - sqlite [platform:rpm]
+    - git-core [platform:rpm]
+
+additional_build_files:
+  - src: src/taminator
+    dest: taminator
+
+additional_build_steps:
+  prepend_base:
+    - RUN echo "Building Taminator Intelligence Execution Environment"
+  
+  prepend_final:
+    - COPY --from=base /app/taminator /app/taminator
+    - RUN mkdir -p /app/data && chmod 775 /app/data
+  
+  append_final:
+    - ENV PYTHONPATH=/app
+    - ENV TAMINATOR_DB_PATH=/app/data/intelligence.db
+    - EXPOSE 8080
+    - HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+        CMD python3 -c "from taminator.core.database import get_intelligence_database; db = get_intelligence_database(); print('OK')" || exit 1
+    - USER 1001
+    - WORKDIR /app
+    - CMD ["python3", "-m", "taminator.core.ipc_bridge", "server", "--host", "0.0.0.0", "--port", "8080"]
+
+options:
+  package_manager_path: /usr/bin/microdnf
+  user: "1001"
+  workdir: "/app"
+
