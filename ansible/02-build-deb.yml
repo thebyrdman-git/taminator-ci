@@ -1,0 +1,89 @@
+---
+# Taminator Release Automation - Build DEB Package
+# 
+# This playbook builds the Debian/Ubuntu package
+# Note: DEB is built alongside AppImage in build:linux
+
+- name: Build Taminator DEB Package
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    version: "2.1.0"
+    build_log: "{{ project_root }}/build-deb-{{ ansible_date_time.iso8601_basic_short }}.log"
+    gui_dir: "{{ project_root }}/gui"
+    dist_dir: "{{ gui_dir }}/dist"
+  
+  tasks:
+    - name: Create build log
+      copy:
+        content: |
+          Taminator v{{ version }} - DEB Package Build
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          User: {{ ansible_user_id }}
+          ================================================================================
+        dest: "{{ build_log }}"
+    
+    - name: Check if DEB was created (from AppImage build)
+      stat:
+        path: "{{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
+      register: deb_stat
+    
+    - name: Verify DEB package
+      assert:
+        that:
+          - deb_stat.stat.exists
+        fail_msg: "❌ BUILD FAILED: DEB package not found (run 01-build-appimage.yml first)"
+        success_msg: "✅ BUILD SUCCESS: DEB package exists"
+    
+    - name: Get DEB size
+      stat:
+        path: "{{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
+      register: deb_size
+    
+    - name: Log DEB details
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "✅ DEB Package: {{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb ({{ (deb_size.stat.size / 1024 / 1024) | round(0) }}MB)"
+    
+    - name: Calculate checksum
+      stat:
+        path: "{{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
+        checksum_algorithm: sha256
+      register: deb_checksum
+    
+    - name: Log checksum
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "SHA256: {{ deb_checksum.stat.checksum }}"
+    
+    - name: Final build summary
+      lineinfile:
+        path: "{{ build_log }}"
+        line: |
+          
+          ================================================================================
+          BUILD SUMMARY
+          ================================================================================
+          Status: ✅ SUCCESS
+          File: taminator-gui_{{ version }}_amd64.deb
+          Size: {{ (deb_size.stat.size / 1024 / 1024) | round(0) }}MB
+          SHA256: {{ deb_checksum.stat.checksum }}
+          Location: {{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb
+          
+          Next: ansible-playbook ansible/03-build-container.yml
+          ================================================================================
+    
+    - name: Display build results
+      debug:
+        msg:
+          - "✅ DEB PACKAGE BUILD COMPLETE"
+          - ""
+          - "File: taminator-gui_{{ version }}_amd64.deb"
+          - "Size: {{ (deb_size.stat.size / 1024 / 1024) | round(0) }}MB"
+          - "Location: {{ dist_dir }}"
+          - "Build log: {{ build_log }}"
+

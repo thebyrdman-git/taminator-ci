@@ -1,0 +1,84 @@
+---
+# Taminator Release Automation - Complete Release Pipeline
+# 
+# This playbook runs the complete release process
+# Use this for automated full releases
+
+- name: Taminator Complete Release Pipeline
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    version: "2.1.0"
+  
+  tasks:
+    - name: Display release pipeline
+      debug:
+        msg:
+          - "🚀 Taminator v{{ version }} - Complete Release Pipeline"
+          - ""
+          - "This will run:"
+          - "  1. Pre-release audit"
+          - "  2. Build AppImage"
+          - "  3. Build DEB package"
+          - "  4. Build container image"
+          - "  5. Release to GitHub staging"
+          - "  6. Release to GitLab production"
+          - ""
+          - "Press Ctrl+C to cancel, or wait 10 seconds to continue..."
+    
+    - name: Wait for confirmation
+      pause:
+        seconds: 10
+    
+    - name: Run pre-release audit
+      include_tasks: 00-pre-release-audit.yml
+    
+    - name: Run AppImage build
+      include_tasks: 01-build-appimage.yml
+    
+    - name: Run DEB build
+      include_tasks: 02-build-deb.yml
+    
+    - name: Run container build
+      include_tasks: 03-build-container.yml
+    
+    - name: Run GitHub release
+      include_tasks: 10-release-github.yml
+    
+    - name: Pause before GitLab release
+      pause:
+        prompt: |
+          
+          ================================================================================
+          GitHub staging release complete.
+          
+          Please test the GitHub release before continuing to GitLab.
+          
+          Test checklist:
+          - [ ] Download AppImage from GitHub
+          - [ ] Test intelligence analysis
+          - [ ] Verify container deployment
+          - [ ] Check documentation
+          
+          Press Enter to continue with GitLab release, or Ctrl+C to stop.
+          ================================================================================
+    
+    - name: Run GitLab release
+      include_tasks: 11-release-gitlab.yml
+    
+    - name: Final summary
+      debug:
+        msg:
+          - "✅ COMPLETE RELEASE PIPELINE FINISHED"
+          - ""
+          - "Version: v{{ version }}"
+          - "GitHub: ✅ Released"
+          - "GitLab: ✅ Released"
+          - ""
+          - "Manual steps remaining:"
+          - "1. Create GitHub release (with artifacts)"
+          - "2. Create GitLab release (with artifacts)"
+          - "3. Announce to TAM team"
+

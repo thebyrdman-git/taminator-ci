@@ -1,0 +1,147 @@
+---
+# Taminator Release Automation - Build AppImage
+# 
+# This playbook builds the Linux AppImage
+# Requires: Pre-release audit passed
+
+- name: Build Taminator AppImage
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    version: "2.1.0"
+    build_log: "{{ project_root }}/build-appimage-{{ ansible_date_time.iso8601_basic_short }}.log"
+    gui_dir: "{{ project_root }}/gui"
+    dist_dir: "{{ gui_dir }}/dist"
+  
+  tasks:
+    - name: Create build log
+      copy:
+        content: |
+          Taminator v{{ version }} - AppImage Build
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          User: {{ ansible_user_id }}
+          ================================================================================
+        dest: "{{ build_log }}"
+    
+    - name: Check npm is installed
+      command: npm --version
+      register: npm_version
+      changed_when: false
+    
+    - name: Log npm version
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "npm version: {{ npm_version.stdout }}"
+    
+    - name: Install npm dependencies
+      command: npm install
+      args:
+        chdir: "{{ gui_dir }}"
+      register: npm_install
+    
+    - name: Log npm install
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "✅ npm install completed"
+    
+    - name: Build AppImage
+      command: npm run build:linux
+      args:
+        chdir: "{{ gui_dir }}"
+      register: build_result
+      failed_when: false
+    
+    - name: Check if AppImage was created
+      stat:
+        path: "{{ dist_dir }}/Taminator-{{ version }}.AppImage"
+      register: appimage_stat
+    
+    - name: Verify AppImage build
+      assert:
+        that:
+          - appimage_stat.stat.exists
+        fail_msg: "❌ BUILD FAILED: AppImage not created"
+        success_msg: "✅ BUILD SUCCESS: AppImage created"
+    
+    - name: Get AppImage size
+      stat:
+        path: "{{ dist_dir }}/Taminator-{{ version }}.AppImage"
+      register: appimage_size
+    
+    - name: Log AppImage details
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "✅ AppImage: {{ dist_dir }}/Taminator-{{ version }}.AppImage ({{ (appimage_size.stat.size / 1024 / 1024) | round(0) }}MB)"
+    
+    - name: Extract and verify Python files
+      block:
+        - name: Extract AppImage
+          command: ./Taminator-{{ version }}.AppImage --appimage-extract
+          args:
+            chdir: "{{ dist_dir }}"
+          register: extract_result
+        
+        - name: Check for intelligence engine
+          stat:
+            path: "{{ dist_dir }}/squashfs-root/resources/taminator/core/intelligence_engine.py"
+          register: intelligence_check
+        
+        - name: Verify intelligence engine packaged
+          assert:
+            that:
+              - intelligence_check.stat.exists
+            fail_msg: "❌ VERIFICATION FAILED: Intelligence engine not in AppImage"
+            success_msg: "✅ VERIFICATION: Intelligence engine packaged"
+        
+        - name: Log verification
+          lineinfile:
+            path: "{{ build_log }}"
+            line: "✅ Verification: Intelligence engine present in AppImage"
+        
+        - name: Clean up extracted files
+          file:
+            path: "{{ dist_dir }}/squashfs-root"
+            state: absent
+    
+    - name: Calculate checksum
+      stat:
+        path: "{{ dist_dir }}/Taminator-{{ version }}.AppImage"
+        checksum_algorithm: sha256
+      register: appimage_checksum
+    
+    - name: Log checksum
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "SHA256: {{ appimage_checksum.stat.checksum }}"
+    
+    - name: Final build summary
+      lineinfile:
+        path: "{{ build_log }}"
+        line: |
+          
+          ================================================================================
+          BUILD SUMMARY
+          ================================================================================
+          Status: ✅ SUCCESS
+          File: Taminator-{{ version }}.AppImage
+          Size: {{ (appimage_size.stat.size / 1024 / 1024) | round(0) }}MB
+          SHA256: {{ appimage_checksum.stat.checksum }}
+          Location: {{ dist_dir }}/Taminator-{{ version }}.AppImage
+          
+          Next: ansible-playbook ansible/02-build-deb.yml
+          ================================================================================
+    
+    - name: Display build results
+      debug:
+        msg:
+          - "✅ APPIMAGE BUILD COMPLETE"
+          - ""
+          - "File: Taminator-{{ version }}.AppImage"
+          - "Size: {{ (appimage_size.stat.size / 1024 / 1024) | round(0) }}MB"
+          - "Location: {{ dist_dir }}"
+          - "Build log: {{ build_log }}"
+

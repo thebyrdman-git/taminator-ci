@@ -1,0 +1,185 @@
+---
+# Taminator Release Automation - GitLab Production Release
+# 
+# This playbook pushes code and creates release on Red Hat GitLab
+# Run this AFTER GitHub staging has been tested
+
+- name: Release Taminator to Red Hat GitLab
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    version: "2.1.0"
+    release_log: "{{ project_root }}/release-gitlab-{{ ansible_date_time.iso8601_basic_short }}.log"
+    dist_dir: "{{ project_root }}/gui/dist"
+    remote: "origin"
+  
+  tasks:
+    - name: Create release log
+      copy:
+        content: |
+          Taminator v{{ version }} - GitLab Production Release
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          User: {{ ansible_user_id }}
+          Remote: {{ remote }}
+          ================================================================================
+        dest: "{{ release_log }}"
+    
+    - name: Check git status
+      command: git status --porcelain
+      args:
+        chdir: "{{ project_root }}"
+      register: git_status
+      changed_when: false
+    
+    - name: Verify working directory clean
+      assert:
+        that:
+          - git_status.stdout == ""
+        fail_msg: "❌ RELEASE FAILED: Working directory not clean"
+        success_msg: "✅ Working directory clean"
+    
+    - name: Log git status
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Git status: Clean"
+    
+    - name: Check remote exists
+      command: git remote get-url {{ remote }}
+      args:
+        chdir: "{{ project_root }}"
+      register: remote_check
+      changed_when: false
+    
+    - name: Verify GitLab remote
+      assert:
+        that:
+          - "'gitlab.cee.redhat.com' in remote_check.stdout"
+        fail_msg: "❌ RELEASE FAILED: Not Red Hat GitLab remote"
+        success_msg: "✅ Red Hat GitLab remote verified"
+    
+    - name: Log remote
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "Remote: {{ remote_check.stdout }}"
+    
+    - name: Final pre-push audit
+      command: git ls-files
+      args:
+        chdir: "{{ project_root }}"
+      register: tracked_files
+      changed_when: false
+    
+    - name: Check for customer data
+      shell: echo "{{ tracked_files.stdout }}" | grep -iE "(jpmc|jpmchase|ganesh|334224|04293185)" || true
+      register: customer_data_final
+      changed_when: false
+    
+    - name: Verify no customer data
+      assert:
+        that:
+          - customer_data_final.stdout == ""
+        fail_msg: "❌ RELEASE BLOCKED: Customer data found in tracked files"
+        success_msg: "✅ No customer data in tracked files"
+    
+    - name: Log audit
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Final audit: No customer data"
+    
+    - name: Push to GitLab
+      command: git push {{ remote }} main
+      args:
+        chdir: "{{ project_root }}"
+      register: push_result
+    
+    - name: Log push result
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Pushed to {{ remote }}/main"
+    
+    - name: Push tag to GitLab
+      command: git push {{ remote }} v{{ version }}
+      args:
+        chdir: "{{ project_root }}"
+      register: tag_push
+    
+    - name: Log tag push
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Pushed tag v{{ version }}"
+    
+    - name: Check build artifacts exist
+      stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ dist_dir }}/Taminator-{{ version }}.AppImage"
+        - "{{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
+      register: artifacts_check
+    
+    - name: Verify artifacts
+      assert:
+        that:
+          - item.stat.exists
+        fail_msg: "❌ RELEASE FAILED: {{ item.item }} not found"
+        success_msg: "✅ Artifact exists"
+      loop: "{{ artifacts_check.results }}"
+    
+    - name: Log artifacts
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Artifacts ready: AppImage ({{ (artifacts_check.results[0].stat.size / 1024 / 1024) | round(0) }}MB), DEB ({{ (artifacts_check.results[1].stat.size / 1024 / 1024) | round(0) }}MB)"
+    
+    - name: Final release summary
+      lineinfile:
+        path: "{{ release_log }}"
+        line: |
+          
+          ================================================================================
+          GITLAB RELEASE SUMMARY
+          ================================================================================
+          Status: ✅ SUCCESS
+          Version: v{{ version }}
+          Remote: {{ remote_check.stdout }}
+          Branch: main
+          Tag: v{{ version }}
+          
+          Artifacts:
+          - Taminator-{{ version }}.AppImage ({{ (artifacts_check.results[0].stat.size / 1024 / 1024) | round(0) }}MB)
+          - taminator-gui_{{ version }}_amd64.deb ({{ (artifacts_check.results[1].stat.size / 1024 / 1024) | round(0) }}MB)
+          
+          Manual Steps Required:
+          1. Go to: https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/new
+          2. Select tag: v{{ version }}
+          3. Title: Taminator Intelligence v{{ version }} - AI-Augmented TAM Assistant
+          4. Copy release notes from: CHANGELOG.md
+          5. Upload artifacts from: {{ dist_dir }}
+          6. Mark as "Latest release"
+          7. Publish release
+          
+          Announcement:
+          - Slack: #taminator-intelligence
+          - Email: TAM team
+          - Wiki: Update internal documentation
+          ================================================================================
+    
+    - name: Display release results
+      debug:
+        msg:
+          - "✅ GITLAB PRODUCTION RELEASE COMPLETE"
+          - ""
+          - "Version: v{{ version }}"
+          - "Remote: {{ remote_check.stdout }}"
+          - ""
+          - "MANUAL STEP: Create GitLab release at:"
+          - "https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/new"
+          - ""
+          - "Upload these files:"
+          - "  - {{ dist_dir }}/Taminator-{{ version }}.AppImage"
+          - "  - {{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
+          - ""
+          - "Release log: {{ release_log }}"
+

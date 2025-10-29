@@ -1,0 +1,122 @@
+---
+# Taminator Release Automation - Build Container Image
+# 
+# This playbook builds the container image for deployment
+
+- name: Build Taminator Container Image
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    version: "2.1.0"
+    build_log: "{{ project_root }}/build-container-{{ ansible_date_time.iso8601_basic_short }}.log"
+    image_name: "taminator-intelligence"
+    image_tag: "{{ version }}"
+  
+  tasks:
+    - name: Create build log
+      copy:
+        content: |
+          Taminator v{{ version }} - Container Image Build
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          User: {{ ansible_user_id }}
+          ================================================================================
+        dest: "{{ build_log }}"
+    
+    - name: Check podman is installed
+      command: podman --version
+      register: podman_version
+      changed_when: false
+    
+    - name: Log podman version
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "podman version: {{ podman_version.stdout }}"
+    
+    - name: Build container image
+      command: >
+        podman build
+        -t {{ image_name }}:{{ image_tag }}
+        -t {{ image_name }}:latest
+        -f Containerfile
+        .
+      args:
+        chdir: "{{ project_root }}"
+      register: build_result
+    
+    - name: Log build output
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "✅ Container build completed"
+    
+    - name: Inspect image
+      command: podman inspect {{ image_name }}:{{ image_tag }}
+      register: inspect_result
+      changed_when: false
+    
+    - name: Parse image details
+      set_fact:
+        image_info: "{{ inspect_result.stdout | from_json | first }}"
+    
+    - name: Log image details
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "Image ID: {{ image_info.Id[:12] }}"
+    
+    - name: Log image size
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "Image Size: {{ (image_info.Size / 1024 / 1024) | round(0) }}MB"
+    
+    - name: Test container runs
+      command: >
+        podman run --rm
+        {{ image_name }}:{{ image_tag }}
+        python3 -c "from taminator.core.intelligence_engine import get_intelligence_engine; print('✅ Intelligence engine loads')"
+      register: test_result
+      changed_when: false
+    
+    - name: Verify test passed
+      assert:
+        that:
+          - "'✅ Intelligence engine loads' in test_result.stdout"
+        fail_msg: "❌ TEST FAILED: Intelligence engine not working in container"
+        success_msg: "✅ TEST PASSED: Intelligence engine working"
+    
+    - name: Log test result
+      lineinfile:
+        path: "{{ build_log }}"
+        line: "✅ Container test: Intelligence engine working"
+    
+    - name: Final build summary
+      lineinfile:
+        path: "{{ build_log }}"
+        line: |
+          
+          ================================================================================
+          BUILD SUMMARY
+          ================================================================================
+          Status: ✅ SUCCESS
+          Image: {{ image_name }}:{{ image_tag }}
+          Image ID: {{ image_info.Id[:12] }}
+          Size: {{ (image_info.Size / 1024 / 1024) | round(0) }}MB
+          Tags: {{ image_name }}:{{ image_tag }}, {{ image_name }}:latest
+          
+          Test: ✅ Intelligence engine working
+          
+          Next: ansible-playbook ansible/10-release-github.yml
+          ================================================================================
+    
+    - name: Display build results
+      debug:
+        msg:
+          - "✅ CONTAINER IMAGE BUILD COMPLETE"
+          - ""
+          - "Image: {{ image_name }}:{{ image_tag }}"
+          - "Size: {{ (image_info.Size / 1024 / 1024) | round(0) }}MB"
+          - "Test: Passed"
+          - "Build log: {{ build_log }}"
+

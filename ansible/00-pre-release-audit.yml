@@ -1,0 +1,214 @@
+---
+# Taminator Release Automation - Pre-Release Audit
+# 
+# This playbook performs comprehensive pre-release checks
+# Run this FIRST before any build or release steps
+
+- name: Taminator Pre-Release Audit
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    version: "2.1.0"
+    audit_log: "{{ project_root }}/release-audit-{{ ansible_date_time.iso8601_basic_short }}.log"
+  
+  tasks:
+    - name: Create audit log
+      copy:
+        content: |
+          Taminator v{{ version }} - Pre-Release Audit
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          User: {{ ansible_user_id }}
+          ================================================================================
+        dest: "{{ audit_log }}"
+    
+    - name: Check for customer data patterns
+      shell: |
+        git ls-files | grep -iE "(fannie|wells|fargo|td-bank|jpmc|jpmchase|ganesh|334224|04293185|family|miraclemax|vpn-config|AGENTS.md|GEMINI.md)" || true
+      args:
+        chdir: "{{ project_root }}"
+      register: customer_data_check
+      changed_when: false
+    
+    - name: Verify customer data results
+      assert:
+        that:
+          - customer_data_check.stdout_lines | length <= 2
+          - "'examples/TD-BANK-EXAMPLE.md' in customer_data_check.stdout or customer_data_check.stdout_lines | length == 0"
+          - "'examples/WELLS-FARGO-EXAMPLE.md' in customer_data_check.stdout or customer_data_check.stdout_lines | length == 0"
+        fail_msg: "❌ AUDIT FAILED: Found customer data in tracked files"
+        success_msg: "✅ PASS: No customer data in tracked files"
+    
+    - name: Log customer data check
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: "✅ Customer Data Check: PASS ({{ customer_data_check.stdout_lines | length }} example files only)"
+    
+    - name: Check .gitignore for test files
+      shell: |
+        git status --ignored | grep test_jpmc_email.txt || echo "NOT_FOUND"
+      args:
+        chdir: "{{ project_root }}"
+      register: gitignore_check
+      changed_when: false
+    
+    - name: Verify gitignore working
+      assert:
+        that:
+          - "'test_jpmc_email.txt' in gitignore_check.stdout"
+        fail_msg: "❌ AUDIT FAILED: test_jpmc_email.txt not in .gitignore"
+        success_msg: "✅ PASS: Real customer data properly ignored"
+    
+    - name: Log gitignore check
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: "✅ GitIgnore Check: PASS (test_jpmc_email.txt ignored)"
+    
+    - name: Check version consistency
+      block:
+        - name: Check package.json version
+          shell: grep '"version"' gui/package.json | head -1
+          args:
+            chdir: "{{ project_root }}"
+          register: package_version
+          changed_when: false
+        
+        - name: Verify version matches
+          assert:
+            that:
+              - "'{{ version }}' in package_version.stdout"
+            fail_msg: "❌ AUDIT FAILED: package.json version mismatch"
+            success_msg: "✅ PASS: Version {{ version }} consistent"
+        
+        - name: Log version check
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "✅ Version Check: PASS (v{{ version }} in package.json)"
+    
+    - name: Check README updated
+      shell: grep "v{{ version.split('.')[0] }}.{{ version.split('.')[1] }}" README.md
+      args:
+        chdir: "{{ project_root }}"
+      register: readme_check
+      changed_when: false
+      failed_when: false
+    
+    - name: Verify README updated
+      assert:
+        that:
+          - readme_check.rc == 0
+        fail_msg: "❌ AUDIT FAILED: README not updated for v{{ version }}"
+        success_msg: "✅ PASS: README updated"
+    
+    - name: Log README check
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: "✅ README Check: PASS (updated for v{{ version }})"
+    
+    - name: Check CHANGELOG exists
+      stat:
+        path: "{{ project_root }}/CHANGELOG.md"
+      register: changelog_stat
+    
+    - name: Verify CHANGELOG exists
+      assert:
+        that:
+          - changelog_stat.stat.exists
+        fail_msg: "❌ AUDIT FAILED: CHANGELOG.md not found"
+        success_msg: "✅ PASS: CHANGELOG.md exists"
+    
+    - name: Log CHANGELOG check
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: "✅ CHANGELOG Check: PASS (exists)"
+    
+    - name: Check intelligence engine exists
+      stat:
+        path: "{{ project_root }}/src/taminator/core/intelligence_engine.py"
+      register: intelligence_stat
+    
+    - name: Verify intelligence engine
+      assert:
+        that:
+          - intelligence_stat.stat.exists
+        fail_msg: "❌ AUDIT FAILED: Intelligence engine not found"
+        success_msg: "✅ PASS: Intelligence engine exists"
+    
+    - name: Log intelligence check
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: "✅ Intelligence Engine: PASS (exists)"
+    
+    - name: Check container files
+      stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ project_root }}/Containerfile"
+        - "{{ project_root }}/docker-compose.yml"
+        - "{{ project_root }}/deployment/taminator-intelligence.service"
+        - "{{ project_root }}/deployment/install.sh"
+      register: container_files
+    
+    - name: Verify container files
+      assert:
+        that:
+          - item.stat.exists
+        fail_msg: "❌ AUDIT FAILED: {{ item.item }} not found"
+        success_msg: "✅ PASS: Container files exist"
+      loop: "{{ container_files.results }}"
+    
+    - name: Log container files check
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: "✅ Container Files: PASS (all present)"
+    
+    - name: Count documentation files
+      find:
+        paths: "{{ project_root }}/docs"
+        patterns: "*.md"
+      register: doc_files
+    
+    - name: Verify documentation
+      assert:
+        that:
+          - doc_files.matched >= 10
+        fail_msg: "❌ AUDIT FAILED: Insufficient documentation ({{ doc_files.matched }} files)"
+        success_msg: "✅ PASS: {{ doc_files.matched }} documentation files"
+    
+    - name: Log documentation check
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: "✅ Documentation: PASS ({{ doc_files.matched }} files)"
+    
+    - name: Final audit summary
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: |
+          
+          ================================================================================
+          AUDIT SUMMARY
+          ================================================================================
+          Status: ✅ PASS - Safe to proceed with build and release
+          Version: {{ version }}
+          Date: {{ ansible_date_time.iso8601 }}
+          
+          Next Steps:
+          1. Run: ansible-playbook ansible/01-build-appimage.yml
+          2. Run: ansible-playbook ansible/02-build-deb.yml
+          3. Run: ansible-playbook ansible/03-build-container.yml
+          4. Run: ansible-playbook ansible/10-release-github.yml
+          5. Run: ansible-playbook ansible/11-release-gitlab.yml
+          ================================================================================
+    
+    - name: Display audit results
+      debug:
+        msg:
+          - "✅ PRE-RELEASE AUDIT COMPLETE"
+          - ""
+          - "Audit log: {{ audit_log }}"
+          - ""
+          - "All checks passed. Safe to proceed with build."
+

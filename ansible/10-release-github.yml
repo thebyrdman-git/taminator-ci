@@ -1,0 +1,164 @@
+---
+# Taminator Release Automation - GitHub Staging Release
+# 
+# This playbook pushes code and creates release on GitHub staging
+# Run this BEFORE GitLab release for testing
+
+- name: Release Taminator to GitHub Staging
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    version: "2.1.0"
+    release_log: "{{ project_root }}/release-github-{{ ansible_date_time.iso8601_basic_short }}.log"
+    dist_dir: "{{ project_root }}/gui/dist"
+    remote: "github"
+  
+  tasks:
+    - name: Create release log
+      copy:
+        content: |
+          Taminator v{{ version }} - GitHub Staging Release
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          User: {{ ansible_user_id }}
+          Remote: {{ remote }}
+          ================================================================================
+        dest: "{{ release_log }}"
+    
+    - name: Check git status
+      command: git status --porcelain
+      args:
+        chdir: "{{ project_root }}"
+      register: git_status
+      changed_when: false
+    
+    - name: Verify working directory clean
+      assert:
+        that:
+          - git_status.stdout == ""
+        fail_msg: "❌ RELEASE FAILED: Working directory not clean. Commit changes first."
+        success_msg: "✅ Working directory clean"
+    
+    - name: Log git status
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Git status: Clean"
+    
+    - name: Check remote exists
+      command: git remote get-url {{ remote }}
+      args:
+        chdir: "{{ project_root }}"
+      register: remote_check
+      changed_when: false
+    
+    - name: Log remote
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "Remote: {{ remote_check.stdout }}"
+    
+    - name: Push to GitHub staging
+      command: git push {{ remote }} main
+      args:
+        chdir: "{{ project_root }}"
+      register: push_result
+    
+    - name: Log push result
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Pushed to {{ remote }}/main"
+    
+    - name: Check if tag exists locally
+      command: git tag -l v{{ version }}
+      args:
+        chdir: "{{ project_root }}"
+      register: tag_check
+      changed_when: false
+    
+    - name: Create tag if not exists
+      command: git tag -a v{{ version }} -m "Release v{{ version }} - AI-Augmented Intelligence"
+      args:
+        chdir: "{{ project_root }}"
+      when: tag_check.stdout == ""
+    
+    - name: Push tag to GitHub
+      command: git push {{ remote }} v{{ version }}
+      args:
+        chdir: "{{ project_root }}"
+      register: tag_push
+    
+    - name: Log tag push
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Pushed tag v{{ version }}"
+    
+    - name: Check build artifacts exist
+      stat:
+        path: "{{ item }}"
+      loop:
+        - "{{ dist_dir }}/Taminator-{{ version }}.AppImage"
+        - "{{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
+      register: artifacts_check
+    
+    - name: Verify artifacts
+      assert:
+        that:
+          - item.stat.exists
+        fail_msg: "❌ RELEASE FAILED: {{ item.item }} not found"
+        success_msg: "✅ Artifact exists: {{ item.item | basename }}"
+      loop: "{{ artifacts_check.results }}"
+    
+    - name: Log artifacts
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Artifacts ready: AppImage ({{ (artifacts_check.results[0].stat.size / 1024 / 1024) | round(0) }}MB), DEB ({{ (artifacts_check.results[1].stat.size / 1024 / 1024) | round(0) }}MB)"
+    
+    - name: Final release summary
+      lineinfile:
+        path: "{{ release_log }}"
+        line: |
+          
+          ================================================================================
+          GITHUB RELEASE SUMMARY
+          ================================================================================
+          Status: ✅ SUCCESS
+          Version: v{{ version }}
+          Remote: {{ remote_check.stdout }}
+          Branch: main
+          Tag: v{{ version }}
+          
+          Artifacts:
+          - Taminator-{{ version }}.AppImage ({{ (artifacts_check.results[0].stat.size / 1024 / 1024) | round(0) }}MB)
+          - taminator-gui_{{ version }}_amd64.deb ({{ (artifacts_check.results[1].stat.size / 1024 / 1024) | round(0) }}MB)
+          
+          Manual Steps Required:
+          1. Go to: https://github.com/thebyrdman-git/taminator-staging/releases/new
+          2. Select tag: v{{ version }}
+          3. Title: Taminator Intelligence v{{ version }} - AI-Augmented TAM Assistant
+          4. Upload artifacts from: {{ dist_dir }}
+          5. Mark as "Latest release"
+          6. Publish release
+          
+          After GitHub testing:
+          - Run: ansible-playbook ansible/11-release-gitlab.yml
+          ================================================================================
+    
+    - name: Display release results
+      debug:
+        msg:
+          - "✅ GITHUB STAGING RELEASE COMPLETE"
+          - ""
+          - "Version: v{{ version }}"
+          - "Remote: {{ remote_check.stdout }}"
+          - ""
+          - "MANUAL STEP: Create GitHub release at:"
+          - "https://github.com/thebyrdman-git/taminator-staging/releases/new"
+          - ""
+          - "Upload these files:"
+          - "  - {{ dist_dir }}/Taminator-{{ version }}.AppImage"
+          - "  - {{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
+          - ""
+          - "Release log: {{ release_log }}"
+
