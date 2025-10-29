@@ -32,8 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Case history view with recent analyses
 - Database health checks and integrity verification
 
-#### Container Deployment (Primary for Linux)
-- Execution Environment approach following AAP philosophy
+#### Container Deployment ⭐ (Recommended for Linux)
+- **Primary deployment method** following AAP Execution Environment philosophy
 - Containerfile for Podman/Docker deployment
 - docker-compose.yml for quick start
 - Systemd user service integration with auto-restart
@@ -41,13 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resource limits (CPU, memory) for stability
 - One-line install script (`./deployment/install.sh`)
 - SELinux support with proper volume contexts
+- Web-based interface accessible at http://localhost:8080
 
-#### Desktop Builds
+#### Desktop Builds (Alternative)
 - Cross-platform Electron builds (Windows, macOS, Linux)
 - Intelligence Analyzer interface in GUI
 - IPC bridge for Python ↔ Electron communication
 - Intelligence client JavaScript library
-- AppImage for Linux (179MB)
+- AppImage for Linux (179MB) - desktop app alternative
 - DEB package for Debian/Ubuntu (142MB)
 
 #### Documentation
@@ -115,27 +116,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Upgrade Guide
 
-### From 2.0.x to 2.1.0
+### From 2.0.x to 2.0.0
 
-**Container Deployment (New Recommended Method):**
+**Container Deployment ⭐ (Recommended):**
 ```bash
-# Clone repository
-git clone https://gitlab.cee.redhat.com/jbyrd/taminator.git
-cd taminator
-
-# Install as container service
-./deployment/install.sh
+# One-line install
+curl -fsSL https://raw.githubusercontent.com/thebyrdman-git/taminator-staging/main/deployment/install.sh | bash
 
 # Access at http://localhost:8080
 ```
 
-**AppImage (Existing Method):**
+**AppImage (Alternative - Desktop App):**
 ```bash
 # Download new version
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v2.1.0/Taminator-2.1.0.AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v2.0.0/Taminator-2.0.0.AppImage
 
 # Run (database migrates automatically)
-./Taminator-2.1.0.AppImage
+./Taminator-2.0.0.AppImage
 ```
 
 **Database Migration:**

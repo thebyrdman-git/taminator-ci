@@ -42,7 +42,23 @@ Official release artifacts for Taminator Intelligence.
 
 ### Installation
 
-**AppImage (Recommended):**
+**Container (Recommended for Linux):**
+```bash
+# One-line install with systemd service
+curl -fsSL https://raw.githubusercontent.com/thebyrdman-git/taminator-staging/main/deployment/install.sh | bash
+
+# Or manual container deployment
+podman run -d \
+  --name taminator-intelligence \
+  --restart=unless-stopped \
+  -v ~/.taminator:/root/.taminator \
+  -p 8080:8080 \
+  registry.gitlab.cee.redhat.com/jbyrd/taminator:v2.0.0
+
+# Access at http://localhost:8080
+```
+
+**AppImage (Alternative):**
 ```bash
 # Download
 wget https://github.com/thebyrdman-git/taminator-staging/releases/download/v2.0.0/Taminator-2.0.0.AppImage
@@ -54,7 +70,7 @@ chmod +x Taminator-2.0.0.AppImage
 ./Taminator-2.0.0.AppImage
 ```
 
-**DEB Package:**
+**DEB Package (Debian/Ubuntu):**
 ```bash
 # Download
 wget https://github.com/thebyrdman-git/taminator-staging/releases/download/v2.0.0/taminator-gui_2.0.0_amd64.deb
@@ -65,17 +81,6 @@ sudo apt-get install -f  # Fix dependencies if needed
 
 # Run
 taminator
-```
-
-**Container (Linux):**
-```bash
-# Pull and run
-podman run -d \
-  --name taminator-intelligence \
-  --restart=unless-stopped \
-  -v ~/.taminator:/root/.taminator \
-  -p 8080:8080 \
-  registry.gitlab.cee.redhat.com/jbyrd/taminator:v2.0.0
 ```
 
 ### Verify Checksums

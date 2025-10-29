@@ -17,8 +17,31 @@ Before you begin, ensure you have:
 
 ## Step 1: Installation (2 minutes)
 
-### Linux
+### Linux (Recommended: Container)
 
+**Option A: One-Line Install (Easiest)**
+```bash
+# Install with systemd service (auto-starts on boot)
+curl -fsSL https://raw.githubusercontent.com/thebyrdman-git/taminator-staging/main/deployment/install.sh | bash
+
+# Access web interface
+firefox http://localhost:8080
+```
+
+**Option B: Manual Container**
+```bash
+# Run with Podman/Docker
+podman run -d \
+  --name taminator-intelligence \
+  --restart=unless-stopped \
+  -v ~/.taminator:/root/.taminator \
+  -p 8080:8080 \
+  registry.gitlab.cee.redhat.com/jbyrd/taminator:v2.0.0
+
+# Access at http://localhost:8080
+```
+
+**Option C: AppImage (Desktop App)**
 ```bash
 # Download AppImage
 wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v2.0.0/Taminator-2.0.0.AppImage
@@ -30,19 +53,19 @@ chmod +x Taminator-2.0.0.AppImage
 ./Taminator-2.0.0.AppImage
 ```
 
-**Optional**: Move to Applications folder
-```bash
-mkdir -p ~/Applications
-mv Taminator-2.0.0.AppImage ~/Applications/
-```
-
 ### macOS
 
-*(Coming soon - use Linux in VM for now)*
+```bash
+# Download DMG (when available)
+# Or use container method above
+```
 
 ### Windows
 
-*(Coming soon - use Linux in VM for now)*
+```bash
+# Download EXE installer (when available)
+# Or use WSL2 + container method
+```
 
 ---
 
