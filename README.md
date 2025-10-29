@@ -10,7 +10,7 @@ Taminator is a professional desktop application for Red Hat TAMs (Technical Acco
 
 **Built by TAMs, for TAMs** - with AI intelligence in v2.1.
 
-**Version**: 2.1.0  
+**Version**: 2.0.0  
 **Architecture**: Container-First (AAP EE Philosophy) + Desktop GUI  
 **Status**: Production Ready
 
@@ -83,13 +83,13 @@ firefox http://localhost:8080
 **Linux (AppImage - Alternative)**:
 ```bash
 # Download from GitLab releases
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v2.1.0/Taminator-2.1.0.AppImage
+wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v2.0.0/Taminator-2.0.0.AppImage
 
 # Make executable
-chmod +x Taminator-2.1.0.AppImage
+chmod +x Taminator-2.0.0.AppImage
 
 # Run
-./Taminator-2.1.0.AppImage
+./Taminator-2.0.0.AppImage
 ```
 
 **Windows/macOS** - Desktop installers available in releases

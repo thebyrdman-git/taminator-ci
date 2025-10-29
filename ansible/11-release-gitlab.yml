@@ -11,7 +11,7 @@
   
   vars:
     project_root: "{{ playbook_dir | dirname }}"
-    version: "2.1.0"
+    version: "2.0.0"
     release_log: "{{ project_root }}/release-gitlab-{{ ansible_date_time.iso8601_basic_short }}.log"
     dist_dir: "{{ project_root }}/gui/dist"
     remote: "origin"
@@ -110,28 +110,42 @@
     - name: Log tag push
       lineinfile:
         path: "{{ release_log }}"
-        line: "✅ Pushed tag v{{ version }}"
+        line: "✅ Pushed tag v{{ version }} - GitLab CI/CD pipeline will now build artifacts"
     
-    - name: Check build artifacts exist
-      stat:
-        path: "{{ item }}"
-      loop:
-        - "{{ dist_dir }}/Taminator-{{ version }}.AppImage"
-        - "{{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
-      register: artifacts_check
+    - name: Wait for GitLab CI/CD pipeline to trigger
+      pause:
+        prompt: |
+          
+          ================================================================================
+          GITLAB CI/CD PIPELINE TRIGGERED
+          ================================================================================
+          
+          The tag v{{ version }} has been pushed to GitLab.
+          MiracleMax self-hosted runner will now:
+          
+          1. Build Linux x86_64 AppImage
+          2. Build Linux ARM64 AppImage (QEMU emulation)
+          3. Create GitLab release automatically
+          
+          Monitor pipeline at:
+          https://gitlab.cee.redhat.com/jbyrd/taminator/-/pipelines
+          
+          Press ENTER to continue monitoring...
+        seconds: 5
     
-    - name: Verify artifacts
-      assert:
-        that:
-          - item.stat.exists
-        fail_msg: "❌ RELEASE FAILED: {{ item.item }} not found"
-        success_msg: "✅ Artifact exists"
-      loop: "{{ artifacts_check.results }}"
-    
-    - name: Log artifacts
-      lineinfile:
-        path: "{{ release_log }}"
-        line: "✅ Artifacts ready: AppImage ({{ (artifacts_check.results[0].stat.size / 1024 / 1024) | round(0) }}MB), DEB ({{ (artifacts_check.results[1].stat.size / 1024 / 1024) | round(0) }}MB)"
+    - name: Get latest pipeline status
+      uri:
+        url: "https://gitlab.cee.redhat.com/api/v4/projects/jbyrd%2Ftaminator/pipelines?ref=v{{ version }}"
+        method: GET
+        headers:
+          PRIVATE-TOKEN: "{{ lookup('env', 'GITLAB_TOKEN') }}"
+        return_content: yes
+      register: pipeline_status
+      until: pipeline_status.json[0].status in ['success', 'failed', 'canceled']
+      retries: 60
+      delay: 30
+      when: lookup('env', 'GITLAB_TOKEN') != ""
+      ignore_errors: yes
     
     - name: Final release summary
       lineinfile:
@@ -147,18 +161,17 @@
           Branch: main
           Tag: v{{ version }}
           
-          Artifacts:
-          - Taminator-{{ version }}.AppImage ({{ (artifacts_check.results[0].stat.size / 1024 / 1024) | round(0) }}MB)
-          - taminator-gui_{{ version }}_amd64.deb ({{ (artifacts_check.results[1].stat.size / 1024 / 1024) | round(0) }}MB)
+          CI/CD Pipeline: https://gitlab.cee.redhat.com/jbyrd/taminator/-/pipelines
+          Release Page: https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v{{ version }}
           
-          Manual Steps Required:
-          1. Go to: https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/new
-          2. Select tag: v{{ version }}
-          3. Title: Taminator Intelligence v{{ version }} - AI-Augmented TAM Assistant
-          4. Copy release notes from: CHANGELOG.md
-          5. Upload artifacts from: {{ dist_dir }}
-          6. Mark as "Latest release"
-          7. Publish release
+          MiracleMax Self-Hosted Runner will build:
+          - Linux x86_64 AppImage (native build)
+          - Linux ARM64 AppImage (QEMU emulation)
+          
+          GitLab will automatically:
+          - Create release from tag v{{ version }}
+          - Attach build artifacts
+          - Generate release notes
           
           Announcement:
           - Slack: #taminator-intelligence
@@ -169,17 +182,20 @@
     - name: Display release results
       debug:
         msg:
-          - "✅ GITLAB PRODUCTION RELEASE COMPLETE"
+          - "✅ GITLAB PRODUCTION RELEASE TRIGGERED"
           - ""
           - "Version: v{{ version }}"
           - "Remote: {{ remote_check.stdout }}"
           - ""
-          - "MANUAL STEP: Create GitLab release at:"
-          - "https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/new"
+          - "MiracleMax self-hosted runner is building:"
+          - "  - Linux x86_64 AppImage (native)"
+          - "  - Linux ARM64 AppImage (QEMU)"
           - ""
-          - "Upload these files:"
-          - "  - {{ dist_dir }}/Taminator-{{ version }}.AppImage"
-          - "  - {{ dist_dir }}/taminator-gui_{{ version }}_amd64.deb"
+          - "Monitor pipeline:"
+          - "https://gitlab.cee.redhat.com/jbyrd/taminator/-/pipelines"
+          - ""
+          - "Release will be available at:"
+          - "https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v{{ version }}"
           - ""
           - "Release log: {{ release_log }}"
 

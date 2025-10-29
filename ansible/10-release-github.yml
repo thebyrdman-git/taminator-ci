@@ -11,7 +11,7 @@
   
   vars:
     project_root: "{{ playbook_dir | dirname }}"
-    version: "2.1.0"
+    version: "2.0.0"
     release_log: "{{ project_root }}/release-github-{{ ansible_date_time.iso8601_basic_short }}.log"
     dist_dir: "{{ project_root }}/gui/dist"
     remote: "github"
@@ -140,9 +140,12 @@
           4. Upload artifacts from: {{ dist_dir }}
           5. Mark as "Latest release"
           6. Publish release
+          7. Test the GitHub release
           
-          After GitHub testing:
+          After GitHub testing passes:
           - Run: ansible-playbook ansible/11-release-gitlab.yml
+          - This will trigger MiracleMax self-hosted GitLab runner
+          - MiracleMax will build x86_64 and ARM64 AppImages automatically
           ================================================================================
     
     - name: Display release results
