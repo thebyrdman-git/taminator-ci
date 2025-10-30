@@ -7,16 +7,13 @@
 class IntelligenceClient {
   constructor() {
     this.analyzing = false;
-    this.ipcRenderer = null;
     
-    // Initialize IPC renderer (nodeIntegration: true mode)
-    if (typeof require !== 'undefined') {
-      try {
-        const { ipcRenderer } = require('electron');
-        this.ipcRenderer = ipcRenderer;
-      } catch (e) {
-        console.warn('[Intelligence Client] Running in browser mode (IPC unavailable)');
-      }
+    // Use globally available ipcRenderer (from index.html)
+    // nodeIntegration: true means it's already in global scope
+    this.ipcRenderer = typeof ipcRenderer !== 'undefined' ? ipcRenderer : null;
+    
+    if (!this.ipcRenderer) {
+      console.warn('[Intelligence Client] Running in browser mode (IPC unavailable)');
     }
   }
   

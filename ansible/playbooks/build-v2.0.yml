@@ -46,10 +46,9 @@
           - ""
           - "Release Pipeline:"
           - "  5. GitHub Staging (test)"
-          - "  6. GitHub CI (taminator-ci public repo - Mac/Windows builds)"
-          - "  7. GitLab Production (MiracleMax CI/CD - Linux builds)"
+          - "  6. GitLab Production (MiracleMax CI/CD)"
           - ""
-          - "Estimated time: 15-20 minutes"
+          - "Estimated time: 10-15 minutes"
       tags: [always]
     
     - name: Confirm build
@@ -143,20 +142,12 @@
       include_tasks: "{{ playbook_dir }}/10-release-github.yml"
       tags: [release, github]
     
-    - name: Mirror to GitHub CI (public repo for Mac/Windows builds)
-      include_tasks: "{{ playbook_dir }}/12-mirror-github-ci.yml"
-      tags: [release, github-ci]
-    
     - name: Pause before GitLab release
       pause:
         prompt: |
           
           GitHub staging release complete.
-          GitHub CI (taminator-ci) building Mac/Windows now.
-          
-          Monitor: https://github.com/thebyrdman-git/taminator-ci/actions
-          
-          Press ENTER to release to GitLab production (Linux builds).
+          Test the release, then press ENTER to release to GitLab production.
           Or Ctrl+C to stop here.
       when: not skip_confirmation
       tags: [release, gitlab]
@@ -181,29 +172,23 @@
           - ""
           - "Release Artifacts:"
           - "  - Linux x86_64 AppImage (179 MB)"
-          - "  - Linux ARM64 AppImage (MiracleMax CI/CD)"
           - "  - Linux x86_64 DEB (142 MB)"
-          - "  - macOS DMG (Intel + Apple Silicon) (GitHub CI)"
-          - "  - Windows EXE (x64) (GitHub CI)"
           - "  - Cursor IDE Extension VSIX"
           - "  - Container Image (Podman)"
           - ""
           - "GitHub Staging:"
           - "  https://github.com/thebyrdman-git/taminator-staging/releases/v{{ version }}"
           - ""
-          - "GitHub CI (Mac/Windows):"
-          - "  https://github.com/thebyrdman-git/taminator-ci/releases/v{{ version }}"
-          - "  Monitor: https://github.com/thebyrdman-git/taminator-ci/actions"
-          - ""
-          - "GitLab Production (Linux):"
+          - "GitLab Production:"
           - "  https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v{{ version }}"
+          - ""
+          - "MiracleMax CI/CD:"
+          - "  Building ARM64 AppImage automatically"
           - "  Monitor: https://gitlab.cee.redhat.com/jbyrd/taminator/-/pipelines"
           - ""
           - "Installation:"
           - "  Container: curl -fsSL <url>/deployment/install.sh | bash"
           - "  AppImage: Download and chmod +x"
-          - "  macOS: Download DMG, drag to Applications"
-          - "  Windows: Download EXE, run installer"
           - "  Extension: Install from Taminator GUI"
           - ""
       tags: [always]

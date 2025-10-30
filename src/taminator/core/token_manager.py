@@ -9,7 +9,6 @@ Badass features:
 - Graceful fallback to encrypted file if keyring unavailable
 """
 
-import keyring
 import logging
 import json
 import threading
@@ -23,6 +22,12 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 import base64
 import os
+
+# Disable keyring backends that might hang (KWallet, GNOME Keyring)
+# This MUST be set before importing keyring
+os.environ['PYTHON_KEYRING_BACKEND'] = 'keyring.backends.null.Keyring'
+
+import keyring
 
 from .exceptions import AuthenticationError, ErrorCode, missing_token_error
 
@@ -324,11 +329,22 @@ class TokenManager:
     def delete_token(self, token_type: TokenType) -> None:
         """Remove token from secure storage"""
         if self._use_keyring:
-            try:
+            @with_timeout(self.KEYRING_TIMEOUT)
+            def delete_from_keyring():
                 keyring.delete_password(self.SERVICE_NAME, token_type.value)
-            except keyring.errors.PasswordDeleteError:
-                # Token doesn't exist, that's fine
+            
+            try:
+                delete_from_keyring()
+            except (TimeoutError, keyring.errors.PasswordDeleteError):
+                # Token doesn't exist or timeout, that's fine
                 pass
+            except Exception as e:
+                logger.warning(f"Keyring delete failed, switching to encrypted file: {e}")
+                self._use_keyring = False
+                tokens = self._read_encrypted_storage()
+                if token_type.value in tokens:
+                    del tokens[token_type.value]
+                    self._write_encrypted_storage(tokens)
         else:
             tokens = self._read_encrypted_storage()
             if token_type.value in tokens:
@@ -343,7 +359,16 @@ class TokenManager:
         """Check if token exists (doesn't validate)"""
         try:
             if self._use_keyring:
-                token = keyring.get_password(self.SERVICE_NAME, token_type.value)
+                @with_timeout(self.KEYRING_TIMEOUT)
+                def check_keyring():
+                    return keyring.get_password(self.SERVICE_NAME, token_type.value)
+                
+                try:
+                    token = check_keyring()
+                except (TimeoutError, Exception) as e:
+                    logger.warning(f"Keyring check failed, switching to encrypted file: {e}")
+                    self._use_keyring = False
+                    token = self._read_encrypted_storage().get(token_type.value)
             else:
                 token = self._read_encrypted_storage().get(token_type.value)
             return token is not None and len(token) > 0

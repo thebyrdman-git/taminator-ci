@@ -12,6 +12,7 @@ Taminator is a professional desktop application for Red Hat TAMs (Technical Acco
 
 **Version**: 2.0.0  
 **Architecture**: Container-First (AAP EE Philosophy) + Desktop GUI  
+**CI/CD**: Hybrid (GitHub Actions + MiracleMax Self-Hosted)  
 **Status**: Production Ready
 
 ---
@@ -421,6 +422,32 @@ curl http://127.0.0.1:8765/api/jira/status | jq '.'
 | Customer data | `~/taminator-test-data/` |
 | OOBE state | `~/.config/taminator-gui/oobe-state.json` |
 | Debug settings | `~/.config/taminator/debug_settings.json` |
+
+---
+
+## 🔄 CI/CD Pipeline
+
+### Hybrid Build Architecture
+
+Taminator uses a **hybrid CI/CD approach** to optimize costs and leverage the right infrastructure for each platform:
+
+**GitHub Actions (Public Repo):**
+- Repository: `github.com/thebyrdman-git/taminator-ci`
+- Builds: macOS DMG, Windows EXE
+- Cost: $0/month (unlimited minutes for public repos)
+
+**MiracleMax Self-Hosted (Private GitLab):**
+- Repository: `gitlab.cee.redhat.com/jbyrd/taminator`
+- Builds: Linux x86_64/ARM64 AppImage, Container Image
+- Cost: $0/month (self-hosted hardware)
+
+**Why Hybrid?**
+- ✅ Free unlimited GitHub Actions for Mac/Windows
+- ✅ Red Hat-compliant self-hosted for Linux
+- ✅ Best of both worlds: cloud + self-hosted
+- ✅ Fully automated release pipeline
+
+**See:** `docs/HYBRID-CI-CD-ARCHITECTURE.md` for details
 
 ---
 

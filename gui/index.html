@@ -3936,7 +3936,7 @@ ${result.error || result.output || 'Post failed'}
 
   <script>
     // Check for first run (OOBE wizard)
-    const { ipcRenderer } = require('electron');
+    // Note: ipcRenderer already declared at top of file (line 605)
     
     // Initialize API client for use throughout the app
     const apiClient = new TaminatorApiClient('http://127.0.0.1:8765');

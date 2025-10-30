@@ -1,0 +1,105 @@
+---
+# Content Sanitizer Role - Main Tasks
+
+- name: Verify source project exists
+  stat:
+    path: "{{ source_project }}/ansible/roles"
+  register: source_check
+  failed_when: not source_check.stat.exists
+
+- name: Verify destination repo exists
+  stat:
+    path: "{{ dest_repo }}"
+  register: dest_check
+  failed_when: not dest_check.stat.exists
+
+- name: Display sanitization plan
+  debug:
+    msg:
+      - "Sanitizing and syncing Ansible roles"
+      - ""
+      - "Source: {{ source_project }}/ansible/roles"
+      - "Destination: {{ dest_repo }}/roles"
+      - ""
+      - "Roles to sync:"
+      - "{% for role in roles_to_sync %}  - {{ role.name }} → {{ role.sanitized_name }}{% endfor %}"
+
+- name: Create destination role directories
+  file:
+    path: "{{ dest_repo }}/roles/{{ item.0.sanitized_name }}/{{ item.1 }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ roles_to_sync | product(['tasks', 'templates', 'defaults', 'meta', 'files']) | list }}"
+  loop_control:
+    label: "{{ item.0.sanitized_name }}/{{ item.1 }}"
+
+- name: Sanitize and copy role files
+  block:
+    - name: Find all role files
+      find:
+        paths: "{{ source_project }}/ansible/roles/{{ item.name }}"
+        recurse: yes
+        file_type: file
+      register: role_files
+      loop: "{{ roles_to_sync }}"
+      loop_control:
+        label: "{{ item.name }}"
+    
+    - name: Sanitize and copy each file
+      shell: |
+        SOURCE_FILE="{{ item.1.path }}"
+        DEST_FILE="{{ dest_repo }}/roles/{{ item.0.item.sanitized_name }}/{{ item.1.path | regex_replace('^.*/' + item.0.item.name + '/', '') }}"
+        
+        mkdir -p "$(dirname "$DEST_FILE")"
+        
+        # Copy and sanitize
+        cp "$SOURCE_FILE" "$DEST_FILE"
+        
+        # Apply sanitization patterns
+        {% for pattern in sanitize_patterns %}
+        sed -i 's/{{ pattern.pattern }}/{{ pattern.replacement }}/g' "$DEST_FILE"
+        {% endfor %}
+        
+        echo "Sanitized: $DEST_FILE"
+      loop: "{{ role_files.results | subelements('files') }}"
+      loop_control:
+        label: "{{ item.1.path | basename }}"
+      register: sanitize_result
+      changed_when: true
+
+- name: Create sanitized playbook examples
+  template:
+    src: "example-playbook.yml.j2"
+    dest: "{{ dest_repo }}/examples/{{ item.sanitized_name }}-example.yml"
+    mode: '0644'
+  loop: "{{ roles_to_sync }}"
+
+- name: Update ansibleize-everything README
+  blockinfile:
+    path: "{{ dest_repo }}/README.md"
+    marker: "<!-- {mark} ANSIBLE MANAGED - IDE Extension Roles -->"
+    block: |
+      ### IDE Extension Roles
+      
+      {% for role in roles_to_sync %}
+      **{{ role.sanitized_name }}**: {{ role.description }}
+      - Location: `roles/{{ role.sanitized_name }}/`
+      - Example: `examples/{{ role.sanitized_name }}-example.yml`
+      {% endfor %}
+    insertafter: "## Available Roles"
+
+- name: Display sync summary
+  debug:
+    msg:
+      - ""
+      - "✅ Content Sanitization Complete"
+      - ""
+      - "Synced Roles:"
+      - "{% for role in roles_to_sync %}  - {{ role.sanitized_name }} ({{ dest_repo }}/roles/{{ role.sanitized_name }}/){% endfor %}"
+      - ""
+      - "Next Steps:"
+      - "  cd {{ dest_repo }}"
+      - "  git add roles/ examples/"
+      - "  git commit -m 'Add IDE extension automation roles'"
+      - "  git push origin main"
+

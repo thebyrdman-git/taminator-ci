@@ -51,6 +51,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AppImage for Linux (179MB) - desktop app alternative
 - DEB package for Debian/Ubuntu (142MB)
 
+#### CI/CD Pipeline ⭐ (New Hybrid Architecture)
+- **GitHub Actions** (public repo) for Mac/Windows builds
+  - macOS DMG (Intel + Apple Silicon)
+  - Windows EXE (x64)
+  - Unlimited free minutes for public repos
+  - Cost: $0/month
+- **MiracleMax Self-Hosted** (private GitLab) for Linux builds
+  - Linux x86_64 AppImage (native)
+  - Linux ARM64 AppImage (QEMU emulation)
+  - Container Image (Podman)
+  - Red Hat internal network compliance
+  - Cost: $0/month (self-hosted hardware)
+- Automated release pipeline with Ansible playbooks
+- Pre-release audit system (customer data checks)
+- Cross-platform artifact generation and verification
+
 #### Documentation
 - 13 comprehensive documentation guides
 - AAP Alignment guide (why TAMs will love this)

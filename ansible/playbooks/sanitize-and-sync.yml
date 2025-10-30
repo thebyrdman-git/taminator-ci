@@ -1,0 +1,47 @@
+---
+# Sanitize and Sync Content to ansibleize-everything
+#
+# Removes project-specific details and syncs to shared repo
+
+- name: Sanitize and Sync Ansible Content
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "/home/jbyrd/TAMINATOR"
+  
+  tasks:
+    - name: Display sanitization info
+      debug:
+        msg:
+          - "🧹 Sanitizing Ansible Content"
+          - ""
+          - "Removing project-specific details:"
+          - "  - Project names"
+          - "  - Hostnames"
+          - "  - Usernames"
+          - "  - Internal URLs"
+          - ""
+          - "Syncing to: /home/jbyrd/ansibleize-everything"
+    
+    - name: Apply content_sanitizer role
+      include_role:
+        name: content_sanitizer
+    
+    - name: Display next steps
+      debug:
+        msg:
+          - ""
+          - "✅ Content Sanitized and Synced"
+          - ""
+          - "Review changes:"
+          - "  cd /home/jbyrd/ansibleize-everything"
+          - "  git status"
+          - "  git diff"
+          - ""
+          - "Commit and push:"
+          - "  git add roles/ examples/"
+          - "  git commit -m 'Add IDE extension automation roles'"
+          - "  git push origin main"
+

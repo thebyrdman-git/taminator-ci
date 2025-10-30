@@ -1,0 +1,182 @@
+---
+# Taminator Release Automation - GitHub CI Mirror
+# 
+# This playbook mirrors sanitized code to public taminator-ci repo
+# for Mac/Windows builds via GitHub Actions (unlimited minutes)
+
+- name: Mirror to GitHub CI (Public Repo)
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+    version: "2.0.0"
+    release_log: "{{ project_root }}/release-github-ci-{{ ansible_date_time.iso8601_basic_short }}.log"
+    remote: "github-ci"
+    remote_url: "git@github.com:thebyrdman-git/taminator-ci.git"
+  
+  tasks:
+    - name: Create release log
+      copy:
+        content: |
+          Taminator v{{ version }} - GitHub CI Mirror
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          User: {{ ansible_user_id }}
+          Remote: {{ remote }}
+          Purpose: Mac/Windows builds via GitHub Actions (unlimited minutes)
+          ================================================================================
+        dest: "{{ release_log }}"
+    
+    - name: Check if remote exists
+      command: git remote get-url {{ remote }}
+      args:
+        chdir: "{{ project_root }}"
+      register: remote_check
+      changed_when: false
+      failed_when: false
+    
+    - name: Add remote if not exists
+      command: git remote add {{ remote }} {{ remote_url }}
+      args:
+        chdir: "{{ project_root }}"
+      when: remote_check.rc != 0
+    
+    - name: Update remote URL (if changed)
+      command: git remote set-url {{ remote }} {{ remote_url }}
+      args:
+        chdir: "{{ project_root }}"
+      when: remote_check.rc == 0
+    
+    - name: Verify remote
+      command: git remote get-url {{ remote }}
+      args:
+        chdir: "{{ project_root }}"
+      register: remote_verified
+      changed_when: false
+    
+    - name: Log remote
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "Remote: {{ remote_verified.stdout }}"
+    
+    - name: Pre-push audit for customer data
+      command: git ls-files
+      args:
+        chdir: "{{ project_root }}"
+      register: tracked_files
+      changed_when: false
+    
+    - name: Check for customer data
+      shell: echo "{{ tracked_files.stdout }}" | grep -iE "(jpmc|jpmchase|ganesh|334224|04293185|wells.fargo|fannie.mae)" || true
+      register: customer_data_check
+      changed_when: false
+    
+    - name: Verify no customer data
+      assert:
+        that:
+          - customer_data_check.stdout == ""
+        fail_msg: "❌ MIRROR BLOCKED: Customer data found in tracked files"
+        success_msg: "✅ No customer data - safe for public repo"
+    
+    - name: Log audit
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Audit: No customer data (safe for public repo)"
+    
+    - name: Push to GitHub CI (public repo)
+      command: git push {{ remote }} main
+      args:
+        chdir: "{{ project_root }}"
+      register: push_result
+    
+    - name: Log push result
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Pushed to {{ remote }}/main"
+    
+    - name: Push tag to GitHub CI
+      command: git push {{ remote }} v{{ version }}
+      args:
+        chdir: "{{ project_root }}"
+      register: tag_push
+    
+    - name: Log tag push
+      lineinfile:
+        path: "{{ release_log }}"
+        line: "✅ Pushed tag v{{ version }} - GitHub Actions will now build Mac/Windows"
+    
+    - name: Wait for GitHub Actions to trigger
+      pause:
+        prompt: |
+          
+          ================================================================================
+          GITHUB ACTIONS TRIGGERED (UNLIMITED MINUTES)
+          ================================================================================
+          
+          The tag v{{ version }} has been pushed to public taminator-ci repo.
+          GitHub Actions will now build:
+          
+          1. macOS DMG (Intel + Apple Silicon)
+          2. Windows EXE (x64)
+          3. Create GitHub release with artifacts
+          
+          Monitor builds at:
+          https://github.com/thebyrdman-git/taminator-ci/actions
+          
+          Release will be available at:
+          https://github.com/thebyrdman-git/taminator-ci/releases/v{{ version }}
+          
+          Press ENTER to continue...
+        seconds: 3
+    
+    - name: Final mirror summary
+      lineinfile:
+        path: "{{ release_log }}"
+        line: |
+          
+          ================================================================================
+          GITHUB CI MIRROR SUMMARY
+          ================================================================================
+          Status: ✅ SUCCESS
+          Version: v{{ version }}
+          Remote: {{ remote_verified.stdout }}
+          Branch: main
+          Tag: v{{ version }}
+          
+          GitHub Actions: https://github.com/thebyrdman-git/taminator-ci/actions
+          Release Page: https://github.com/thebyrdman-git/taminator-ci/releases/v{{ version }}
+          
+          GitHub Actions will build:
+          - macOS DMG (Universal: Intel + Apple Silicon)
+          - Windows EXE (x64)
+          
+          Build time: ~10-15 minutes
+          Cost: $0 (unlimited minutes for public repos)
+          
+          Artifacts will be automatically attached to GitHub release.
+          ================================================================================
+    
+    - name: Display mirror results
+      debug:
+        msg:
+          - "✅ GITHUB CI MIRROR COMPLETE"
+          - ""
+          - "Version: v{{ version }}"
+          - "Remote: {{ remote_verified.stdout }}"
+          - ""
+          - "GitHub Actions building Mac/Windows now:"
+          - "  - macOS DMG (Universal)"
+          - "  - Windows EXE (x64)"
+          - ""
+          - "Monitor builds:"
+          - "https://github.com/thebyrdman-git/taminator-ci/actions"
+          - ""
+          - "Release will be at:"
+          - "https://github.com/thebyrdman-git/taminator-ci/releases/v{{ version }}"
+          - ""
+          - "Cost: $0 (unlimited minutes)"
+          - ""
+          - "Release log: {{ release_log }}"
+

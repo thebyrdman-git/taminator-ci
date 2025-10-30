@@ -1,0 +1,54 @@
+---
+# Content Sanitizer Role - Default Variables
+
+# Source and destination
+source_project: "/home/jbyrd/TAMINATOR"
+dest_repo: "/home/jbyrd/ansibleize-everything"
+
+# Roles to sanitize and sync
+roles_to_sync:
+  - name: "cursor_extension"
+    sanitized_name: "ide_extension"
+    description: "Build IDE extension from templates"
+  - name: "extension_installer"
+    sanitized_name: "extension_installer"
+    description: "Integrate extension installer into GUI"
+  - name: "context_manager"
+    sanitized_name: "context_manager"
+    description: "Switch between project contexts"
+
+# Sanitization rules
+sanitize_patterns:
+  - pattern: "taminator"
+    replacement: "myapp"
+  - pattern: "Taminator"
+    replacement: "MyApp"
+  - pattern: "TAMINATOR"
+    replacement: "MYAPP"
+  - pattern: "jbyrd"
+    replacement: "username"
+  - pattern: "gitlab.cee.redhat.com/jbyrd/taminator"
+    replacement: "gitlab.example.com/org/project"
+  - pattern: "thebyrdman-git/taminator-staging"
+    replacement: "org/project-staging"
+  - pattern: "miraclemax"
+    replacement: "buildserver"
+  - pattern: "MiracleMax"
+    replacement: "BuildServer"
+  - pattern: "rhgrimm"
+    replacement: "buildhost"
+  - pattern: "grimm@rhgrimm"
+    replacement: "user@buildhost"
+  - pattern: "Red Hat"
+    replacement: "Company"
+  - pattern: "TAM"
+    replacement: "User"
+
+# Files to exclude from sync
+exclude_patterns:
+  - "*.pyc"
+  - "__pycache__"
+  - "*.log"
+  - ".git"
+  - "node_modules"
+

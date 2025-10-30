@@ -1,0 +1,149 @@
+name: Build Cross-Platform (Mac/Windows)
+# 
+# This workflow runs on PUBLIC taminator-ci repo (unlimited Actions minutes)
+# Builds Mac/Windows installers while MiracleMax handles Linux
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        working-directory: gui
+        run: npm ci
+      
+      - name: Build macOS DMG
+        working-directory: gui
+        run: npm run build:mac
+      
+      - name: Generate checksums
+        working-directory: gui/dist
+        run: |
+          shasum -a 256 *.dmg > checksums-macos.txt
+          cat checksums-macos.txt
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-builds
+          path: |
+            gui/dist/*.dmg
+            gui/dist/checksums-macos.txt
+          retention-days: 7
+  
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        working-directory: gui
+        run: npm ci
+      
+      - name: Build Windows EXE
+        working-directory: gui
+        run: npm run build:win
+      
+      - name: Generate checksums
+        working-directory: gui/dist
+        shell: pwsh
+        run: |
+          Get-ChildItem *.exe | ForEach-Object { 
+            $hash = (Get-FileHash $_.Name -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -Append checksums-windows.txt -Encoding ASCII
+          }
+          Get-Content checksums-windows.txt
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-builds
+          path: |
+            gui/dist/*.exe
+            gui/dist/checksums-windows.txt
+          retention-days: 7
+  
+  create-release:
+    name: Create GitHub Release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-builds
+          path: artifacts/macos
+      
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-builds
+          path: artifacts/windows
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/macos/*
+            artifacts/windows/*
+          body: |
+            ## Taminator Intelligence ${{ github.ref_name }}
+            
+            ### Downloads
+            
+            **macOS:**
+            - Universal DMG (Intel + Apple Silicon)
+            
+            **Windows:**
+            - Windows 10/11 Installer (x64)
+            
+            **Linux:**
+            - See GitLab release for AppImage and Container
+            - https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/${{ github.ref_name }}
+            
+            ### Installation
+            
+            **macOS:**
+            ```bash
+            # Download DMG
+            # Open and drag to Applications
+            ```
+            
+            **Windows:**
+            ```bash
+            # Download EXE
+            # Run installer
+            ```
+            
+            **Linux:**
+            See GitLab release
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

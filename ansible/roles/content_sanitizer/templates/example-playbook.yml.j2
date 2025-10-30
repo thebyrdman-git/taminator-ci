@@ -1,0 +1,22 @@
+---
+# Example: {{ item.sanitized_name }} Role
+#
+# {{ item.description }}
+
+- name: Example - {{ item.description }}
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname }}"
+  
+  tasks:
+    - name: Apply {{ item.sanitized_name }} role
+      include_role:
+        name: {{ item.sanitized_name }}
+    
+    - name: Display completion
+      debug:
+        msg: "✅ {{ item.sanitized_name }} role complete"
+
