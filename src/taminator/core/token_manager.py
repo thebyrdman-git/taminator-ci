@@ -6,17 +6,57 @@ Badass features:
 - Token validation before use
 - Automatic expiry detection
 - No tokens ever in process list or logs
+- Graceful fallback to encrypted file if keyring unavailable
 """
 
 import keyring
 import logging
+import json
+import threading
 from enum import Enum
 from typing import Optional, Dict
 from datetime import datetime, timedelta
+from pathlib import Path
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.backends import default_backend
+import base64
+import os
 
 from .exceptions import AuthenticationError, ErrorCode, missing_token_error
 
 logger = logging.getLogger(__name__)
+
+
+def with_timeout(timeout_seconds):
+    """Decorator to add timeout to function calls"""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            result = [None]
+            exception = [None]
+            
+            def target():
+                try:
+                    result[0] = func(*args, **kwargs)
+                except Exception as e:
+                    exception[0] = e
+            
+            thread = threading.Thread(target=target)
+            thread.daemon = True
+            thread.start()
+            thread.join(timeout_seconds)
+            
+            if thread.is_alive():
+                # Timeout occurred
+                raise TimeoutError(f"Operation timed out after {timeout_seconds}s")
+            
+            if exception[0]:
+                raise exception[0]
+            
+            return result[0]
+        return wrapper
+    return decorator
 
 
 class TokenType(str, Enum):
@@ -57,20 +97,118 @@ class TokenInfo:
 
 class TokenManager:
     """
-    Secure token storage using OS keyring
+    Secure token storage using OS keyring with encrypted file fallback
     
     Never stores tokens in:
     - Environment variables
     - Process arguments
     - Log files
     - Plain text config files
+    
+    Fallback strategy:
+    1. Try OS keyring (with 2s timeout)
+    2. If keyring unavailable/timeout, use encrypted file
     """
     
     SERVICE_NAME = "taminator"
+    KEYRING_TIMEOUT = 2  # seconds
     
     def __init__(self):
         self._cache: Dict[TokenType, TokenInfo] = {}
-        logger.info("🔐 TokenManager initialized with secure keyring storage")
+        self._use_keyring = self._test_keyring()
+        self._encrypted_storage_path = Path.home() / ".config" / "taminator" / "tokens.enc"
+        self._encrypted_storage_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        if self._use_keyring:
+            logger.info("🔐 TokenManager initialized with secure keyring storage")
+        else:
+            logger.warning("⚠️  Keyring unavailable, using encrypted file fallback")
+    
+    def _test_keyring(self) -> bool:
+        """Test if keyring is available and responsive"""
+        @with_timeout(self.KEYRING_TIMEOUT)
+        def test():
+            return keyring.get_password(self.SERVICE_NAME, "test")
+        
+        try:
+            test()
+            return True
+        except TimeoutError:
+            logger.warning("⚠️  Keyring timeout - falling back to encrypted file")
+            return False
+        except Exception as e:
+            logger.warning(f"⚠️  Keyring unavailable ({e}) - falling back to encrypted file")
+            return False
+    
+    def _get_encryption_key(self) -> bytes:
+        """Get or create encryption key for file storage"""
+        key_file = Path.home() / ".config" / "taminator" / ".key"
+        key_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        if key_file.exists():
+            return key_file.read_bytes()
+        
+        # Generate new key
+        salt = os.urandom(16)
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=100000,
+            backend=default_backend()
+        )
+        # Use machine ID as password base
+        machine_id = self._get_machine_id()
+        key = base64.urlsafe_b64encode(kdf.derive(machine_id.encode()))
+        
+        # Store key and salt
+        key_data = {"key": key.decode(), "salt": base64.b64encode(salt).decode()}
+        key_file.write_text(json.dumps(key_data))
+        key_file.chmod(0o600)  # Owner read/write only
+        
+        return key
+    
+    def _get_machine_id(self) -> str:
+        """Get a machine-specific identifier"""
+        try:
+            # Try /etc/machine-id first (Linux)
+            machine_id_file = Path("/etc/machine-id")
+            if machine_id_file.exists():
+                return machine_id_file.read_text().strip()
+        except:
+            pass
+        
+        # Fallback to hostname
+        import socket
+        return socket.gethostname()
+    
+    def _read_encrypted_storage(self) -> Dict[str, str]:
+        """Read tokens from encrypted file"""
+        if not self._encrypted_storage_path.exists():
+            return {}
+        
+        try:
+            key = self._get_encryption_key()
+            fernet = Fernet(key)
+            encrypted_data = self._encrypted_storage_path.read_bytes()
+            decrypted_data = fernet.decrypt(encrypted_data)
+            return json.loads(decrypted_data.decode())
+        except Exception as e:
+            logger.error(f"Failed to read encrypted storage: {e}")
+            return {}
+    
+    def _write_encrypted_storage(self, tokens: Dict[str, str]) -> None:
+        """Write tokens to encrypted file"""
+        try:
+            key = self._get_encryption_key()
+            fernet = Fernet(key)
+            data = json.dumps(tokens).encode()
+            encrypted_data = fernet.encrypt(data)
+            self._encrypted_storage_path.write_bytes(encrypted_data)
+            self._encrypted_storage_path.chmod(0o600)  # Owner read/write only
+        except Exception as e:
+            logger.error(f"Failed to write encrypted storage: {e}")
+            raise
     
     def get_token(self, token_type: TokenType) -> str:
         """
@@ -103,8 +241,20 @@ class TokenManager:
                         }
                     )
         
-        # Retrieve from keyring
-        token = keyring.get_password(self.SERVICE_NAME, token_type.value)
+        # Retrieve from keyring or encrypted file
+        if self._use_keyring:
+            @with_timeout(self.KEYRING_TIMEOUT)
+            def get_from_keyring():
+                return keyring.get_password(self.SERVICE_NAME, token_type.value)
+            
+            try:
+                token = get_from_keyring()
+            except (TimeoutError, Exception) as e:
+                logger.warning(f"Keyring failed, switching to encrypted file: {e}")
+                self._use_keyring = False
+                token = self._read_encrypted_storage().get(token_type.value)
+        else:
+            token = self._read_encrypted_storage().get(token_type.value)
         
         if not token:
             raise missing_token_error(token_type.value)
@@ -144,31 +294,58 @@ class TokenManager:
         if expires_in_days:
             expires_at = datetime.now() + timedelta(days=expires_in_days)
         
-        # Store in keyring
-        keyring.set_password(self.SERVICE_NAME, token_type.value, token)
+        # Store in keyring or encrypted file
+        if self._use_keyring:
+            @with_timeout(self.KEYRING_TIMEOUT)
+            def set_in_keyring():
+                keyring.set_password(self.SERVICE_NAME, token_type.value, token)
+            
+            try:
+                set_in_keyring()
+            except (TimeoutError, Exception) as e:
+                logger.warning(f"Keyring failed, switching to encrypted file: {e}")
+                self._use_keyring = False
+                tokens = self._read_encrypted_storage()
+                tokens[token_type.value] = token
+                self._write_encrypted_storage(tokens)
+        else:
+            tokens = self._read_encrypted_storage()
+            tokens[token_type.value] = token
+            self._write_encrypted_storage(tokens)
         
         # Update cache
         self._cache[token_type] = TokenInfo(
             token, token_type, expires_at=expires_at
         )
         
-        logger.info(f"✅ Stored {token_type.value} token securely")
+        storage_type = "keyring" if self._use_keyring else "encrypted file"
+        logger.info(f"✅ Stored {token_type.value} token securely ({storage_type})")
     
     def delete_token(self, token_type: TokenType) -> None:
         """Remove token from secure storage"""
-        try:
-            keyring.delete_password(self.SERVICE_NAME, token_type.value)
-            if token_type in self._cache:
-                del self._cache[token_type]
-            logger.info(f"🗑️  Deleted {token_type.value} token")
-        except keyring.errors.PasswordDeleteError:
-            # Token doesn't exist, that's fine
-            pass
+        if self._use_keyring:
+            try:
+                keyring.delete_password(self.SERVICE_NAME, token_type.value)
+            except keyring.errors.PasswordDeleteError:
+                # Token doesn't exist, that's fine
+                pass
+        else:
+            tokens = self._read_encrypted_storage()
+            if token_type.value in tokens:
+                del tokens[token_type.value]
+                self._write_encrypted_storage(tokens)
+        
+        if token_type in self._cache:
+            del self._cache[token_type]
+        logger.info(f"🗑️  Deleted {token_type.value} token")
     
     def has_token(self, token_type: TokenType) -> bool:
         """Check if token exists (doesn't validate)"""
         try:
-            token = keyring.get_password(self.SERVICE_NAME, token_type.value)
+            if self._use_keyring:
+                token = keyring.get_password(self.SERVICE_NAME, token_type.value)
+            else:
+                token = self._read_encrypted_storage().get(token_type.value)
             return token is not None and len(token) > 0
         except Exception:
             return False
