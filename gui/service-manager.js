@@ -113,16 +113,18 @@ class ServiceManager {
   /**
    * Check if service is healthy
    * Returns a promise that resolves to true if healthy, false otherwise
+   * 
+   * Uses /health/live for fast startup checks (no expensive AI/rhcase checks)
    */
   isHealthy() {
     return new Promise((resolve) => {
-      const req = http.get(`${this.serviceUrl}/health`, { timeout: 1000 }, (res) => {
+      const req = http.get(`${this.serviceUrl}/health/live`, { timeout: 1000 }, (res) => {
         let data = '';
         res.on('data', (chunk) => { data += chunk; });
         res.on('end', () => {
           try {
             const health = JSON.parse(data);
-            resolve(health.status === 'healthy');
+            resolve(health.status === 'alive');
           } catch {
             resolve(false);
           }
