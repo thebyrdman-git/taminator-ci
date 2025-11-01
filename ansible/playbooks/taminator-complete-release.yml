@@ -88,22 +88,78 @@
         msg: "{{ doc_stats.stdout_lines }}"
 
     # ============================================================================
-    # STEP 3: GIT COMMIT (with pre-commit bypass)
+    # STEP 3: PREPARE RELEASE DIRECTORY
     # ============================================================================
     
-    - name: "📝 Step 3: Stage all changes"
+    - name: "📦 Step 3: Copy release files to distribution"
       shell: |
         cd {{ project_root }}
+        
+        # Ensure release directory exists
+        mkdir -p releases/v{{ new_version }}
+        
+        # Copy Linux AppImage if exists
+        if [ -f gui/dist/Taminator-{{ new_version }}.AppImage ]; then
+          cp gui/dist/Taminator-{{ new_version }}.AppImage releases/v{{ new_version }}/
+          echo "✅ Copied Linux AppImage"
+        else
+          echo "⚠️  Linux AppImage not found in gui/dist"
+        fi
+        
+        # Copy release notes
+        if [ -f RELEASE-NOTES-{{ new_version }}.md ]; then
+          cp RELEASE-NOTES-{{ new_version }}.md releases/v{{ new_version }}/
+          echo "✅ Copied release notes"
+        fi
+        
+        # Create checksums
+        cd releases/v{{ new_version }}
+        if ls *.AppImage 1> /dev/null 2>&1; then
+          sha256sum *.AppImage > SHA256SUMS
+          echo "✅ Created checksums"
+        fi
+        
+        # Show what's in the release directory
+        echo ""
+        echo "Release directory contents:"
+        ls -lh
+      register: release_prep
+      ignore_errors: yes
+      
+    - name: "Display release preparation"
+      debug:
+        msg: "{{ release_prep.stdout_lines | default(['Release prep complete']) }}"
+
+    # ============================================================================
+    # STEP 4: GIT COMMIT (with pre-commit bypass)
+    # ============================================================================
+    
+    - name: "📝 Step 4: Stage all changes (including releases/)"
+      shell: |
+        cd {{ project_root }}
+        
+        # Add everything
         git add -A
+        
+        # Force add release directory (it's in .gitignore)
+        git add -f releases/v{{ new_version }}/Taminator-{{ new_version }}.AppImage
+        git add -f releases/v{{ new_version }}/RELEASE-NOTES-{{ new_version }}.md
+        git add -f releases/v{{ new_version }}/SHA256SUMS
+        
         echo "Staged files:"
         git status --short | wc -l
+        echo ""
+        echo "Release files staged:"
+        git status --short | grep "releases/" || echo "(no release files shown, checking...)"
+        git ls-files --stage | grep "releases/v{{ new_version }}" | wc -l
+        echo "release files in staging area"
       register: git_stage
       
     - name: "Display staged count"
       debug:
         msg: "{{ git_stage.stdout_lines }}"
     
-    - name: "📝 Step 3: Create comprehensive commit (bypass pre-commit if needed)"
+    - name: "📝 Step 4: Create comprehensive commit (bypass pre-commit if needed)"
       shell: |
         cd {{ project_root }}
         
@@ -185,7 +241,7 @@
       debug:
         msg: "{{ git_commit.stdout_lines | default(['Commit completed']) }}"
     
-    - name: "🏷️ Step 3: Create annotated release tag"
+    - name: "🏷️ Step 4: Create annotated release tag"
       shell: |
         cd {{ project_root }}
         git tag -a v{{ new_version }} -m "Taminator v{{ new_version }} - Production Release
@@ -206,10 +262,10 @@
       ignore_errors: yes
 
     # ============================================================================
-    # STEP 4: VERIFY COMMIT & TAG
+    # STEP 5: VERIFY COMMIT & TAG
     # ============================================================================
     
-    - name: "✅ Step 4: Verify commit was created"
+    - name: "✅ Step 5: Verify commit was created"
       shell: |
         cd {{ project_root }}
         echo "Latest commit:"
@@ -223,7 +279,7 @@
       debug:
         msg: "{{ verify_commit.stdout_lines }}"
     
-    - name: "✅ Step 4: Verify tag was created"
+    - name: "✅ Step 5: Verify tag was created"
       shell: |
         cd {{ project_root }}
         git tag -l "v{{ new_version }}"
@@ -235,7 +291,7 @@
       debug:
         msg: "{{ verify_tag.stdout_lines }}"
     
-    - name: "✅ Step 4: Verify no uncommitted changes remain"
+    - name: "✅ Step 5: Verify no uncommitted changes remain"
       shell: |
         cd {{ project_root }}
         STATUS=$(git status --short | wc -l)
@@ -252,10 +308,10 @@
         msg: "{{ verify_clean.stdout_lines }}"
 
     # ============================================================================
-    # STEP 5: PUSH TO GIT
+    # STEP 6: PUSH TO GIT
     # ============================================================================
     
-    - name: "🚀 Step 5: Push commit and tag to {{ git_remote }}"
+    - name: "🚀 Step 6: Push commit and tag to {{ git_remote }}"
       shell: |
         cd {{ project_root }}
         git push {{ git_remote }} main 2>&1
@@ -268,7 +324,7 @@
       debug:
         msg: "{{ git_push.stdout_lines | default(['Push completed']) }}"
     
-    - name: "🚀 Step 5: Trigger GitHub CI (if configured)"
+    - name: "🚀 Step 6: Trigger GitHub CI (if configured)"
       shell: |
         cd {{ project_root }}
         if git remote | grep -q github; then
@@ -291,10 +347,10 @@
         msg: "{{ github_ci.stdout_lines | default(['GitHub CI status']) }}"
 
     # ============================================================================
-    # STEP 6: FINAL SUMMARY
+    # STEP 7: FINAL SUMMARY
     # ============================================================================
     
-    - name: "📊 Step 6: Generate release summary"
+    - name: "📊 Step 7: Generate release summary"
       shell: |
         cd {{ project_root }}
         echo "╔════════════════════════════════════════════════════╗"
