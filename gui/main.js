@@ -539,7 +539,7 @@ ipcMain.handle('oobe-save-manual-tokens', async (event, tokens) => {
 });
 
 /**
- * Load Dashboard data - TESLA ARCHITECTURE! 🚗⚡
+ * Load Dashboard data - Production Architecture
  * Now uses API service instead of CLI spawning
  */
 ipcMain.handle('dashboard-load', async (event) => {

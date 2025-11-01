@@ -21,10 +21,10 @@ class StartupSplash {
         this.splash.innerHTML = `
             <div class="splash-content">
                 <div class="splash-icon">
-                    🚗⚡
+                    🤖
                 </div>
                 <h1 class="splash-title">Taminator</h1>
-                <p class="splash-subtitle">v2.0 - Professional TAM Automation</p>
+                <p class="splash-subtitle">v2.0 - AI-Augmented TAM Assistant</p>
                 
                 <div class="splash-progress">
                     <div class="splash-progress-bar" id="splash-progress-bar"></div>
