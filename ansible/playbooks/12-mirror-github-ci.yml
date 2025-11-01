@@ -96,6 +96,10 @@
         path: "{{ release_log }}"
         line: "✅ Pushed to {{ remote }}/main"
     
+    - name: Wait before tag push (GitLab security bot blocks parallel uploads)
+      pause:
+        seconds: 2
+    
     - name: Push tag to GitHub CI
       command: git push {{ remote }} v{{ version }}
       args:

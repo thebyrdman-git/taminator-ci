@@ -308,43 +308,85 @@
         msg: "{{ verify_clean.stdout_lines }}"
 
     # ============================================================================
-    # STEP 6: PUSH TO GIT
+    # STEP 6: PUSH TO GIT (ONE AT A TIME - GitLab security bot blocks parallel uploads)
     # ============================================================================
     
-    - name: "🚀 Step 6: Push commit and tag to {{ git_remote }}"
+    - name: "🚀 Step 6a: Push main branch to {{ git_remote }} (1/4)"
       shell: |
         cd {{ project_root }}
+        echo "📤 Pushing main branch..."
         git push {{ git_remote }} main 2>&1
-        git push {{ git_remote }} v{{ new_version }} 2>&1
-        echo "✅ Pushed to {{ git_remote }}"
-      register: git_push
+        echo "✅ Main branch pushed"
+      register: git_push_main
       ignore_errors: yes
       
-    - name: "Display push result"
+    - name: "Display main push result"
       debug:
-        msg: "{{ git_push.stdout_lines | default(['Push completed']) }}"
+        msg: "{{ git_push_main.stdout_lines | default(['Main branch pushed']) }}"
     
-    - name: "🚀 Step 6: Trigger GitHub CI (if configured)"
+    - name: "⏱️  Wait 2 seconds before next push (GitLab rate limit)"
+      pause:
+        seconds: 2
+    
+    - name: "🚀 Step 6b: Push tag to {{ git_remote }} (2/4)"
+      shell: |
+        cd {{ project_root }}
+        echo "📤 Pushing tag v{{ new_version }}..."
+        git push {{ git_remote }} v{{ new_version }} 2>&1
+        echo "✅ Tag pushed"
+      register: git_push_tag
+      ignore_errors: yes
+      
+    - name: "Display tag push result"
+      debug:
+        msg: "{{ git_push_tag.stdout_lines | default(['Tag pushed']) }}"
+    
+    - name: "⏱️  Wait 2 seconds before GitHub push (GitLab rate limit)"
+      pause:
+        seconds: 2
+    
+    - name: "🚀 Step 6c: Push main branch to GitHub (3/4 - if configured)"
       shell: |
         cd {{ project_root }}
         if git remote | grep -q github; then
-          echo "📡 Triggering GitHub CI..."
+          echo "📤 Pushing main branch to GitHub..."
           git push github main 2>&1 || true
-          git push github v{{ new_version }} 2>&1 || true
-          echo "✅ GitHub CI triggered!"
-          echo ""
-          echo "Monitor build: https://github.com/YOUR-ORG/taminator-ci/actions"
-          echo "macOS builds ready in ~15 minutes"
+          echo "✅ GitHub main branch pushed"
         else
           echo "ℹ️  GitHub remote not configured"
           echo "To enable CI: git remote add github git@github.com:YOUR-ORG/taminator-ci.git"
         fi
-      register: github_ci
+      register: github_push_main
       ignore_errors: yes
       
-    - name: "Display CI trigger result"
+    - name: "Display GitHub main push result"
       debug:
-        msg: "{{ github_ci.stdout_lines | default(['GitHub CI status']) }}"
+        msg: "{{ github_push_main.stdout_lines | default(['GitHub main status']) }}"
+    
+    - name: "⏱️  Wait 2 seconds before final push (GitLab rate limit)"
+      pause:
+        seconds: 2
+      when: github_push_main.stdout is defined and 'not configured' not in github_push_main.stdout
+    
+    - name: "🚀 Step 6d: Push tag to GitHub (4/4 - if configured)"
+      shell: |
+        cd {{ project_root }}
+        if git remote | grep -q github; then
+          echo "📤 Pushing tag v{{ new_version }} to GitHub..."
+          git push github v{{ new_version }} 2>&1 || true
+          echo "✅ GitHub tag pushed - CI triggered!"
+          echo ""
+          echo "📡 Monitor build: https://github.com/YOUR-ORG/taminator-ci/actions"
+          echo "🍎 macOS builds ready in ~15 minutes"
+        else
+          echo "ℹ️  GitHub remote not configured - skipping"
+        fi
+      register: github_push_tag
+      ignore_errors: yes
+      
+    - name: "Display GitHub tag push result"
+      debug:
+        msg: "{{ github_push_tag.stdout_lines | default(['GitHub tag status']) }}"
 
     # ============================================================================
     # STEP 7: FINAL SUMMARY

@@ -152,21 +152,38 @@
         msg: "{{ git_tag.stdout }}"
 
     # ============================================================================
-    # PUSH TO GIT
+    # PUSH TO GIT (ONE AT A TIME - GitLab security bot blocks parallel uploads)
     # ============================================================================
     
-    - name: "🚀 Git: Push to {{ git_remote }}"
+    - name: "🚀 Git: Push main branch to {{ git_remote }} (1/4)"
       shell: |
         cd {{ project_root }}
+        echo "📤 Pushing main branch..."
         git push {{ git_remote }} main
-        git push {{ git_remote }} v{{ version }}
-        echo "✅ Pushed to {{ git_remote }}"
-      register: git_push
+        echo "✅ Main branch pushed"
+      register: git_push_main
       ignore_errors: yes
       
-    - name: "Display push result"
+    - name: "Display main push result"
       debug:
-        msg: "{{ git_push.stdout_lines | default(['Push result']) }}"
+        msg: "{{ git_push_main.stdout_lines | default(['Main branch pushed']) }}"
+    
+    - name: "⏱️  Wait 2 seconds before next push (GitLab rate limit)"
+      pause:
+        seconds: 2
+    
+    - name: "🚀 Git: Push tag to {{ git_remote }} (2/4)"
+      shell: |
+        cd {{ project_root }}
+        echo "📤 Pushing tag v{{ version }}..."
+        git push {{ git_remote }} v{{ version }}
+        echo "✅ Tag pushed"
+      register: git_push_tag
+      ignore_errors: yes
+      
+    - name: "Display tag push result"
+      debug:
+        msg: "{{ git_push_tag.stdout_lines | default(['Tag pushed']) }}"
     
     - name: "Check if GitHub CI should be triggered"
       shell: |
@@ -175,31 +192,58 @@
       register: has_github
       ignore_errors: yes
     
-    - name: "🚀 Trigger GitHub CI (if configured)"
+    - name: "⏱️  Wait 2 seconds before GitHub push (GitLab rate limit)"
+      pause:
+        seconds: 2
+      when: has_github.stdout == "yes"
+    
+    - name: "🚀 Git: Push main branch to GitHub (3/4 - if configured)"
       shell: |
         cd {{ project_root }}
         if git remote | grep -q github; then
-          echo "Pushing to GitHub to trigger CI..."
+          echo "📤 Pushing main branch to GitHub..."
           git push github main
-          git push github v{{ version }}
-          echo "✅ GitHub CI triggered!"
-          echo ""
-          echo "Monitor at: https://github.com/YOUR-ORG/taminator-ci/actions"
-          echo "macOS builds will be ready in ~15 minutes"
+          echo "✅ GitHub main branch pushed"
         else
           echo "⚠️  GitHub remote not configured"
           echo "To enable automated macOS builds:"
           echo "  git remote add github git@github.com:YOUR-ORG/taminator-ci.git"
-          echo "  git push github v{{ version }}"
         fi
-      register: github_trigger
+      register: github_push_main
+      ignore_errors: yes
+      when: has_github.stdout == "yes"
+      
+    - name: "Display GitHub main push result"
+      debug:
+        msg: "{{ github_push_main.stdout_lines | default(['GitHub main status']) }}"
+      when: github_push_main is defined
+    
+    - name: "⏱️  Wait 2 seconds before final push (GitLab rate limit)"
+      pause:
+        seconds: 2
+      when: has_github.stdout == "yes"
+    
+    - name: "🚀 Git: Push tag to GitHub (4/4 - if configured)"
+      shell: |
+        cd {{ project_root }}
+        if git remote | grep -q github; then
+          echo "📤 Pushing tag v{{ version }} to GitHub..."
+          git push github v{{ version }}
+          echo "✅ GitHub tag pushed - CI triggered!"
+          echo ""
+          echo "📡 Monitor at: https://github.com/YOUR-ORG/taminator-ci/actions"
+          echo "🍎 macOS builds will be ready in ~15 minutes"
+        else
+          echo "ℹ️  GitHub remote not configured - skipping"
+        fi
+      register: github_push_tag
       ignore_errors: yes
       when: has_github.stdout == "yes"
       
     - name: "Display GitHub CI status"
       debug:
-        msg: "{{ github_trigger.stdout_lines | default(['GitHub remote not configured']) }}"
-      when: github_trigger is defined
+        msg: "{{ github_push_tag.stdout_lines | default(['GitHub remote not configured']) }}"
+      when: github_push_tag is defined
 
     # ============================================================================
     # POST-DEPLOYMENT
