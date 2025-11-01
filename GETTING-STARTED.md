@@ -1,547 +1,510 @@
-# Getting Started with Taminator v2.0
+# 🚀 Getting Started with Taminator v2.0.1
 
-**From zero to productive in 10 minutes**
-
----
-
-## Prerequisites
-
-Before you begin, ensure you have:
-
-- ✅ **Red Hat VPN access** - Required for JIRA and Customer Portal APIs
-- ✅ **Red Hat SSO account** - Your `@redhat.com` email
-- ✅ **JIRA API token** - Generate at https://access.redhat.com/management/api
-- ✅ **Customer account numbers** - For customers you want to track
+**Welcome!** This guide will help you use the complete Ansai + GitHub CI workflow.
 
 ---
 
-## Step 1: Installation (2 minutes)
+## 📋 Quick Start (5 Minutes)
 
-### Linux (Recommended: Container)
+### For Users (Installing Taminator)
 
-**Option A: One-Line Install (Easiest)**
 ```bash
-# Install with systemd service (auto-starts on boot)
-curl -fsSL https://raw.githubusercontent.com/thebyrdman-git/taminator-staging/main/deployment/install.sh | bash
+# Download Linux build
+wget https://github.com/YOUR-ORG/taminator-ci/releases/download/v2.0.1/Taminator-2.0.1.AppImage
 
-# Access web interface
-firefox http://localhost:8080
+# Make executable and run
+chmod +x Taminator-2.0.1.AppImage
+./Taminator-2.0.1.AppImage
 ```
 
-**Option B: Manual Container**
-```bash
-# Run with Podman/Docker
-podman run -d \
-  --name taminator-intelligence \
-  --restart=unless-stopped \
-  -v ~/.taminator:/root/.taminator \
-  -p 8080:8080 \
-  registry.gitlab.cee.redhat.com/jbyrd/taminator:v2.0.0
+**macOS Users**: Download the DMG, right-click → Open
 
-# Access at http://localhost:8080
-```
+---
 
-**Option C: AppImage (Desktop App)**
-```bash
-# Download AppImage
-wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v2.0.0/Taminator-2.0.0.AppImage
-
-# Make executable
-chmod +x Taminator-2.0.0.AppImage
-
-# Run
-./Taminator-2.0.0.AppImage
-```
-
-### macOS
+### For Developers (Contributing)
 
 ```bash
-# Download DMG (when available)
-# Or use container method above
-```
+# Clone repository
+git clone https://github.com/YOUR-ORG/taminator-ci.git
+cd taminator-ci
 
-### Windows
+# Use tam-dev tools
+./bin/tam-dev health     # Check if service is running
+./bin/tam-dev debug      # Interactive debugging
+./bin/tam-dev logs       # Watch logs
 
-```bash
-# Download EXE installer (when available)
-# Or use WSL2 + container method
+# Make changes, then verify
+ansible-playbook ansible/test-taminator-simple.yml
 ```
 
 ---
 
-## Step 2: First Launch - OOBE Wizard (3 minutes)
+## 🛠️ Development Workflow
 
-When you first launch Taminator, the **Out-of-Box Experience (OOBE) wizard** guides you through setup.
-
-### OOBE Steps
-
-#### 1. Welcome Screen
-- Overview of Taminator features
-- Architecture explanation (v2.0 improvements)
-- Click **"Get Started"**
-
-#### 2. Authentication Setup
-**Choose your token management method**:
-
-**Option A: OS Keyring** (Recommended for individual use)
-- Tokens stored in system keyring (Secret Service, KWallet, Keychain)
-- Most secure for single-user
-- Select **"Use OS Keyring"** → **"Continue"**
-
-**Option B: HashiCorp Vault** (Recommended for teams)
-- Centralized token management
-- Requires Vault server
-- Enter Vault URL and token → **"Continue"**
-
-#### 3. Add JIRA Token (Required)
-
-**Get your JIRA token**:
-1. Open https://access.redhat.com/management/api
-2. Click **"Generate Token"** or **"Create Personal Access Token"**
-3. Copy the token (looks like `MTE1NjQyMD...`)
-
-**In Taminator**:
-1. Paste token in **"JIRA API Token"** field
-2. Click **"Test Token"** (verifies it works)
-3. ✅ Green checkmark = success
-4. Click **"Continue"**
-
-**Troubleshooting**:
-- ❌ "Connection failed" → Check VPN connection
-- ❌ "Invalid token" → Regenerate at https://access.redhat.com/management/api
-- ❌ "Timeout" → Verify `ping issues.redhat.com` works
-
-#### 4. Add Portal Token (Optional)
-
-**If you post reports to Customer Portal**:
-1. Generate token at https://access.redhat.com/management/api
-2. Paste in **"Portal API Token"** field
-3. Click **"Test Token"**
-4. Click **"Continue"**
-
-**Skip if you don't need it**:
-- Click **"Skip"** → You can add later in Settings
-
-#### 5. Onboard First Customer (Optional)
-
-**Add your first customer** (or skip and do later):
-
-**Customer details**:
-- **Name**: Display name (e.g., "JPMorgan Chase")
-- **Slug**: Short ID (e.g., "jpmc") - lowercase, no spaces
-- **Your Email**: Your `@redhat.com` email
-- **Account Number**: Customer's Red Hat account number (required)
-- **Product**: Primary product (e.g., "Ansible", "OpenShift", "RHEL")
-
-**Click "Onboard Customer"** → Taminator will:
-1. Query JIRA for RFEs and Bugs
-2. Generate initial report
-3. Save to `~/taminator-test-data/<slug>.md`
-
-**Or click "Skip"** to add customers later.
-
-#### 6. Completion
-- ✅ Setup complete!
-- Dashboard loads automatically
-- You're ready to use Taminator
-
----
-
-## Step 3: Using Taminator (5 minutes)
-
-### Dashboard Tab
-
-**What it shows**:
-- All customers at a glance
-- Live JIRA statistics (RFEs, Bugs, Total Issues)
-- Service health status
-
-**Actions**:
-- Click **"🔄 Refresh"** → Update from JIRA
-- Click customer row → Opens customer details
-
-**Status Bar** (bottom of window):
-- **Service**: Backend health (should be green)
-- **AI**: LiteLLM models available (optional)
-- **Tokens**: JIRA/Portal tokens configured
-- **VPN**: Red Hat VPN connection status
-- **Last Sync**: When data was last refreshed
-
-### Customers Tab
-
-**Manage customer accounts**:
-- Click **"+ Add Customer"** → Onboard new customer
-- Click **"Edit"** → Modify customer details
-- Click **"Delete"** → Remove customer (keeps report file)
-
-### Check Tab
-
-**Compare saved report vs. live JIRA**:
-1. Select customer from dropdown
-2. Click **"Compare Report vs. Live JIRA"**
-3. Review differences
-4. If changes detected → Use **Update** tab to sync
-
-### Update Tab
-
-**Sync report with current JIRA status**:
-1. Select customer
-2. Click **"Update from JIRA"**
-3. Report updated with latest JIRA data
-4. Backup created automatically (`.backup` file)
-
-### Post Tab
-
-**Publish report to Customer Portal**:
-1. Select customer
-2. Click **"Preview"** → See what will be posted
-3. Enter **Customer Portal Group ID**
-   - Find in Customer Portal URL: `.../groups/<group-id>`
-4. Click **"Post to Portal"**
-5. ✅ Success message appears
-
-**Prerequisites**:
-- Portal token must be configured
-- Red Hat VPN must be connected
-
-### rhcase Bot Tab
-
-**Interactive case analysis** (uses `rhcase` CLI):
-
-**Commands**:
-```bash
-# List cases for account
-rhcase list <account-number>
-
-# Get case details
-rhcase show <case-number>
-
-# Search cases
-rhcase search <keyword>
-```
-
-**Example**:
-```bash
-rhcase list 1234567 --months 1
-```
-
-**Output**: Terminal-style display of case data
-
-### Settings Tab
-
-**Configure Taminator**:
-
-**Authentication**:
-- Add/update JIRA token
-- Add/update Portal token
-- Test tokens
-
-**Debug Logging**:
-- Enable debug for specific features
-- View log level per module
-- Download diagnostic logs
-
-**About**:
-- Version information
-- Service status
-- API documentation link
-
----
-
-## Common Workflows
-
-### Workflow 1: Weekly RFE/Bug Report Update
-
-**Before your weekly TAM call**:
+### 1. Setup Your Environment
 
 ```bash
-# 1. Check for changes
-tam-rfe check <customer-slug>
+cd /home/jbyrd/TAMINATOR
 
-# 2. Update report (if changes detected)
-tam-rfe update <customer-slug> --yes
+# Backend (Python)
+python3 -m venv venv
+source venv/bin/activate
+pip install -e .
 
-# 3. Post to Portal
-tam-rfe post <customer-slug>
+# Frontend (Node.js)
+cd gui
+npm install
+cd ..
 ```
 
-**Or use GUI**:
-1. Open Taminator
-2. Check tab → Select customer → Compare
-3. Update tab → Update from JIRA
-4. Post tab → Preview → Post
-
-**Time**: 5 minutes per customer (vs 30 minutes manual)
-
-### Workflow 2: Onboarding New Customer
-
-**When you get a new customer**:
+### 2. Use tam-dev Tools
 
 ```bash
-tam-rfe onboard <customer-slug> \
-  --email your.email@redhat.com \
-  --display-name "Customer Name" \
-  --account 1234567 \
-  --product "Ansible"
+# Interactive menu (15 workflows)
+./bin/tam-dev
+
+# Or direct commands:
+./bin/tam-dev health       # Quick health check
+./bin/tam-dev debug        # IPython with Taminator context
+./bin/tam-dev logs         # Tail service logs
+./bin/tam-dev test         # Run tests
+./bin/tam-dev jira         # Test JIRA connection
+./bin/tam-dev ai           # Test AI features
 ```
 
-**Or use GUI**:
-1. Customers tab → **"+ Add Customer"**
-2. Fill in details
-3. Click **"Onboard"**
-4. Report generated automatically
-
-**Time**: 2 minutes (vs 45 minutes manual)
-
-### Workflow 3: Case Analysis
-
-**Before customer call**:
+### 3. Make Changes
 
 ```bash
-# In rhcase Bot tab:
-rhcase list 1234567 --months 1
+# Edit code
+vim gui/public/js/intelligence-client.js
 
-# Review recent cases
-rhcase show 03742156
+# Check code quality
+cd gui
+npx eslint public/js/*.js --fix
 
-# Check case severity
-rhcase list 1234567 --severity 1-2
+# Test locally
+npm start
 ```
 
-**Time**: 3 minutes (vs 10 minutes in SupportShell)
+### 4. Verify Changes
 
----
-
-## Pro Tips
-
-### 1. Use Keyboard Shortcuts
-
-- **Ctrl+R** / **Cmd+R** - Refresh dashboard
-- **Ctrl+,** / **Cmd+,** - Open settings
-- **Ctrl+Q** / **Cmd+Q** - Quit
-
-### 2. Enable Debug Logging (when things go wrong)
-
-**In Settings → Debug Logging**:
-- Enable debug for `taminator.services.rhcase_service`
-- Enable debug for `taminator.services.jira_service`
-- Reproduce issue
-- Download logs
-- Attach to GitLab issue
-
-### 3. Check Service Health
-
-**Status Bar (bottom)**:
-- 🟢 Green = Healthy
-- 🟡 Yellow = Warning (partial functionality)
-- 🔴 Red = Error (needs attention)
-
-**Hover over status** → Tooltip shows details
-
-### 4. Automate with Cron
-
-**Daily dashboard check** (8 AM Monday-Friday):
-```cron
-0 8 * * 1-5 /home/$USER/Applications/Taminator-2.0.0.AppImage --cli dashboard --json > /tmp/taminator-daily.json
-```
-
-**Weekly update** (Friday 4 PM):
-```cron
-0 16 * * 5 /home/$USER/Applications/Taminator-2.0.0.AppImage --cli update --all --yes
-```
-
----
-
-## Troubleshooting
-
-### Issue: "Service Offline"
-
-**Cause**: Backend service crashed or starting up
-
-**Solution**:
-1. Wait 10 seconds (service auto-restarts)
-2. Check logs: `~/.local/state/taminator/log/taminator.log`
-3. If persists, restart Taminator
-
-### Issue: "VPN Not Connected"
-
-**Cause**: Red Hat VPN not active
-
-**Solution**:
 ```bash
-# Test VPN
-ping issues.redhat.com
+# Run Ansible verification
+ansible-playbook ansible/test-taminator-simple.yml
 
-# If fails, connect to VPN
-# Then refresh Taminator
+# Check ESLint
+cd gui && npx eslint public/js/*.js
+
+# Manual testing
+./bin/tam-dev debug
 ```
-
-### Issue: "JIRA Token Invalid"
-
-**Cause**: Token expired or incorrect
-
-**Solution**:
-1. Regenerate at https://access.redhat.com/management/api
-2. Settings → Authentication → Update JIRA Token
-3. Test token
-
-### Issue: "rhcase Command Not Found"
-
-**Cause**: `rhcase` not bundled or not in PATH
-
-**Solution**:
-- v2.0 bundles `rhcase` automatically
-- If missing, download from: https://gitlab.cee.redhat.com/gvaughn/hatter-pai
-- Place in `~/.local/bin/rhcase`
-
-### Issue: "Customer Not Found"
-
-**Cause**: Customer not onboarded yet
-
-**Solution**:
-1. Customers tab → **"+ Add Customer"**
-2. Fill in account number
-3. Onboard
 
 ---
 
-## Next Steps
+## 📦 Release Workflow
 
-### 1. Customize Your Setup
+### Full Release Process
 
-**Settings → Preferences**:
-- Set default email
-- Configure auto-update frequency
-- Choose report format (Markdown/HTML/PDF)
-
-### 2. Add More Customers
-
-**Onboard all your customers**:
 ```bash
-tam-rfe onboard customer1 --account 111111 --product Ansible
-tam-rfe onboard customer2 --account 222222 --product OpenShift
-tam-rfe onboard customer3 --account 333333 --product RHEL
+cd /home/jbyrd/TAMINATOR
+
+# 1. Run Ansible release playbook
+ansible-playbook ansible/playbooks/taminator-release.yml
+
+# This does:
+# ✅ Bumps version (2.0.0 → 2.0.1)
+# ✅ Runs ESLint
+# ✅ Builds Linux AppImage
+# ✅ Generates release notes
+# ✅ Creates distribution
+
+# 2. Review what was created
+cat RELEASE-NOTES-2.0.1.md
+ls -lh releases/v2.0.1/
+
+# 3. Test the build
+./releases/v2.0.1/Taminator-2.0.1.AppImage
+
+# 4. Commit and tag
+git add gui/package.json RELEASE-NOTES-2.0.1.md
+git commit -m "Release v2.0.1 - Hotfix"
+git tag -a v2.0.1 -m "Release v2.0.1"
+
+# 5. Push to trigger CI (builds macOS automatically)
+git push github main
+git push github v2.0.1
+
+# 6. Monitor CI build (~15 minutes)
+gh run watch --repo YOUR-ORG/taminator-ci
+
+# 7. Download from GitHub Releases
+# https://github.com/YOUR-ORG/taminator-ci/releases
 ```
-
-**Or use GUI**: Customers tab → **"+ Add Customer"** (repeat)
-
-### 3. Set Up Automation
-
-**Weekly report automation**:
-1. Create script: `~/bin/weekly-taminator-update.sh`
-2. Add to crontab
-3. Reports update automatically before TAM calls
-
-### 4. Explore Advanced Features
-
-- **API access**: http://127.0.0.1:8765/docs
-- **CLI scripting**: `tam-rfe --help`
-- **Debug logging**: Settings → Debug
-- **Metrics**: Dashboard → Analytics (coming soon)
 
 ---
 
-## Getting Help
+## 🎯 Common Tasks
 
-### Documentation
-- **README**: Overview and quick reference
-- **TROUBLESHOOTING**: Common issues and solutions
-- **API Docs**: http://127.0.0.1:8765/docs (when service running)
+### Fix a Bug
 
-### Support
-- **GitLab Issues**: https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues
-- **Email**: jbyrd@redhat.com
-- **Slack**: *(channel TBD)*
-
-### Report a Bug
-
-**Collect diagnostics**:
 ```bash
-# In Settings → Debug Logging
-# Click "Download Diagnostics"
-# Attach .tar.gz to GitLab issue
+# 1. Identify the issue
+./bin/tam-dev errors      # Check error logs
+./bin/tam-dev debug       # Interactive debugging
+
+# 2. Fix the code
+vim gui/public/js/FILE.js
+
+# 3. Verify fix
+npx eslint gui/public/js/FILE.js
+ansible-playbook ansible/test-taminator-simple.yml
+
+# 4. Commit
+git add gui/public/js/FILE.js
+git commit -m "Fix: Description of bug fix"
 ```
 
-**Or manually**:
+### Add a Feature
+
 ```bash
-./tam-collect-logs
+# 1. Create feature branch
+git checkout -b feature/new-feature
+
+# 2. Develop feature
+# ... make changes ...
+
+# 3. Test thoroughly
+./bin/tam-dev test
+ansible-playbook ansible/test-taminator-simple.yml
+
+# 4. Create PR
+git push origin feature/new-feature
+gh pr create
 ```
 
-**Create issue**:
-1. Go to: https://gitlab.cee.redhat.com/jbyrd/taminator/-/issues/new
-2. Describe problem
-3. Attach diagnostics file
-4. Tag with `bug` label
+### Update Dependencies
+
+```bash
+# Frontend
+cd gui
+npm outdated
+npm update
+npm audit fix
+
+# Backend
+source venv/bin/activate
+pip list --outdated
+pip install --upgrade PACKAGE
+```
 
 ---
 
-## FAQ
+## 📊 Monitoring & Debugging
 
-### Q: How do I update Taminator?
+### Check Service Health
 
-**A**: Download new AppImage from GitLab releases. Your configuration and data are preserved.
+```bash
+# Quick check
+./bin/tam-dev health
 
-### Q: Where is my data stored?
+# Full status
+curl http://127.0.0.1:8765/health/live | jq
 
-**A**: 
-- Tokens: OS keyring (secure)
-- Customer reports: `~/taminator-test-data/`
-- Logs: `~/.local/state/taminator/log/`
-- Config: `~/.config/taminator/`
+# Watch logs live
+./bin/tam-dev logs
+```
 
-### Q: Can I use Taminator without VPN?
+### Debug Issues
 
-**A**: No. JIRA and Customer Portal APIs require Red Hat VPN.
+```bash
+# Interactive Python debugging
+./bin/tam-dev debug
 
-### Q: Is my data secure?
+# Then in IPython:
+>>> import sys
+>>> sys.path.insert(0, '/home/jbyrd/TAMINATOR/src')
+>>> from taminator.services.ai_client import AIClient
+>>> client = AIClient()
+>>> # Test your code
+```
 
-**A**: Yes. Tokens in OS keyring, local-only API, no external services.
+### Check for Errors
 
-### Q: Can I customize reports?
+```bash
+# Recent errors
+./bin/tam-dev errors
 
-**A**: Yes. Edit templates in `~/.config/taminator/templates/` (coming soon).
+# Service logs
+tail -100 ~/.local/state/taminator/log/taminator-service.log
 
-### Q: Does Taminator work on Windows?
-
-**A**: Windows build coming soon. Use Linux VM for now.
-
-### Q: Can I run multiple instances?
-
-**A**: No. One instance per user (service runs on fixed port 8765).
-
----
-
-## Success Checklist
-
-After following this guide, you should be able to:
-
-- ✅ Launch Taminator
-- ✅ See dashboard with service status
-- ✅ Have JIRA token configured (green checkmark)
-- ✅ Onboard at least one customer
-- ✅ Run a "Check" to compare report vs. JIRA
-- ✅ Update a report from JIRA
-- ✅ (Optional) Post a report to Customer Portal
-- ✅ (Optional) Run `rhcase` commands
-
-**If any of these failed**, see **Troubleshooting** section or contact jbyrd@redhat.com.
+# Search for specific error
+grep -i "error" ~/.local/state/taminator/log/*.log
+```
 
 ---
 
-## You're Ready! 🎉
+## 🧪 Testing
 
-**Congratulations!** You've completed Taminator setup.
+### Run All Tests
 
-**What's next?**:
-1. Add all your customers
-2. Set up weekly automation
-3. Share feedback in GitLab issues
+```bash
+# Ansible verification (comprehensive)
+ansible-playbook ansible/test-taminator-simple.yml
 
-**Enjoy saving 2+ hours per week!** ⏱️ → ☕
+# Python tests (if available)
+source venv/bin/activate
+pytest tests/ -v
+
+# JavaScript linting
+cd gui
+npx eslint public/js/*.js
+```
+
+### Manual Testing Checklist
+
+- [ ] Service starts without errors
+- [ ] GUI loads correctly
+- [ ] Can connect to JIRA
+- [ ] AI analysis works
+- [ ] Customer data loads
+- [ ] Settings save correctly
+- [ ] No memory leaks (run for 1 hour)
+- [ ] Error handling works
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: October 28, 2025  
-**Software Version**: Taminator 2.0.0  
-**Status**: Alpha
+## 🐛 Troubleshooting
+
+### Service Won't Start
+
+```bash
+# Check if port is in use
+lsof -i :8765
+
+# Kill existing process
+pkill -f taminator-service
+
+# Check logs
+tail -50 ~/.local/state/taminator/log/taminator-service.log
+
+# Restart
+cd /home/jbyrd/TAMINATOR
+./bin/taminator-service &
+```
+
+### GUI Won't Load
+
+```bash
+# Check Electron
+cd gui
+npm start
+
+# Check console for errors (F12)
+# Check main.js for issues
+tail -50 ~/.config/Electron/logs/main.log
+```
+
+### Build Fails
+
+```bash
+# Check ESLint
+cd gui
+npx eslint public/js/*.js
+
+# Check Node version
+node --version  # Should be 18+
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### CI Build Fails
+
+```bash
+# Check GitHub Actions logs
+gh run list --repo YOUR-ORG/taminator-ci
+gh run view RUN_ID --log
+
+# Re-run failed job
+gh run rerun RUN_ID
+```
+
+---
+
+## 📚 Documentation Index
+
+### For Users
+- `README.md` - Project overview
+- `RELEASE-NOTES-X.Y.Z.md` - What's new
+
+### For Developers
+- `GETTING-STARTED.md` - This file
+- `DEBUGGING-WITH-ANSAI-TOOLS.md` - Debug guide
+- `DEVELOPMENT.md` - Development setup (if exists)
+
+### For Contributors
+- `FINAL-RECOMMENDATIONS.md` - Best practices
+- `TECHNOLOGY-ASSESSMENT.md` - Technology choices
+- `JAVASCRIPT-BUGS-TRACKER.md` - Bug database
+
+### For Maintainers
+- `GITHUB-CI-SETUP.md` - CI/CD setup
+- `RELEASE-BUILD-INSTRUCTIONS.md` - Build instructions
+- `ANSAI-GITHUB-CI-INTEGRATION.md` - Complete workflow
+
+---
+
+## 💡 Tips & Tricks
+
+### Speed Up Development
+
+```bash
+# Watch mode for auto-restart
+cd gui
+npm run dev
+
+# Keep tam-dev logs open in separate terminal
+./bin/tam-dev logs
+
+# Use aliases
+alias td='cd /home/jbyrd/TAMINATOR && ./bin/tam-dev'
+alias ttest='ansible-playbook ansible/test-taminator-simple.yml'
+```
+
+### Code Quality
+
+```bash
+# Auto-fix on save (add to your editor)
+# VSCode: settings.json
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+}
+
+# Pre-commit hook
+cat > .git/hooks/pre-commit << 'EOF'
+#!/bin/bash
+cd gui
+npx eslint public/js/*.js || exit 1
+EOF
+chmod +x .git/hooks/pre-commit
+```
+
+### Faster Testing
+
+```bash
+# Test only changed files
+git diff --name-only | grep '\.js$' | xargs npx eslint
+
+# Quick smoke test
+./bin/tam-dev health && echo "✅ Service OK"
+```
+
+---
+
+## 🎓 Learning Resources
+
+### Ansai Workflows
+- Run `./bin/tam-dev` to see all 15 workflows
+- Each workflow is documented with `--help`
+- See `ANSAI-DEBUG-SESSION.md` for examples
+
+### Electron Development
+- Main process: `gui/main.js`
+- Renderer process: `gui/public/js/*.js`
+- IPC communication: See `intelligence-client.js`
+
+### FastAPI Backend
+- API routes: `src/taminator/api/routes/`
+- Services: `src/taminator/services/`
+- Database: SQLite in `~/.config/taminator/`
+
+---
+
+## 🚀 Next Steps
+
+### After Setup
+1. Run `./bin/tam-dev health` to verify installation
+2. Make a small change to test workflow
+3. Run `ansible-playbook ansible/test-taminator-simple.yml`
+4. Review `FINAL-RECOMMENDATIONS.md` for best practices
+
+### For First Release
+1. Follow `GITHUB-CI-SETUP.md` to setup CI/CD
+2. Test release process with Ansible
+3. Push tag to trigger automated builds
+4. Verify all artifacts are created
+
+### For Ongoing Development
+1. Use tam-dev tools daily
+2. Run tests before committing
+3. Keep documentation updated
+4. Monitor CI builds
+
+---
+
+## 📞 Getting Help
+
+### Check Documentation
+```bash
+# List all docs
+ls -1 /home/jbyrd/TAMINATOR/*.md
+
+# Search docs
+grep -r "keyword" /home/jbyrd/TAMINATOR/*.md
+```
+
+### Debug Tools
+```bash
+./bin/tam-dev debug     # Interactive debugging
+./bin/tam-dev errors    # Recent errors
+./bin/tam-dev logs      # Live logs
+```
+
+### Community
+- GitHub Issues: Report bugs
+- GitHub Discussions: Ask questions
+- Internal Wiki: Team documentation
+
+---
+
+## ✅ Checklist for New Developers
+
+### Initial Setup
+- [ ] Clone repository
+- [ ] Install Python dependencies
+- [ ] Install Node.js dependencies
+- [ ] Run `./bin/tam-dev health`
+- [ ] Test tam-dev tools
+- [ ] Read `DEBUGGING-WITH-ANSAI-TOOLS.md`
+
+### First Contribution
+- [ ] Find an issue to work on
+- [ ] Create feature branch
+- [ ] Make changes
+- [ ] Run ESLint
+- [ ] Run Ansible tests
+- [ ] Create PR
+- [ ] Respond to review
+
+### First Release (Maintainers)
+- [ ] Setup GitHub CI (see `GITHUB-CI-SETUP.md`)
+- [ ] Test release playbook
+- [ ] Create test tag
+- [ ] Verify CI builds
+- [ ] Download and test artifacts
+- [ ] Document any issues
+
+---
+
+**Welcome to Taminator development!** 🎉
+
+**Status**: ✅ Ready to use  
+**Tools**: ✅ All installed  
+**Documentation**: ✅ Comprehensive  
+**CI/CD**: ✅ Automated  
+
+**Happy coding!** 💻
+

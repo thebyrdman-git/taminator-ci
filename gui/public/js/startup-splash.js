@@ -1,6 +1,6 @@
 /**
  * Startup Splash Screen - Professional Loading Experience
- * 
+ *
  * Shows during service startup with animated progress
  */
 
@@ -156,7 +156,7 @@ class StartupSplash {
     }
 
     simulateProgress() {
-        let progress = 0;
+        const progress = 0;
         const steps = [
             { progress: 20, message: 'Loading configuration...', delay: 300 },
             { progress: 40, message: 'Starting API service...', delay: 800 },

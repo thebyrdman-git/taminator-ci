@@ -1,0 +1,18 @@
+# Add these to your package.json "scripts" section:
+
+"scripts": {
+  "lint": "eslint public/js/**/*.js main.js service-manager.js",
+  "lint:fix": "eslint public/js/**/*.js main.js service-manager.js --fix",
+  "test": "jest",
+  "test:watch": "jest --watch",
+  "dev": "electron main.js --dev",
+  "start": "electron main.js",
+  "build": "electron-builder"
+}
+
+# Then you can run:
+# npm run lint         - Check for issues
+# npm run lint:fix     - Auto-fix issues
+# npm test             - Run tests
+# npm run dev          - Run in dev mode
+

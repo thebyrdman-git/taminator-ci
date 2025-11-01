@@ -109,7 +109,7 @@ class SuccessAnimator {
     if (!element) return;
 
     element.style.animation = 'success-pulse 0.6s ease-out';
-    
+
     setTimeout(() => {
       element.style.animation = '';
     }, 600);

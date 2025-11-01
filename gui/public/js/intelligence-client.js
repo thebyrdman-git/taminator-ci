@@ -1,22 +1,22 @@
 /**
  * Intelligence Client for Taminator GUI
- * 
+ *
  * Provides interface to AI-augmented email analysis
  */
 
 class IntelligenceClient {
   constructor() {
     this.analyzing = false;
-    
+
     // Use globally available ipcRenderer (from index.html)
     // nodeIntegration: true means it's already in global scope
     this.ipcRenderer = typeof ipcRenderer !== 'undefined' ? ipcRenderer : null;
-    
+
     if (!this.ipcRenderer) {
       console.warn('[Intelligence Client] Running in browser mode (IPC unavailable)');
     }
   }
-  
+
   /**
    * Analyze email and get intelligence
    */
@@ -24,13 +24,13 @@ class IntelligenceClient {
     if (this.analyzing) {
       throw new Error('Analysis already in progress');
     }
-    
+
     if (!this.ipcRenderer) {
       throw new Error('IPC not available - running in browser mode');
     }
-    
+
     this.analyzing = true;
-    
+
     try {
       const intelligence = await this.ipcRenderer.invoke('analyze-email', emailText, tags);
       return intelligence;
@@ -38,44 +38,87 @@ class IntelligenceClient {
       this.analyzing = false;
     }
   }
-  
+
   /**
    * Get case history from database
    */
   async getCaseHistory(limit = 50) {
-    if (!this.ipcRenderer) {
-      throw new Error('IPC not available - running in browser mode');
+    try {
+      if (!this.ipcRenderer) {
+        throw new Error('IPC not available - running in browser mode');
+      }
+
+      return await this.ipcRenderer.invoke('get-case-history', limit);
+    } catch (error) {
+      console.error('[Intelligence Client] Failed to get case history:', error);
+
+      if (window.errorHandler) {
+        window.errorHandler.showError(
+          'Failed to load case history',
+          error.message,
+          null,
+          () => this.getCaseHistory(limit)
+        );
+      }
+
+      throw error;
     }
-    
-    return await this.ipcRenderer.invoke('get-case-history', limit);
   }
-  
+
   /**
    * Record TAM feedback on AI recommendation
    */
   async recordFeedback(caseNumber, decision, aiFollowed, notes = null) {
-    if (!this.ipcRenderer) {
-      throw new Error('IPC not available - running in browser mode');
+    try {
+      if (!this.ipcRenderer) {
+        throw new Error('IPC not available - running in browser mode');
+      }
+
+      return await this.ipcRenderer.invoke('record-feedback', caseNumber, {
+        decision,
+        aiFollowed,
+        notes
+      });
+    } catch (error) {
+      console.error('[Intelligence Client] Failed to record feedback:', error);
+
+      if (window.errorHandler) {
+        window.errorHandler.showError(
+          'Failed to record feedback',
+          error.message
+        );
+      }
+
+      throw error;
     }
-    
-    return await this.ipcRenderer.invoke('record-feedback', caseNumber, {
-      decision,
-      aiFollowed,
-      notes
-    });
   }
-  
+
   /**
    * Get accuracy statistics
    */
   async getStatistics(days = 7) {
-    if (!this.ipcRenderer) {
-      throw new Error('IPC not available - running in browser mode');
+    try {
+      if (!this.ipcRenderer) {
+        throw new Error('IPC not available - running in browser mode');
+      }
+
+      return await this.ipcRenderer.invoke('get-statistics', days);
+    } catch (error) {
+      console.error('[Intelligence Client] Failed to get statistics:', error);
+
+      if (window.errorHandler) {
+        window.errorHandler.showError(
+          'Failed to load statistics',
+          error.message,
+          null,
+          () => this.getStatistics(days)
+        );
+      }
+
+      throw error;
     }
-    
-    return await this.ipcRenderer.invoke('get-statistics', days);
   }
-  
+
   /**
    * Display intelligence results in UI
    */
@@ -84,7 +127,7 @@ class IntelligenceClient {
     container.innerHTML = html;
     this._attachEventListeners(container, intelligence);
   }
-  
+
   /**
    * Generate HTML for intelligence display
    */
@@ -93,7 +136,7 @@ class IntelligenceClient {
     const level = intelligence.confidence_level || 'unknown';
     const confidenceColor = overall >= 0.8 ? 'success' : overall >= 0.5 ? 'warning' : 'danger';
     const confidenceIcon = overall >= 0.8 ? '✅' : overall >= 0.5 ? '⚠️' : '❌';
-    
+
     return `
       <div class="intelligence-results" style="padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <div class="confidence-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -125,12 +168,12 @@ class IntelligenceClient {
       </div>
     `;
   }
-  
+
   _generateCaseSection(intelligence) {
     if (!intelligence.case_number) {
       return '<div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">❌ Case Number: Not detected</div>';
     }
-    
+
     const conf = ((intelligence.confidence_scores?.case_number || 0) * 100).toFixed(0);
     return `
       <div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">
@@ -142,15 +185,15 @@ class IntelligenceClient {
       </div>
     `;
   }
-  
+
   _generateCustomerSection(intelligence) {
     if (!intelligence.customer) {
       return '<div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">❌ Customer: Not detected</div>';
     }
-    
+
     const customer = intelligence.customer;
     const conf = ((customer.confidence || 0) * 100).toFixed(0);
-    
+
     return `
       <div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -162,15 +205,15 @@ class IntelligenceClient {
       </div>
     `;
   }
-  
+
   _generateIssueSection(intelligence) {
     if (!intelligence.issue) {
       return '<div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">❌ Issue Type: Not classified</div>';
     }
-    
+
     const issue = intelligence.issue;
     const conf = ((issue.confidence || 0) * 100).toFixed(0);
-    
+
     return `
       <div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -183,15 +226,15 @@ class IntelligenceClient {
       </div>
     `;
   }
-  
+
   _generateUrgencySection(intelligence) {
     if (!intelligence.urgency) {
       return '<div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">❌ Urgency: Not assessed</div>';
     }
-    
+
     const urgency = intelligence.urgency;
     const levelEmoji = urgency.level === 'high' ? '🔴' : urgency.level === 'medium' ? '🟡' : '🟢';
-    
+
     return `
       <div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">
         <div style="font-weight: bold; margin-bottom: 8px;">${levelEmoji} Urgency</div>
@@ -201,14 +244,14 @@ class IntelligenceClient {
       </div>
     `;
   }
-  
+
   _generateRecommendationSection(intelligence) {
     if (!intelligence.recommended_actions) {
       return '';
     }
-    
+
     const actions = intelligence.recommended_actions;
-    
+
     return `
       <div class="intelligence-section" style="padding: 12px; background: #f8f9fa; border-radius: 4px;">
         <div style="font-weight: bold; margin-bottom: 8px;">💡 Recommendation</div>
@@ -222,7 +265,7 @@ class IntelligenceClient {
       </div>
     `;
   }
-  
+
   _attachEventListeners(container, intelligence) {
     const createBtn = container.querySelector('[data-action="create-case"]');
     if (createBtn) {
@@ -230,14 +273,14 @@ class IntelligenceClient {
         this.populateCaseForm(intelligence);
       });
     }
-    
+
     const incorrectBtn = container.querySelector('[data-action="incorrect"]');
     if (incorrectBtn) {
       incorrectBtn.addEventListener('click', () => {
         this.handleIncorrectFeedback(intelligence);
       });
     }
-    
+
     const saveBtn = container.querySelector('[data-action="save"]');
     if (saveBtn) {
       saveBtn.addEventListener('click', () => {
@@ -245,12 +288,12 @@ class IntelligenceClient {
       });
     }
   }
-  
+
   populateCaseForm(intelligence) {
     alert('Case form population will be implemented based on your existing form structure. Intelligence data is ready!');
     console.log('Intelligence data for case form:', intelligence);
   }
-  
+
   async handleIncorrectFeedback(intelligence) {
     const notes = prompt('What was incorrect? (This helps improve accuracy)');
     if (notes && intelligence.case_number) {
@@ -267,7 +310,7 @@ class IntelligenceClient {
       }
     }
   }
-  
+
   saveForLater(intelligence) {
     alert('Intelligence saved! View in History.');
   }

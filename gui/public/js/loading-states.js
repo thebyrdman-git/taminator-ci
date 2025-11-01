@@ -11,7 +11,7 @@ class LoadingStateManager {
 
   /**
    * Show loading spinner in a container
-   * 
+   *
    * @param {string} containerId - Element ID to show spinner in
    * @param {string} message - Loading message
    * @param {string} size - 'small', 'medium', 'large'
@@ -20,11 +20,13 @@ class LoadingStateManager {
     const container = document.getElementById(containerId);
     if (!container) {
       console.warn(`[LoadingStates] Container not found: ${containerId}`);
+      // Clean up tracking if container missing
+      this.activeLoaders.delete(containerId);
       return;
     }
 
     const loaderId = `loader-${containerId}-${Date.now()}`;
-    
+
     const sizeClass = {
       small: 'loader-small',
       medium: 'loader-medium',
@@ -42,9 +44,9 @@ class LoadingStateManager {
 
     container.style.position = 'relative';
     container.insertAdjacentHTML('beforeend', loaderHTML);
-    
+
     this.activeLoaders.set(containerId, loaderId);
-    
+
     return loaderId;
   }
 
@@ -56,7 +58,7 @@ class LoadingStateManager {
     if (!container) return;
 
     const loaderId = `loader-inline-${containerId}-${Date.now()}`;
-    
+
     const loaderHTML = `
       <span id="${loaderId}" class="loading-inline">
         <span class="spinner-small"></span>
@@ -66,7 +68,7 @@ class LoadingStateManager {
 
     container.innerHTML = loaderHTML;
     this.activeLoaders.set(containerId, loaderId);
-    
+
     return loaderId;
   }
 
@@ -78,7 +80,7 @@ class LoadingStateManager {
     if (!container) return;
 
     const loaderId = `loader-progress-${containerId}-${Date.now()}`;
-    
+
     const loaderHTML = `
       <div id="${loaderId}" class="loading-progress">
         <div class="progress-message">${message}</div>
@@ -91,7 +93,7 @@ class LoadingStateManager {
 
     container.innerHTML = loaderHTML;
     this.activeLoaders.set(containerId, loaderId);
-    
+
     return loaderId;
   }
 
@@ -107,11 +109,11 @@ class LoadingStateManager {
 
     const progressBar = loader.querySelector('.progress-bar');
     const progressPercent = loader.querySelector('.progress-percent');
-    
+
     if (progressBar) {
       progressBar.style.width = `${progress}%`;
     }
-    
+
     if (progressPercent) {
       progressPercent.textContent = `${progress}%`;
     }
@@ -129,19 +131,28 @@ class LoadingStateManager {
    */
   hide(containerId) {
     const loaderId = this.activeLoaders.get(containerId);
-    if (!loaderId) return;
+    if (!loaderId) {
+      // Clean up tracking even if loader not found
+      this.activeLoaders.delete(containerId);
+      return;
+    }
 
     const loader = document.getElementById(loaderId);
     if (loader) {
       // Fade out
       loader.style.opacity = '0';
       setTimeout(() => {
-        if (loader.parentNode) {
-          loader.parentNode.removeChild(loader);
+        try {
+          if (loader.parentNode) {
+            loader.parentNode.removeChild(loader);
+          }
+        } catch (error) {
+          console.warn('[LoadingStates] Failed to remove loader from DOM:', error);
         }
       }, 300);
     }
 
+    // Always clean up tracking
     this.activeLoaders.delete(containerId);
   }
 
@@ -172,19 +183,21 @@ class LoadingStateManager {
    */
   async wrapWithProgress(containerId, asyncFn, message = 'Processing...') {
     this.showProgress(containerId, message, 0);
-    
+
     try {
       // Create progress callback
       const updateProgress = (progress, msg) => {
         this.updateProgress(containerId, progress, msg);
       };
-      
+
       const result = await asyncFn(updateProgress);
-      
+
       // Show 100% briefly
       this.updateProgress(containerId, 100, 'Complete!');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise(resolve => {
+        setTimeout(() => resolve(), 500);
+      });
+
       return result;
     } finally {
       this.hide(containerId);

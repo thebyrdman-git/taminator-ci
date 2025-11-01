@@ -178,6 +178,12 @@ function loadSavedSettings() {
 }
 
 // Add IPC handler to get settings
+// IPC Handler for getting app version
+ipcMain.handle('get-version', async () => {
+  const packageJson = require('./package.json');
+  return packageJson.version;
+});
+
 ipcMain.handle('load-settings', async () => {
   return loadSavedSettings();
 });

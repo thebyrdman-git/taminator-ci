@@ -1,0 +1,513 @@
+---
+# Taminator Development Workflow
+# Based on Ansai development tools architecture
+# Usage: ansible-playbook ansible/playbooks/taminator-dev.yml
+
+- name: Taminator - Development Workflow
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  
+  vars:
+    taminator_base_dir: "/home/{{ ansible_user_id }}/TAMINATOR"
+    taminator_config_dir: "/home/{{ ansible_user_id }}/.config/taminator"
+    taminator_log_dir: "/home/{{ ansible_user_id }}/.local/state/taminator/log"
+    taminator_dev_log: "{{ taminator_log_dir }}/dev.log"
+    taminator_service_port: 8765
+    
+  tasks:
+    - name: Display Taminator dev menu
+      ansible.builtin.debug:
+        msg: |
+          
+          ╔═══════════════════════════════════════════════════════════╗
+          ║                                                           ║
+          ║     🤖 TAMINATOR INTELLIGENCE v2.1                       ║
+          ║        Development & Debugging Tools                      ║
+          ║                                                           ║
+          ╚═══════════════════════════════════════════════════════════╝
+          
+          🛠️  Development Workflows:
+          
+          1. Setup Dev Environment     - Install dev dependencies
+          2. Run Tests                 - Execute pytest suite
+          3. Code Quality Check        - Lint and format code
+          4. Test FastAPI Service      - Check service health
+          5. Interactive Debug         - IPython with Taminator context
+          6. Service Logs (Live)       - Tail service logs
+          7. Test JIRA Connection      - Verify JIRA API access
+          8. Test Portal Connection    - Verify Red Hat Portal API
+          9. Test AI Intelligence      - Verify AI models
+          10. Database Inspector       - Explore SQLite intelligence DB
+          11. Clear Cache              - Remove all cached data
+          12. Service Restart          - Restart FastAPI service
+          13. API Test Suite           - Test all API endpoints
+          14. View Recent Errors       - Show error logs
+          15. Performance Profiling    - Profile service performance
+          
+          0. Exit
+    
+    - name: Prompt for workflow selection
+      ansible.builtin.pause:
+        prompt: |
+          
+          Select a development workflow (0-15)
+      register: dev_choice
+    
+    # 1. Setup Dev Environment
+    - name: Setup development environment
+      when: dev_choice.user_input == "1"
+      block:
+        - name: Display setup message
+          ansible.builtin.debug:
+            msg: "🔧 Setting up Taminator development environment..."
+        
+        - name: Check if virtual environment exists
+          ansible.builtin.stat:
+            path: "{{ taminator_base_dir }}/venv"
+          register: venv_check
+        
+        - name: Create virtual environment if not exists
+          ansible.builtin.command:
+            cmd: python3 -m venv venv
+            chdir: "{{ taminator_base_dir }}"
+          when: not venv_check.stat.exists
+        
+        - name: Install development dependencies
+          ansible.builtin.pip:
+            name:
+              - pytest
+              - pytest-cov
+              - pytest-mock
+              - pytest-asyncio
+              - black
+              - flake8
+              - pylint
+              - mypy
+              - ipython
+              - ipdb
+              - httpx  # For FastAPI testing
+              - pytest-httpx
+            state: present
+            virtualenv: "{{ taminator_base_dir }}/venv"
+        
+        - name: Install Taminator in editable mode
+          ansible.builtin.shell: |
+            source {{ taminator_base_dir }}/venv/bin/activate
+            cd {{ taminator_base_dir }}
+            pip install -e .
+          ignore_errors: yes
+        
+        - name: Display completion message
+          ansible.builtin.debug:
+            msg: |
+              
+              ✅ Development environment ready!
+              
+              Virtual env: {{ taminator_base_dir }}/venv
+              
+              To activate:
+                cd {{ taminator_base_dir }}
+                source venv/bin/activate
+    
+    # 2. Run Tests
+    - name: Run test suite
+      when: dev_choice.user_input == "2"
+      block:
+        - name: Run pytest
+          ansible.builtin.shell: |
+            source {{ taminator_base_dir }}/venv/bin/activate
+            cd {{ taminator_base_dir }}
+            pytest tests/ -v --tb=short
+          register: test_results
+          ignore_errors: yes
+        
+        - name: Display test results
+          ansible.builtin.debug:
+            msg: "{{ test_results.stdout }}"
+    
+    # 3. Code Quality Check
+    - name: Run code quality checks
+      when: dev_choice.user_input == "3"
+      block:
+        - name: Run Black formatter check
+          ansible.builtin.shell: |
+            source {{ taminator_base_dir }}/venv/bin/activate
+            cd {{ taminator_base_dir }}
+            black --check src/ bin/ || echo "Files need formatting"
+          register: black_results
+          ignore_errors: yes
+        
+        - name: Run Flake8 linter
+          ansible.builtin.shell: |
+            source {{ taminator_base_dir }}/venv/bin/activate
+            cd {{ taminator_base_dir }}
+            flake8 src/ bin/ --max-line-length=100 || echo "Linting issues found"
+          register: flake8_results
+          ignore_errors: yes
+        
+        - name: Display quality check results
+          ansible.builtin.debug:
+            msg: |
+              
+              📊 Code Quality Report:
+              
+              Black Formatter:
+              {{ black_results.stdout }}
+              
+              Flake8 Linter:
+              {{ flake8_results.stdout }}
+    
+    # 4. Test FastAPI Service
+    - name: Test FastAPI service
+      when: dev_choice.user_input == "4"
+      block:
+        - name: Check service health
+          ansible.builtin.uri:
+            url: "http://127.0.0.1:{{ taminator_service_port }}/health"
+            method: GET
+            return_content: yes
+          register: health_check
+          ignore_errors: yes
+        
+        - name: Display service status
+          ansible.builtin.debug:
+            msg: |
+              
+              🏥 Service Health Check:
+              
+              {% if health_check.status == 200 %}
+              ✅ Service is RUNNING
+              
+              Health Response:
+              {{ health_check.json | to_nice_json }}
+              
+              API Docs: http://127.0.0.1:{{ taminator_service_port }}/docs
+              {% else %}
+              ❌ Service is OFFLINE
+              
+              Start the service:
+                cd {{ taminator_base_dir }}
+                ./bin/taminator-service
+              {% endif %}
+    
+    # 5. Interactive Debug
+    - name: Launch interactive debugger
+      when: dev_choice.user_input == "5"
+      block:
+        - name: Display debug instructions
+          ansible.builtin.debug:
+            msg: |
+              
+              🐛 Launching interactive Python debugger...
+              
+              Pre-loaded modules:
+                • sys.path configured for Taminator
+                • Import taminator modules directly
+              
+              Example usage:
+                >>> from taminator.services.ai_client import AIClient
+                >>> from taminator.services.jira_service import JiraService
+                >>> import httpx
+                >>> # Test API endpoint
+                >>> response = httpx.get('http://127.0.0.1:8765/health')
+              
+              Type 'quit()' to exit.
+        
+        - name: Start IPython debugger
+          ansible.builtin.shell: |
+            source {{ taminator_base_dir }}/venv/bin/activate
+            cd {{ taminator_base_dir }}
+            export PYTHONPATH={{ taminator_base_dir }}/src:$PYTHONPATH
+            ipython -i -c "
+            import sys
+            sys.path.insert(0, '{{ taminator_base_dir }}/src')
+            import httpx
+            
+            print('\\n✅ Taminator debug environment loaded')
+            print('Available: httpx for API testing')
+            print('Import taminator modules as needed')
+            "
+          ignore_errors: yes
+    
+    # 6. Service Logs (Live)
+    - name: Tail service logs
+      when: dev_choice.user_input == "6"
+      block:
+        - name: Display log instructions
+          ansible.builtin.debug:
+            msg: |
+              
+              📡 Watching service logs live... (Press Ctrl+C to exit)
+              
+              Log file: {{ taminator_log_dir }}/taminator.log
+        
+        - name: Tail logs
+          ansible.builtin.shell: |
+            tail -f {{ taminator_log_dir }}/taminator.log 2>/dev/null || \
+            echo "❌ Log file not found. Is the service running?"
+          ignore_errors: yes
+    
+    # 7. Test JIRA Connection
+    - name: Test JIRA connection
+      when: dev_choice.user_input == "7"
+      block:
+        - name: Test JIRA API
+          ansible.builtin.uri:
+            url: "http://127.0.0.1:{{ taminator_service_port }}/api/jira/status"
+            method: GET
+            return_content: yes
+          register: jira_status
+          ignore_errors: yes
+        
+        - name: Display JIRA status
+          ansible.builtin.debug:
+            msg: |
+              
+              🔗 JIRA Connection Test:
+              
+              {% if jira_status.status == 200 %}
+              ✅ JIRA API accessible
+              
+              {{ jira_status.json | to_nice_json }}
+              {% else %}
+              ❌ JIRA API not accessible
+              
+              Possible issues:
+              - Service not running
+              - JIRA token not configured
+              - Not connected to Red Hat VPN
+              
+              Check: http://127.0.0.1:8765/docs
+              {% endif %}
+    
+    # 8. Test Portal Connection
+    - name: Test Portal connection
+      when: dev_choice.user_input == "8"
+      block:
+        - name: Display Portal test info
+          ansible.builtin.debug:
+            msg: |
+              
+              🔗 Red Hat Customer Portal Connection Test:
+              
+              Testing portal API accessibility...
+        
+        - name: Test Portal API
+          ansible.builtin.uri:
+            url: "http://127.0.0.1:{{ taminator_service_port }}/api/portal/status"
+            method: GET
+            return_content: yes
+          register: portal_status
+          ignore_errors: yes
+        
+        - name: Display Portal status
+          ansible.builtin.debug:
+            msg: |
+              {% if portal_status.status == 200 %}
+              ✅ Portal API accessible
+              {% else %}
+              ⚠️  Portal API not accessible (may be optional)
+              {% endif %}
+    
+    # 9. Test AI Intelligence
+    - name: Test AI intelligence
+      when: dev_choice.user_input == "9"
+      block:
+        - name: Check AI models
+          ansible.builtin.shell: |
+            source {{ taminator_base_dir }}/venv/bin/activate
+            cd {{ taminator_base_dir }}
+            python -c "
+            try:
+                from taminator.services.ai_client import AIClient
+                print('✅ AI modules imported successfully')
+            except Exception as e:
+                print(f'❌ AI module import failed: {e}')
+            "
+          register: ai_check
+          ignore_errors: yes
+        
+        - name: Display AI status
+          ansible.builtin.debug:
+            msg: |
+              
+              🧠 AI Intelligence Test:
+              
+              {{ ai_check.stdout }}
+    
+    # 10. Database Inspector
+    - name: Inspect Intelligence database
+      when: dev_choice.user_input == "10"
+      block:
+        - name: Find Intelligence database
+          ansible.builtin.find:
+            paths: "{{ taminator_config_dir }}"
+            patterns: "*.db"
+            recurse: yes
+          register: db_files
+        
+        - name: Inspect database
+          ansible.builtin.shell: |
+            {% if db_files.matched > 0 %}
+            db_file="{{ db_files.files[0].path }}"
+            echo "📊 Database: $db_file"
+            echo ""
+            echo "Tables:"
+            sqlite3 "$db_file" ".tables"
+            echo ""
+            echo "Schema:"
+            sqlite3 "$db_file" ".schema" | head -50
+            {% else %}
+            echo "❌ No database found in {{ taminator_config_dir }}"
+            {% endif %}
+          register: db_info
+        
+        - name: Display database info
+          ansible.builtin.debug:
+            msg: "{{ db_info.stdout }}"
+    
+    # 11. Clear Cache
+    - name: Clear all caches
+      when: dev_choice.user_input == "11"
+      block:
+        - name: Clear caches
+          ansible.builtin.shell: |
+            echo "Clearing caches..."
+            rm -rf {{ taminator_base_dir }}/src/__pycache__
+            rm -rf {{ taminator_base_dir }}/src/taminator/__pycache__
+            rm -rf /home/{{ ansible_user_id }}/.cache/taminator
+            echo "✅ Cache cleared"
+          register: cache_clear
+        
+        - name: Display cache clear message
+          ansible.builtin.debug:
+            msg: "{{ cache_clear.stdout }}"
+    
+    # 12. Service Restart
+    - name: Restart FastAPI service
+      when: dev_choice.user_input == "12"
+      block:
+        - name: Display restart instructions
+          ansible.builtin.debug:
+            msg: |
+              
+              🔄 Service Restart:
+              
+              The service auto-restarts on crash via watchdog.
+              To manually restart:
+              
+              1. Find process:
+                 ps aux | grep taminator-service
+              
+              2. Kill process:
+                 kill <PID>
+              
+              3. Restart:
+                 cd {{ taminator_base_dir }}
+                 ./bin/taminator-service &
+              
+              Or close and reopen the GUI (it will restart the service).
+    
+    # 13. API Test Suite
+    - name: Run API test suite
+      when: dev_choice.user_input == "13"
+      block:
+        - name: Test all API endpoints
+          ansible.builtin.shell: |
+            echo "🧪 Testing API endpoints..."
+            
+            # Health check
+            echo "Testing /health..."
+            curl -s http://127.0.0.1:{{ taminator_service_port }}/health | jq '.' || echo "Failed"
+            
+            # API docs
+            echo -e "\nTesting /docs..."
+            curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:{{ taminator_service_port }}/docs
+            
+            # Customers endpoint
+            echo -e "\nTesting /api/customers..."
+            curl -s http://127.0.0.1:{{ taminator_service_port }}/api/customers | jq '.' || echo "Failed"
+            
+            echo -e "\n✅ API test complete"
+          register: api_tests
+          ignore_errors: yes
+        
+        - name: Display API test results
+          ansible.builtin.debug:
+            msg: "{{ api_tests.stdout }}"
+    
+    # 14. View Recent Errors
+    - name: Display recent errors
+      when: dev_choice.user_input == "14"
+      block:
+        - name: Get error logs
+          ansible.builtin.shell: |
+            if [ -f "{{ taminator_log_dir }}/taminator.log" ]; then
+              echo "🚨 Recent Errors (last 30 lines with ERROR/WARNING):"
+              grep -E "(ERROR|WARNING)" {{ taminator_log_dir }}/taminator.log | tail -30 || echo "No errors found!"
+            else
+              echo "❌ Log file not found: {{ taminator_log_dir }}/taminator.log"
+            fi
+          register: error_logs
+        
+        - name: Display error logs
+          ansible.builtin.debug:
+            msg: "{{ error_logs.stdout }}"
+    
+    # 15. Performance Profiling
+    - name: Profile performance
+      when: dev_choice.user_input == "15"
+      block:
+        - name: Display profiling instructions
+          ansible.builtin.debug:
+            msg: |
+              
+              ⚡ Performance Profiling Tools:
+              
+              1. CPU Profiling:
+                 source {{ taminator_base_dir }}/venv/bin/activate
+                 py-spy record -o profile.svg -- python ./bin/taminator-service
+              
+              2. Memory Profiling:
+                 python -m memory_profiler ./bin/taminator-service
+              
+              3. API Endpoint Profiling:
+                 # Install locust for load testing
+                 pip install locust
+                 # Then create a locustfile.py for API testing
+              
+              ⚠️  Interactive profiling not available in Ansible.
+              Run these commands manually from: {{ taminator_base_dir }}
+    
+    # 0. Exit
+    - name: Display exit message
+      ansible.builtin.debug:
+        msg: |
+          
+          ╔═══════════════════════════════════════════════════════════╗
+          ║     Happy debugging! 🐛                                  ║
+          ╚═══════════════════════════════════════════════════════════╝
+      when: dev_choice.user_input == "0"
+    
+    - name: Invalid choice
+      ansible.builtin.debug:
+        msg: |
+          
+          ❌ Invalid choice. Please run again and select 0-15.
+      when: dev_choice.user_input not in ['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15']
+    
+    - name: Return to dev menu
+      ansible.builtin.pause:
+        prompt: |
+          
+          Press Enter to return to dev menu, or Ctrl+C to exit
+      register: continue_choice
+      when: dev_choice.user_input != "0"
+    
+    - name: Loop back to dev menu
+      ansible.builtin.include_tasks: taminator-dev.yml
+      when: 
+        - continue_choice is defined
+        - dev_choice.user_input != "0"
+

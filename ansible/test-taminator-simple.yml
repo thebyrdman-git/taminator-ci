@@ -1,0 +1,106 @@
+---
+# Simple Taminator test playbook using Ansible
+- name: Taminator Development - Quick Tests
+  hosts: localhost
+  gather_facts: yes
+  vars:
+    project_root: "/home/jbyrd/TAMINATOR"
+    
+  tasks:
+    - name: "Display Test Menu"
+      debug:
+        msg: |
+          
+          ╔════════════════════════════════════════╗
+          ║  Taminator - Ansible Quick Tests      ║
+          ╚════════════════════════════════════════╝
+          
+          Running automated verification...
+
+    - name: "✅ Check if service is running"
+      shell: |
+        curl -s http://127.0.0.1:8765/health/live 2>&1 || echo "Service not responding"
+      register: health_check
+      ignore_errors: yes
+      
+    - name: "Display service status"
+      debug:
+        msg: "{{ health_check.stdout }}"
+
+    - name: "✅ Check JavaScript files exist"
+      stat:
+        path: "{{ project_root }}/gui/public/js/{{ item }}"
+      loop:
+        - intelligence-client.js
+        - error-handler.js
+        - error-dialog.js
+        - loading-states.js
+        - api-client.js
+      register: js_files
+      
+    - name: "Display JavaScript file check"
+      debug:
+        msg: "✅ All JavaScript files present"
+      when: js_files.results | selectattr('stat.exists') | list | length == 5
+
+    - name: "✅ Check ESLint configuration"
+      stat:
+        path: "{{ project_root }}/gui/eslint.config.js"
+      register: eslint_config
+      
+    - name: "Display ESLint status"
+      debug:
+        msg: "✅ ESLint configured: {{ eslint_config.stat.exists }}"
+
+    - name: "✅ Run ESLint on fixed files"
+      shell: |
+        cd {{ project_root }}/gui
+        npx eslint public/js/intelligence-client.js \
+                    public/js/error-handler.js \
+                    public/js/error-dialog.js \
+                    public/js/loading-states.js \
+                    public/js/api-client.js 2>&1 | head -50
+      register: eslint_results
+      ignore_errors: yes
+      
+    - name: "Display ESLint results"
+      debug:
+        msg: "{{ eslint_results.stdout_lines }}"
+
+    - name: "✅ Check service logs"
+      shell: |
+        tail -20 ~/.local/state/taminator/log/taminator-service.log 2>/dev/null || echo "No logs found"
+      register: service_logs
+      ignore_errors: yes
+      
+    - name: "Display recent logs"
+      debug:
+        msg: "{{ service_logs.stdout_lines }}"
+
+    - name: "✅ Count bug fixes"
+      shell: |
+        echo "Files modified: $(find {{ project_root }}/gui -name '*.js' -newer {{ project_root }}/JAVASCRIPT-BUGS-TRACKER.md 2>/dev/null | wc -l)"
+        echo "Documentation created: $(ls -1 {{ project_root }}/*.md 2>/dev/null | wc -l)"
+      register: stats
+      ignore_errors: yes
+      
+    - name: "Display statistics"
+      debug:
+        msg: "{{ stats.stdout_lines }}"
+
+    - name: "📊 Final Status"
+      debug:
+        msg: |
+          
+          ╔════════════════════════════════════════╗
+          ║  Taminator Verification Complete      ║
+          ╚════════════════════════════════════════╝
+          
+          ✅ All automated checks complete!
+          
+          Next steps:
+          1. Run: ./bin/tam-dev debug
+          2. Test manually in browser
+          3. Check for memory leaks
+          4. Monitor logs: ./bin/tam-dev logs
+

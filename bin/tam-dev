@@ -1,0 +1,154 @@
+#!/bin/bash
+# Taminator Development Tools
+# Quick access to development workflows
+# Based on Ansai development architecture
+
+set -e
+
+TAMINATOR_DIR="/home/$(whoami)/TAMINATOR"
+DEV_PLAYBOOK="${TAMINATOR_DIR}/ansible/playbooks/taminator-dev.yml"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+print_header() {
+    echo -e "${BLUE}"
+    echo "╔═══════════════════════════════════════════════════════════╗"
+    echo "║     🤖 TAMINATOR DEVELOPMENT TOOLS                       ║"
+    echo "╚═══════════════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+}
+
+print_usage() {
+    print_header
+    echo "Usage: tam-dev [command]"
+    echo ""
+    echo "Commands:"
+    echo "  menu          - Interactive menu (default)"
+    echo "  setup         - Setup dev environment"
+    echo "  test          - Run tests"
+    echo "  lint          - Check code quality"
+    echo "  health        - Check service health"
+    echo "  debug         - Interactive debug shell"
+    echo "  logs          - Tail service logs"
+    echo "  jira          - Test JIRA connection"
+    echo "  ai            - Test AI intelligence"
+    echo "  db            - Inspect database"
+    echo "  errors        - View recent errors"
+    echo "  api           - Test API endpoints"
+    echo ""
+    echo "Examples:"
+    echo "  tam-dev           # Open interactive menu"
+    echo "  tam-dev health    # Quick health check"
+    echo "  tam-dev logs      # Watch logs"
+    echo "  tam-dev debug     # Start debugging"
+}
+
+run_playbook_option() {
+    local option=$1
+    echo -e "${GREEN}Running development workflow...${NC}"
+    cd "${TAMINATOR_DIR}"
+    echo "$option" | ansible-playbook "${DEV_PLAYBOOK}"
+}
+
+quick_health() {
+    echo -e "${BLUE}🏥 Quick Health Check${NC}"
+    if curl -s http://127.0.0.1:8765/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Service is RUNNING${NC}"
+        curl -s http://127.0.0.1:8765/health | jq '.' 2>/dev/null || echo "$(curl -s http://127.0.0.1:8765/health)"
+    else
+        echo -e "${RED}❌ Service is OFFLINE${NC}"
+        echo "Start the service:"
+        echo "  cd ${TAMINATOR_DIR}"
+        echo "  ./bin/taminator-service"
+    fi
+}
+
+quick_logs() {
+    local log_file="$HOME/.local/state/taminator/log/taminator.log"
+    if [ -f "$log_file" ]; then
+        echo -e "${BLUE}📡 Service Logs (Press Ctrl+C to exit)${NC}"
+        tail -f "$log_file"
+    else
+        echo -e "${RED}❌ Log file not found: $log_file${NC}"
+        echo "Is the service running?"
+    fi
+}
+
+quick_errors() {
+    local log_file="$HOME/.local/state/taminator/log/taminator.log"
+    if [ -f "$log_file" ]; then
+        echo -e "${YELLOW}🚨 Recent Errors:${NC}"
+        grep -E "(ERROR|WARNING)" "$log_file" | tail -20 || echo "No errors found!"
+    else
+        echo -e "${RED}❌ Log file not found${NC}"
+    fi
+}
+
+# Main
+case "${1:-menu}" in
+    menu|"")
+        cd "${TAMINATOR_DIR}"
+        ansible-playbook "${DEV_PLAYBOOK}"
+        ;;
+    
+    setup)
+        run_playbook_option "1"
+        ;;
+    
+    test)
+        run_playbook_option "2"
+        ;;
+    
+    lint)
+        run_playbook_option "3"
+        ;;
+    
+    health)
+        quick_health
+        ;;
+    
+    debug)
+        run_playbook_option "5"
+        ;;
+    
+    logs)
+        quick_logs
+        ;;
+    
+    jira)
+        run_playbook_option "7"
+        ;;
+    
+    ai)
+        run_playbook_option "9"
+        ;;
+    
+    db)
+        run_playbook_option "10"
+        ;;
+    
+    errors)
+        quick_errors
+        ;;
+    
+    api)
+        run_playbook_option "13"
+        ;;
+    
+    -h|--help|help)
+        print_usage
+        ;;
+    
+    *)
+        echo -e "${RED}❌ Unknown command: $1${NC}"
+        echo ""
+        print_usage
+        exit 1
+        ;;
+esac
+

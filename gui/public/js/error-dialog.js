@@ -1,6 +1,6 @@
 /**
  * Error Dialog System with Copy/Paste for Bug Reports
- * 
+ *
  * Provides user-friendly error dialogs with:
  * - Clear error messages
  * - Technical details (collapsible)
@@ -247,7 +247,7 @@ class ErrorDialog {
     }
   }
 
-  _buildErrorReport(options) {
+  async _buildErrorReport(options) {
     const {
       title,
       message,
@@ -258,7 +258,16 @@ class ErrorDialog {
 
     const timestamp = new Date().toISOString();
     const userAgent = navigator.userAgent;
-    const taminatorVersion = '2.0.0'; // TODO: Get from package.json
+
+    // Get version dynamically from IPC
+    let taminatorVersion = '2.0.0';
+    try {
+      if (typeof ipcRenderer !== 'undefined') {
+        taminatorVersion = await ipcRenderer.invoke('get-version');
+      }
+    } catch (error) {
+      console.warn('[ErrorDialog] Could not get version:', error);
+    }
 
     let report = `# Taminator Error Report
 
@@ -324,10 +333,10 @@ ${context}
   _copyToClipboard(text) {
     const textarea = document.getElementById('error-report-text');
     textarea.select();
-    
+
     try {
       document.execCommand('copy');
-      
+
       // Show success feedback
       const copyBtn = document.getElementById('error-dialog-copy-btn');
       const originalText = copyBtn.innerHTML;
@@ -338,12 +347,12 @@ ${context}
         Copied!
       `;
       copyBtn.style.background = '#3e8635';
-      
+
       setTimeout(() => {
         copyBtn.innerHTML = originalText;
         copyBtn.style.background = '#06c';
       }, 2000);
-      
+
     } catch (err) {
       console.error('Failed to copy:', err);
       alert('Failed to copy. Please select and copy manually.');
@@ -360,34 +369,50 @@ ${context}
 // Global error dialog instance
 window.errorDialog = new ErrorDialog();
 
-// Override console.error to show dialog for critical errors
-const originalConsoleError = console.error;
-console.error = function(...args) {
-  originalConsoleError.apply(console, args);
-  
-  // Only show dialog for actual Error objects or critical messages
-  const firstArg = args[0];
-  if (firstArg instanceof Error || (typeof firstArg === 'string' && firstArg.includes('ERROR'))) {
-    const errorMessage = firstArg instanceof Error ? firstArg.message : firstArg;
-    const errorStack = firstArg instanceof Error ? firstArg.stack : '';
-    
+// Override console.error to show dialog for critical errors (production mode only)
+const isDevelopment = window.location.href.includes('--dev') ||
+                      (typeof process !== 'undefined' && process.env.NODE_ENV === 'development');
+
+if (!isDevelopment) {
+  const originalConsoleError = console.error;
+  console.error = function(...args) {
+    originalConsoleError.apply(console, args);
+
+    // Only show dialog for actual Error objects with critical severity
+    const firstArg = args[0];
+
     // Don't show dialog for certain non-critical errors
     const ignoredErrors = [
       'Autofill.enable',
       'Autofill.setAddresses',
-      'Content-Security-Policy'
+      'Content-Security-Policy',
+      '[Warning]',
+      '[Info]'
     ];
-    
-    if (!ignoredErrors.some(ignored => errorMessage.includes(ignored))) {
+
+    const isCriticalError = firstArg instanceof Error ||
+                           (typeof firstArg === 'string' &&
+                            (firstArg.includes('[CRITICAL]') || firstArg.includes('[FATAL]')));
+
+    if (isCriticalError && !ignoredErrors.some(ignored =>
+      (firstArg.message || firstArg).includes(ignored))) {
+
+      const errorMessage = firstArg instanceof Error ? firstArg.message : firstArg;
+      const errorStack = firstArg instanceof Error ? firstArg.stack : '';
+
       window.errorDialog.show({
-        title: 'JavaScript Error',
+        title: 'Critical Error',
         message: errorMessage,
         technicalDetails: errorStack,
         context: `Arguments: ${JSON.stringify(args, null, 2)}`
       });
     }
-  }
-};
+  };
+
+  console.log('[ErrorDialog] Production mode - critical errors will show dialog');
+} else {
+  console.log('[ErrorDialog] Development mode - error dialogs disabled');
+}
 
 console.log('[ErrorDialog] ✅ Error dialog system initialized with copy/paste support');
 

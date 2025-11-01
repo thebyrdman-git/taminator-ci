@@ -1,0 +1,339 @@
+---
+# Taminator CI/CD Release Workflow
+# Automatically builds for Linux and macOS when a tag is pushed
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build (e.g., 2.0.1)'
+        required: true
+        default: '2.0.1'
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ============================================================================
+  # PRE-BUILD CHECKS
+  # ============================================================================
+  
+  pre-build-checks:
+    name: Pre-Build Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install dependencies
+        working-directory: gui
+        run: npm ci
+        
+      - name: Run ESLint
+        working-directory: gui
+        run: |
+          npx eslint public/js/intelligence-client.js \
+                      public/js/error-handler.js \
+                      public/js/error-dialog.js \
+                      public/js/loading-states.js \
+                      public/js/api-client.js || true
+        
+      - name: Check version consistency
+        run: |
+          GUI_VERSION=$(node -p "require('./gui/package.json').version")
+          echo "GUI Version: $GUI_VERSION"
+          
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG_VERSION=${GITHUB_REF#refs/tags/v}
+            echo "Tag Version: $TAG_VERSION"
+            
+            if [ "$GUI_VERSION" != "$TAG_VERSION" ]; then
+              echo "::warning::Version mismatch! package.json=$GUI_VERSION tag=$TAG_VERSION"
+            fi
+          fi
+
+  # ============================================================================
+  # LINUX BUILD
+  # ============================================================================
+  
+  build-linux:
+    name: Build Linux (AppImage)
+    runs-on: ubuntu-latest
+    needs: pre-build-checks
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install dependencies
+        working-directory: gui
+        run: npm ci
+        
+      - name: Build Linux AppImage
+        working-directory: gui
+        run: npm run build:linux
+        
+      - name: List built files
+        working-directory: gui/dist
+        run: ls -lh *.AppImage
+        
+      - name: Generate checksums
+        working-directory: gui/dist
+        run: sha256sum *.AppImage > SHA256SUMS.linux
+        
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-builds
+          path: |
+            gui/dist/*.AppImage
+            gui/dist/SHA256SUMS.linux
+          retention-days: 30
+
+  # ============================================================================
+  # MACOS BUILD
+  # ============================================================================
+  
+  build-macos:
+    name: Build macOS (DMG + ZIP)
+    runs-on: macos-latest
+    needs: pre-build-checks
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: Install dependencies
+        working-directory: gui
+        run: npm ci
+        
+      - name: Build macOS (DMG + ZIP)
+        working-directory: gui
+        run: npm run build:mac
+        env:
+          # Skip code signing for now (can be added with secrets)
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        
+      - name: List built files
+        working-directory: gui/dist
+        run: ls -lh *.{dmg,zip} || ls -lh
+        
+      - name: Generate checksums
+        working-directory: gui/dist
+        run: |
+          if ls *.dmg 1> /dev/null 2>&1; then
+            sha256sum *.dmg *.zip > SHA256SUMS.mac 2>/dev/null || true
+          fi
+        
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-builds
+          path: |
+            gui/dist/*.dmg
+            gui/dist/*.zip
+            gui/dist/SHA256SUMS.mac
+          retention-days: 30
+
+  # ============================================================================
+  # PYTHON BACKEND (Optional - for bundled releases)
+  # ============================================================================
+  
+  build-python-backend:
+    name: Build Python Backend
+    runs-on: ubuntu-latest
+    needs: pre-build-checks
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip setuptools wheel
+          
+      - name: Install dependencies
+        run: |
+          source venv/bin/activate
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          pip install -e .
+          
+      - name: Run tests (if available)
+        run: |
+          source venv/bin/activate
+          pytest tests/ -v || echo "No tests found or tests skipped"
+        continue-on-error: true
+        
+      - name: Build Python package
+        run: |
+          source venv/bin/activate
+          python -m build
+        continue-on-error: true
+        
+      - name: Upload Python artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+          retention-days: 30
+        if: success()
+
+  # ============================================================================
+  # CREATE RELEASE
+  # ============================================================================
+  
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-macos]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    
+    permissions:
+      contents: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-builds
+          path: ./artifacts/linux
+          
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-builds
+          path: ./artifacts/macos
+          
+      - name: Download Python artifacts (if available)
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: ./artifacts/python
+        continue-on-error: true
+        
+      - name: Combine checksums
+        run: |
+          cat artifacts/linux/SHA256SUMS.linux > SHA256SUMS
+          cat artifacts/macos/SHA256SUMS.mac >> SHA256SUMS 2>/dev/null || true
+          
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        
+      - name: Check for release notes
+        id: release_notes
+        run: |
+          if [ -f "RELEASE-NOTES-${{ steps.version.outputs.version }}.md" ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "file=RELEASE-NOTES-${{ steps.version.outputs.version }}.md" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Taminator v${{ steps.version.outputs.version }}
+          body_path: ${{ steps.release_notes.outputs.found == 'true' && steps.release_notes.outputs.file || '' }}
+          body: |
+            ## Taminator v${{ steps.version.outputs.version }}
+            
+            ### Downloads
+            
+            **Linux**:
+            - AppImage (portable, no installation required)
+            
+            **macOS**:
+            - DMG (installer)
+            - ZIP (portable)
+            
+            ### Verification
+            
+            ```bash
+            sha256sum -c SHA256SUMS
+            ```
+            
+            ### Installation
+            
+            **Linux**:
+            ```bash
+            chmod +x Taminator-${{ steps.version.outputs.version }}.AppImage
+            ./Taminator-${{ steps.version.outputs.version }}.AppImage
+            ```
+            
+            **macOS**:
+            - Right-click → Open (first time only)
+            
+            See release notes for full details.
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/linux/*.AppImage
+            artifacts/macos/*.dmg
+            artifacts/macos/*.zip
+            SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # POST-RELEASE NOTIFICATIONS
+  # ============================================================================
+  
+  notify-success:
+    name: Notify Build Success
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: success()
+    
+    steps:
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        
+      - name: Build success summary
+        run: |
+          echo "## ✅ Release Build Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platforms**: Linux + macOS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Downloads" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux AppImage: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS DMG: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS ZIP: ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Release available at: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+

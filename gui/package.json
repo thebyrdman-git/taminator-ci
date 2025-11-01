@@ -1,6 +1,6 @@
 {
   "name": "taminator-gui",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Taminator Intelligence - AI-Augmented TAM Assistant",
   "homepage": "https://gitlab.cee.redhat.com/jbyrd/taminator",
   "repository": {
@@ -27,8 +27,11 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.0",
     "electron": "^33.2.0",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "electron-builder-squirrel-windows": "^25.1.8",
+    "globals": "^16.5.0"
   },
   "build": {
     "appId": "com.redhat.taminator",
@@ -62,7 +65,11 @@
       {
         "from": "../src/taminator",
         "to": "taminator",
-        "filter": ["**/*", "!**/*.pyc", "!**/__pycache__"]
+        "filter": [
+          "**/*",
+          "!**/*.pyc",
+          "!**/__pycache__"
+        ]
       }
     ],
     "mac": {
@@ -71,7 +78,10 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "type": "distribution"
@@ -93,7 +103,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.png"

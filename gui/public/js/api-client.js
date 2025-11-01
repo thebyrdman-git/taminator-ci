@@ -1,6 +1,6 @@
 /**
  * Taminator API Client - JavaScript SDK for GUI
- * 
+ *
  * Production-grade API client with:
  * - Structured error handling
  * - Type-safe responses
@@ -22,7 +22,7 @@ class TaminatorApiClient {
    */
   async _request(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const config = {
       ...options,
       headers: {
@@ -35,14 +35,14 @@ class TaminatorApiClient {
     try {
       console.log(`[API] ${options.method || 'GET'} ${endpoint}`);
       const response = await fetch(url, config);
-      
+
       if (!response.ok) {
         // Parse error response
         const error = await response.json().catch(() => ({
           error_code: 'UNKNOWN_ERROR',
           message: `HTTP ${response.status}`
         }));
-        
+
         throw new TaminatorApiError(
           error.message || `Request failed: ${response.status}`,
           error.error_code || 'HTTP_ERROR',
@@ -54,14 +54,19 @@ class TaminatorApiClient {
       const data = await response.json();
       console.log(`[API] ✅ ${endpoint} success`);
       return data;
-      
+
     } catch (error) {
       if (error instanceof TaminatorApiError) {
         throw error;
       }
-      
-      // Network or other errors
-      console.error(`[API] ❌ ${endpoint} failed:`, error.message);
+
+      // Network or other errors - include full context
+      console.error(`[API] ❌ ${endpoint} failed:`, {
+        message: error.message,
+        timestamp: new Date().toISOString(),
+        stack: error.stack
+      });
+
       throw new TaminatorApiError(
         error.message || 'Request failed',
         'NETWORK_ERROR',
@@ -224,19 +229,19 @@ class TaminatorApiError extends Error {
     switch (this.errorCode) {
       case 'CUSTOMER_NOT_FOUND':
         return 'Customer not found. Please check the customer ID.';
-      
+
       case 'CONFIG_ERROR':
         return 'Configuration error. Please check customer settings.';
-      
+
       case 'JIRA_AUTH_ERROR':
         return 'JIRA authentication failed. Please check your token.';
-      
+
       case 'NETWORK_ERROR':
         return 'Network error. Please check your connection.';
-      
+
       case 'SERVICE_UNAVAILABLE':
         return 'Service temporarily unavailable. Please try again.';
-      
+
       default:
         return this.message;
     }
@@ -251,7 +256,7 @@ class TaminatorApiError extends Error {
       'SERVICE_UNAVAILABLE',
       'TIMEOUT_ERROR'
     ];
-    
+
     return retryableErrors.includes(this.errorCode);
   }
 }

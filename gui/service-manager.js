@@ -220,8 +220,20 @@ class ServiceManager {
       clearInterval(this.healthCheckInterval);
     }
 
+    let lastCheckTime = 0;
+    const debounceMs = 2000; // Minimum 2 seconds between checks
+
     this.healthCheckInterval = setInterval(async () => {
+      const now = Date.now();
+      
+      // Debounce: Skip if last check was too recent
+      if (now - lastCheckTime < debounceMs) {
+        return;
+      }
+      
+      lastCheckTime = now;
       const healthy = await this.isHealthy();
+      
       if (!healthy && onUnhealthy) {
         console.log('[ServiceManager] ⚠️  Service became unhealthy');
         onUnhealthy();
@@ -289,15 +301,27 @@ class ServiceManager {
     } catch (error) {
       console.error('[ServiceManager] ❌ Restart failed:', error);
       
-      // Notify user of failed restart
-      if (this.onCrashCallback) {
-        this.onCrashCallback({
-          type: 'restart_failed',
-          error: error.message,
-          attempts: this.restartAttempts,
-          maxAttempts: this.maxRestartAttempts
-        });
-      }
+      // Exponential backoff for retry attempts
+      const backoffDelay = Math.min(
+        1000 * Math.pow(2, this.restartAttempts) + Math.random() * 1000,
+        30000 // Max 30 seconds
+      );
+      
+      console.log(`[ServiceManager] ⏱️ Waiting ${Math.round(backoffDelay/1000)}s before next attempt...`);
+      
+      // Wait before notifying (allows for retry)
+      setTimeout(() => {
+        // Notify user of failed restart
+        if (this.onCrashCallback) {
+          this.onCrashCallback({
+            type: 'restart_failed',
+            error: error.message,
+            attempts: this.restartAttempts,
+            maxAttempts: this.maxRestartAttempts,
+            nextRetryIn: backoffDelay
+          });
+        }
+      }, backoffDelay);
     }
   }
 
