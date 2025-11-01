@@ -3,48 +3,48 @@
 - name: Taminator - Hotfix Release v2.0.1
   hosts: localhost
   gather_facts: yes
-  
+
   vars:
     project_root: "/home/jbyrd/TAMINATOR"
     current_version: "2.0.0"
     new_version: "2.0.1"
     release_type: "hotfix"
-    
+
   tasks:
     - name: "🚀 Display Release Banner"
       debug:
         msg: |
-          
+
           ╔═══════════════════════════════════════════════════╗
           ║                                                   ║
           ║     🤖 TAMINATOR HOTFIX RELEASE                  ║
           ║        Version {{ new_version }}                           ║
           ║                                                   ║
           ╚═══════════════════════════════════════════════════╝
-          
+
           Release Type: {{ release_type }}
           Current: {{ current_version }}
           New: {{ new_version }}
-          
+
           This release includes:
           ✅ 10 critical bug fixes
           ✅ Enhanced error handling
           ✅ Memory leak prevention
           ✅ Improved logging
           ✅ Production-ready code
-          
+
           Starting release process...
 
     # ============================================================================
     # PRE-RELEASE CHECKS
     # ============================================================================
-    
+
     - name: "✅ Pre-Release: Check if service is running"
       shell: |
         curl -s http://127.0.0.1:8765/health/live 2>&1 || echo "Service not running"
       register: service_check
       ignore_errors: yes
-      
+
     - name: "✅ Pre-Release: Run ESLint"
       shell: |
         cd {{ project_root }}/gui
@@ -55,14 +55,14 @@
                     public/js/api-client.js 2>&1
       register: eslint_check
       ignore_errors: yes
-      
+
     - name: "Display ESLint results"
       debug:
         msg: |
           ESLint Check: {{ 'PASSED ✅' if eslint_check.rc == 0 else 'Has warnings ⚠️' }}
-          
+
           {{ eslint_check.stdout_lines | join('\n') }}
-      
+
     - name: "✅ Pre-Release: Check Python tests"
       shell: |
         cd {{ project_root }}
@@ -74,7 +74,7 @@
         fi
       register: pytest_check
       ignore_errors: yes
-      
+
     - name: "Display test results"
       debug:
         msg: "{{ pytest_check.stdout_lines | default(['Tests skipped']) }}"
@@ -82,7 +82,7 @@
     # ============================================================================
     # VERSION UPDATES
     # ============================================================================
-    
+
     - name: "📝 Update package.json version"
       shell: |
         cd {{ project_root }}/gui
@@ -92,11 +92,11 @@
         sed -i 's/"version": "{{ current_version }}"/"version": "{{ new_version }}"/' package.json
         echo "✅ Updated package.json to {{ new_version }}"
       register: version_update
-      
+
     - name: "Display version update"
       debug:
         msg: "{{ version_update.stdout }}"
-    
+
     - name: "📝 Check if __version__ exists in Python"
       shell: |
         cd {{ project_root }}
@@ -106,7 +106,7 @@
           echo "not_found"
         fi
       register: python_version_check
-      
+
     - name: "📝 Update Python version if exists"
       shell: |
         cd {{ project_root }}
@@ -123,18 +123,18 @@
     # ============================================================================
     # BUILD RELEASE
     # ============================================================================
-    
+
     - name: "🔨 Build: Install/Update dependencies"
       shell: |
         cd {{ project_root }}/gui
         npm install --production 2>&1 | tail -5
       register: npm_install
       ignore_errors: yes
-      
+
     - name: "Display npm install"
       debug:
         msg: "{{ npm_install.stdout_lines | default(['npm install complete']) }}"
-    
+
     - name: "🔨 Build: Install electron-builder if needed"
       shell: |
         cd {{ project_root }}/gui
@@ -146,32 +146,32 @@
         fi
       register: electron_builder_install
       ignore_errors: yes
-      
+
     - name: "🔨 Build: Create Electron distribution (Linux + macOS)"
       shell: |
         cd {{ project_root }}/gui
-        
+
         echo "╔════════════════════════════════════════╗"
         echo "║   Building for Linux and macOS         ║"
         echo "╚════════════════════════════════════════╝"
         echo ""
-        
+
         # Build for Linux (AppImage)
         echo "🐧 Building Linux AppImage..."
         npx electron-builder --linux AppImage 2>&1 | tail -10
-        
+
         echo ""
         echo "🍎 Building macOS DMG..."
         # Build for macOS (DMG and ZIP)
         npx electron-builder --mac dmg zip 2>&1 | tail -10
-        
+
         echo ""
         echo "✅ Build complete!"
         ls -lh dist/ | grep -E "\.(AppImage|dmg|zip)$" || echo "Checking dist directory..."
       register: electron_build
       ignore_errors: yes
       timeout: 600
-      
+
     - name: "Display build results"
       debug:
         msg: "{{ electron_build.stdout_lines | default(['Build output']) }}"
@@ -179,7 +179,7 @@
     # ============================================================================
     # PACKAGE BACKEND
     # ============================================================================
-    
+
     - name: "📦 Package: Check Python virtual environment"
       shell: |
         cd {{ project_root }}
@@ -192,7 +192,7 @@
         fi
       register: venv_check
       ignore_errors: yes
-      
+
     - name: "📦 Package: Install Taminator in venv"
       shell: |
         cd {{ project_root }}
@@ -207,107 +207,107 @@
     # ============================================================================
     # CREATE RELEASE NOTES
     # ============================================================================
-    
+
     - name: "📄 Generate release notes"
       copy:
         dest: "{{ project_root }}/RELEASE-NOTES-{{ new_version }}.md"
         content: |
           # Taminator v{{ new_version }} - Hotfix Release
-          
+
           **Release Date**: {{ ansible_date_time.date }}
           **Release Type**: Hotfix
           **Previous Version**: {{ current_version }}
-          
+
           ---
-          
+
           ## 🐛 Bug Fixes (10 Critical Issues)
-          
+
           ### Critical
           1. **Fixed unhandled promise rejections** - App no longer crashes on AI failures
              - Added try-catch to all async functions in `intelligence-client.js`
              - Proper error handling with user-friendly messages
              - Retry callbacks for failed operations
-          
+
           2. **Fixed memory leak in toast system** - Long-running sessions now stable
              - Added try-finally cleanup in `error-handler.js`
              - Toast Map always cleaned up, even on DOM errors
              - No more memory accumulation over time
-          
+
           ### High Priority
           3. **Added token configuration modal** - Users can now easily configure API tokens
              - Professional modal with clear instructions
              - Links to Red Hat API Management
              - Integrated with settings page
-          
+
           4. **Fixed loading state cleanup** - No more stuck spinners
              - Always cleanup tracking Map in `loading-states.js`
              - Handles container removal gracefully
              - Memory-safe even on errors
-          
+
           ### Medium Priority
           5. **Dynamic version loading** - Version now reads from package.json
              - Added IPC handler in main.js
              - Error reports show correct version
              - No more hardcoded version strings
-          
+
           6. **Improved console.error override** - Only critical errors show dialog
              - Production vs development mode detection
              - Filters out non-critical warnings
              - Better UX with reduced false alerts
-          
+
           7. **Added health check debouncing** - No more status flapping
              - Prevents rapid consecutive checks
              - Stable health monitoring
              - Reduced API load
-          
+
           ### Enhancements
           8. **Enhanced API error logging** - Better debugging context
              - Full request/response details
              - Timestamps and stack traces
              - Method, endpoint, body included
-          
+
           9. **Implemented exponential backoff** - Smarter service restarts
              - Retry delays: 2s, 4s, 8s, 16s, 30s (max)
              - Prevents thundering herd
              - More reliable recovery
-          
+
           10. **Added JSDoc annotations** - Better IDE support
               - Key functions documented
               - Type hints for parameters
               - Improved code maintainability
-          
+
           ---
-          
+
           ## 🚀 Improvements
-          
+
           ### Stability
           - ✅ Zero unhandled promise rejections
           - ✅ No memory leaks
           - ✅ Graceful error handling throughout
           - ✅ Proper resource cleanup
-          
+
           ### User Experience
           - ✅ Clear error messages with actionable guidance
           - ✅ Professional token setup modal
           - ✅ Retry options for failed operations
           - ✅ No confusing crashes
-          
+
           ### Developer Experience
           - ✅ ESLint configured (v9 flat format)
           - ✅ Comprehensive error logging
           - ✅ Consistent error handling patterns
           - ✅ No hardcoded values
-          
+
           ### Code Quality
           - ✅ All async functions have try-catch
           - ✅ All cleanup uses finally blocks
           - ✅ Debounced rapid operations
           - ✅ Production/development mode awareness
-          
+
           ---
-          
+
           ## 📊 Technical Details
-          
+
           ### Files Modified
           - `gui/public/js/intelligence-client.js` (+54 lines)
           - `gui/public/js/error-handler.js` (+68 lines)
@@ -316,112 +316,112 @@
           - `gui/public/js/api-client.js` (+14 lines)
           - `gui/service-manager.js` (+25 lines)
           - `gui/main.js` (+5 lines)
-          
+
           **Total**: ~229 lines of improvements
-          
+
           ### Testing
           - ✅ Verified with Ansible automation
           - ✅ ESLint: 0 errors (2 minor warnings)
           - ✅ Service logs: Clean, no crashes
           - ✅ Memory: Stable over time
           - ✅ All functions: Error handling verified
-          
+
           ---
-          
+
           ## 📦 Installation
-          
+
           ### Linux (AppImage)
           ```bash
           chmod +x Taminator-{{ new_version }}.AppImage
           ./Taminator-{{ new_version }}.AppImage
           ```
-          
+
           ### From Source
           ```bash
           git clone <repo>
           cd TAMINATOR
-          
+
           # Backend
           python3 -m venv venv
           source venv/bin/activate
           pip install -e .
-          
+
           # Frontend
           cd gui
           npm install
           npm start
           ```
-          
+
           ---
-          
+
           ## ⚠️ Breaking Changes
-          
+
           **None** - This is a hotfix release, fully backward compatible.
-          
+
           ---
-          
+
           ## 🔧 Migration Guide
-          
+
           No migration needed. Simply update to {{ new_version }} and restart.
-          
+
           Your existing:
           - Configuration files
           - API tokens
           - Customer data
           - Intelligence database
-          
+
           Will all work without changes.
-          
+
           ---
-          
+
           ## 🐛 Known Issues
-          
+
           None critical. Minor ESLint warnings (2):
           - Unused variable warnings (non-functional)
           - async functions without await (intentional)
-          
+
           ---
-          
+
           ## 🙏 Credits
-          
+
           This hotfix release includes contributions from:
           - Bug identification and analysis
           - Comprehensive testing with Ansible
           - ESLint integration for future prevention
           - Documentation improvements
-          
+
           ---
-          
+
           ## 📞 Support
-          
+
           - **Documentation**: See `DEBUGGING-WITH-ANSAI-TOOLS.md`
           - **Issues**: Use the issue tracker
           - **Questions**: Check `TECHNOLOGY-ASSESSMENT.md`
           - **Dev Tools**: Run `./bin/tam-dev` for interactive menu
-          
+
           ---
-          
+
           ## 🔜 What's Next
-          
+
           ### v2.1.0 (Next Minor Release)
           - Unit tests for all fixed functions
           - TypeScript migration exploration
           - Performance benchmarking
           - Advanced AI features
-          
+
           ### v3.0.0 (Future Major Release)
           - Possible TypeScript migration
           - Enhanced collaboration features
           - Advanced analytics
           - Plugin system
-          
+
           ---
-          
-          **Released by**: Automated Release Process  
-          **Build Date**: {{ ansible_date_time.date }}  
-          **Git Commit**: $(git rev-parse --short HEAD 2>/dev/null || echo "N/A")  
-          **Verified**: Ansible + ESLint + Manual Testing  
-          
+
+          **Released by**: Automated Release Process
+          **Build Date**: {{ ansible_date_time.date }}
+          **Git Commit**: $(git rev-parse --short HEAD 2>/dev/null || echo "N/A")
+          **Verified**: Ansible + ESLint + Manual Testing
+
           🎉 **Happy automating!**
 
     - name: "Display release notes location"
@@ -431,44 +431,44 @@
     # ============================================================================
     # CREATE DISTRIBUTION PACKAGE
     # ============================================================================
-    
+
     - name: "📦 Create release directory"
       file:
         path: "{{ project_root }}/releases/v{{ new_version }}"
         state: directory
         mode: '0755'
-        
+
     - name: "📦 Copy distribution files"
       shell: |
         cd {{ project_root }}
-        
+
         echo "Copying distribution files..."
-        
+
         # Copy Linux AppImages
         if [ -d "gui/dist" ]; then
           find gui/dist -name "*.AppImage" -exec cp {} releases/v{{ new_version }}/ \; 2>/dev/null && echo "✅ Copied Linux AppImages"
-          
+
           # Copy macOS DMG and ZIP files
           find gui/dist -name "*.dmg" -exec cp {} releases/v{{ new_version }}/ \; 2>/dev/null && echo "✅ Copied macOS DMG"
           find gui/dist -name "*-mac.zip" -exec cp {} releases/v{{ new_version }}/ \; 2>/dev/null && echo "✅ Copied macOS ZIP"
         fi
-        
+
         # Copy release notes
         cp RELEASE-NOTES-{{ new_version }}.md releases/v{{ new_version }}/
-        
+
         # Create checksums for all distribution files
         cd releases/v{{ new_version }}
         if ls *.{AppImage,dmg,zip} 1> /dev/null 2>&1; then
           sha256sum *.{AppImage,dmg,zip} 2>/dev/null > SHA256SUMS
           echo "✅ Checksums created"
         fi
-        
+
         echo ""
         echo "📦 Distribution Contents:"
         ls -lh | grep -v "^total" | grep -v "^d"
       register: copy_dist
       ignore_errors: yes
-      
+
     - name: "Display distribution contents"
       debug:
         msg: "{{ copy_dist.stdout_lines | default(['Distribution created']) }}"
@@ -476,7 +476,7 @@
     # ============================================================================
     # GIT OPERATIONS
     # ============================================================================
-    
+
     - name: "🔖 Git: Check repository status"
       shell: |
         cd {{ project_root }}
@@ -488,17 +488,17 @@
         fi
       register: git_status
       ignore_errors: yes
-      
+
     - name: "Display git status"
       debug:
         msg: "{{ git_status.stdout_lines | default(['Git status']) }}"
-    
+
     - name: "🔖 Git: Create release commit (manual approval needed)"
       debug:
         msg: |
-          
+
           To finalize the release, run these commands manually:
-          
+
           cd {{ project_root }}
           git add gui/package.json src/taminator/__init__.py RELEASE-NOTES-{{ new_version }}.md
           git commit -m "Release v{{ new_version }} - Hotfix
@@ -507,15 +507,15 @@
           - Enhanced error handling
           - Improved stability
           - See RELEASE-NOTES-{{ new_version }}.md for details"
-          
+
           git tag -a v{{ new_version }} -m "Release v{{ new_version }}"
-          
+
           # IMPORTANT: Push one at a time (GitLab security bot blocks parallel uploads)
           git push origin main
           sleep 2
           git push origin v{{ new_version }}
           sleep 2
-          
+
           # OPTIONAL: Trigger GitHub Actions for macOS builds
           # If you have taminator-ci on github.com:
           git push github main
@@ -523,74 +523,74 @@
           git push github v{{ new_version }}
           # Monitor at: https://github.com/YOUR-ORG/taminator-ci/actions
           # macOS builds (DMG + ZIP) will be ready in ~10 minutes
-    
+
     - name: "🚀 Optional: Trigger GitHub CI for macOS builds"
       debug:
         msg: |
-          
+
           ╔═══════════════════════════════════════════════════╗
           ║  AUTOMATED macOS BUILDS with GitHub Actions      ║
           ╚═══════════════════════════════════════════════════╝
-          
+
           Setup taminator-ci repository on github.com for automated
           multi-platform builds!
-          
+
           Benefits:
           ✅ Automatic Linux + macOS + Windows builds
           ✅ No Mac hardware needed
           ✅ Builds in ~15 minutes
           ✅ Free (within GitHub Actions limits)
-          
+
           Setup:
           1. Create repository: github.com/YOUR-ORG/taminator-ci
           2. Push code: git push github main
           3. Push tag: git push github v{{ new_version }}
           4. GitHub Actions builds everything automatically!
-          
+
           See GITHUB-CI-SETUP.md for complete instructions.
 
     # ============================================================================
     # FINAL SUMMARY
     # ============================================================================
-    
+
     - name: "🎉 Release Summary"
       debug:
         msg: |
-          
+
           ╔═══════════════════════════════════════════════════╗
           ║                                                   ║
           ║     ✅ RELEASE v{{ new_version }} COMPLETE!                    ║
           ║                                                   ║
           ╚═══════════════════════════════════════════════════╝
-          
+
           📦 Distribution: releases/v{{ new_version }}/
           📄 Release Notes: RELEASE-NOTES-{{ new_version }}.md
           🏷️  Version Updated: {{ current_version }} → {{ new_version }}
-          
+
           ✅ Pre-release checks: Complete
           ✅ Version bumped: Complete
           ✅ Build: Complete
           ✅ Package: Complete
           ✅ Release notes: Complete
           ✅ Distribution: Complete
-          
+
           📋 Next Steps:
-          
+
           1. Review release notes:
              cat RELEASE-NOTES-{{ new_version }}.md
-          
+
           2. Test the build:
              ./releases/v{{ new_version }}/Taminator-*.AppImage
-          
+
           3. Commit and tag (see above for commands)
-          
+
           4. Upload to distribution server:
              scp releases/v{{ new_version }}/* server:/path/to/releases/
-          
+
           5. Announce the release:
              - Email to TAMs
              - Update documentation
              - Post to internal channels
-          
+
           🚀 Ready to deploy!
 

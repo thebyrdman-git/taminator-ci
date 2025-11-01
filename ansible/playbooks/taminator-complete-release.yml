@@ -3,25 +3,25 @@
 - name: Taminator - Complete Release Workflow
   hosts: localhost
   gather_facts: yes
-  
+
   vars:
     project_root: "/home/jbyrd/TAMINATOR"
     current_version: "2.0.0"
     new_version: "2.0.1"
     git_remote: "origin"
-    
+
   tasks:
     - name: "🚀 Display Complete Release Banner"
       debug:
         msg: |
-          
+
           ╔═══════════════════════════════════════════════════╗
           ║                                                   ║
           ║   📦 COMPLETE RELEASE WORKFLOW                    ║
           ║      Taminator v{{ new_version }}                          ║
           ║                                                   ║
           ╚═══════════════════════════════════════════════════╝
-          
+
           This workflow handles EVERYTHING:
           1. Update version numbers
           2. Build distributions
@@ -31,13 +31,13 @@
           6. Tag the release
           7. Push to git
           8. Trigger CI
-          
+
           Starting complete release process...
 
     # ============================================================================
     # STEP 1: VERSION & BUILD (from taminator-release.yml)
     # ============================================================================
-    
+
     - name: "📝 Step 1: Update version in package.json"
       shell: |
         cd {{ project_root }}/gui
@@ -45,14 +45,14 @@
         sed -i 's/"version": "{{ current_version }}"/"version": "{{ new_version }}"/' package.json
         echo "✅ Version updated to {{ new_version }}"
       register: version_update
-      
+
     - name: "🔨 Step 1: Build Linux AppImage"
       shell: |
         cd {{ project_root }}/gui
         npm install --production 2>&1 | tail -3
       register: npm_install
       ignore_errors: yes
-      
+
     - name: "📦 Step 1: Create release directory"
       file:
         path: "{{ project_root }}/releases/v{{ new_version }}"
@@ -62,7 +62,7 @@
     # ============================================================================
     # STEP 2: DOCUMENTATION
     # ============================================================================
-    
+
     - name: "📚 Step 2: Verify all documentation exists"
       stat:
         path: "{{ project_root }}/{{ item }}"
@@ -73,7 +73,7 @@
         - ANSAI-GITHUB-CI-INTEGRATION.md
         - DEBUGGING-WITH-ANSAI-TOOLS.md
       register: doc_check
-      
+
     - name: "📚 Step 2: Count documentation files"
       shell: |
         cd {{ project_root }}
@@ -82,7 +82,7 @@
         echo "Total lines of documentation:"
         cat *.md | wc -l
       register: doc_stats
-      
+
     - name: "Display documentation stats"
       debug:
         msg: "{{ doc_stats.stdout_lines }}"
@@ -90,14 +90,14 @@
     # ============================================================================
     # STEP 3: PREPARE RELEASE DIRECTORY
     # ============================================================================
-    
+
     - name: "📦 Step 3: Copy release files to distribution"
       shell: |
         cd {{ project_root }}
-        
+
         # Ensure release directory exists
         mkdir -p releases/v{{ new_version }}
-        
+
         # Copy Linux AppImage if exists
         if [ -f gui/dist/Taminator-{{ new_version }}.AppImage ]; then
           cp gui/dist/Taminator-{{ new_version }}.AppImage releases/v{{ new_version }}/
@@ -105,27 +105,27 @@
         else
           echo "⚠️  Linux AppImage not found in gui/dist"
         fi
-        
+
         # Copy release notes
         if [ -f RELEASE-NOTES-{{ new_version }}.md ]; then
           cp RELEASE-NOTES-{{ new_version }}.md releases/v{{ new_version }}/
           echo "✅ Copied release notes"
         fi
-        
+
         # Create checksums
         cd releases/v{{ new_version }}
         if ls *.AppImage 1> /dev/null 2>&1; then
           sha256sum *.AppImage > SHA256SUMS
           echo "✅ Created checksums"
         fi
-        
+
         # Show what's in the release directory
         echo ""
         echo "Release directory contents:"
         ls -lh
       register: release_prep
       ignore_errors: yes
-      
+
     - name: "Display release preparation"
       debug:
         msg: "{{ release_prep.stdout_lines | default(['Release prep complete']) }}"
@@ -133,19 +133,19 @@
     # ============================================================================
     # STEP 4: GIT COMMIT (with pre-commit bypass)
     # ============================================================================
-    
+
     - name: "📝 Step 4: Stage all changes (including releases/)"
       shell: |
         cd {{ project_root }}
-        
+
         # Add everything
         git add -A
-        
+
         # Force add release directory (it's in .gitignore)
         git add -f releases/v{{ new_version }}/Taminator-{{ new_version }}.AppImage
         git add -f releases/v{{ new_version }}/RELEASE-NOTES-{{ new_version }}.md
         git add -f releases/v{{ new_version }}/SHA256SUMS
-        
+
         echo "Staged files:"
         git status --short | wc -l
         echo ""
@@ -154,25 +154,25 @@
         git ls-files --stage | grep "releases/v{{ new_version }}" | wc -l
         echo "release files in staging area"
       register: git_stage
-      
+
     - name: "Display staged count"
       debug:
         msg: "{{ git_stage.stdout_lines }}"
-    
+
     - name: "📝 Step 4: Create comprehensive commit (bypass pre-commit if needed)"
       shell: |
         cd {{ project_root }}
-        
+
         # Try normal commit first
         git commit -m "Release v{{ new_version }} - Complete Package
 
         🎉 COMPLETE RELEASE v{{ new_version }}
-        
+
         This commit includes EVERYTHING for the release:
-        
+
         🐛 Bug Fixes (10 critical):
         • Fixed unhandled promise rejections (4 functions)
-        • Fixed memory leaks in toast system  
+        • Fixed memory leaks in toast system
         • Added token configuration modal
         • Fixed loading state cleanup
         • Dynamic version loading
@@ -181,7 +181,7 @@
         • Enhanced API error logging
         • Implemented exponential backoff
         • Added JSDoc annotations
-        
+
         📚 Documentation (20+ files, ~9,000 lines):
         • GETTING-STARTED.md - Complete onboarding guide
         • GITHUB-CI-SETUP.md - CI/CD setup instructions
@@ -190,57 +190,57 @@
         • RELEASE-NOTES-{{ new_version }}.md - What's new
         • TECHNOLOGY-ASSESSMENT.md - Language analysis
         • Plus 15+ more comprehensive guides
-        
+
         🛠️ Development Tools:
         • tam-dev CLI (15 interactive workflows)
         • Ansible playbooks (release, test, ship)
         • ESLint configuration (v9 flat format)
         • GitHub Actions CI/CD pipeline
-        
+
         📦 Build & Distribution:
         • Linux AppImage (136 MB)
         • macOS DMG + ZIP (via CI)
         • Automated checksums
         • Release automation
-        
+
         🔧 Infrastructure:
         • Ansible verification (25 tasks, 100% pass)
         • ESLint: 0 errors
         • Pre-commit hooks
         • CI/CD pipeline
-        
+
         ✅ Quality Metrics:
         • Bug fix rate: 10/10 (100%)
         • Test pass rate: 100%
         • ESLint errors: 0
         • Service uptime: 100%
         • Documentation: Comprehensive
-        
+
         🚀 Ready for Production:
         Status: Production Ready
         Platforms: Linux + macOS (CI)
         Quality: Excellent
         Verified: Ansible + ESLint + Manual
-        
+
         See COMPLETE-SESSION-SUMMARY-FINAL.md for full details." 2>&1 || \
-        
+
         # If pre-commit blocks, bypass it
         git commit --no-verify -m "Release v{{ new_version }} - Complete Package
 
         🎉 Production release with all bug fixes, documentation, and tools.
-        
+
         See RELEASE-NOTES-{{ new_version }}.md and COMPLETE-SESSION-SUMMARY-FINAL.md
         for complete details.
-        
+
         Committed with --no-verify to bypass pre-commit hooks for release." 2>&1
-        
+
       register: git_commit
       ignore_errors: yes
-      
+
     - name: "Display commit result"
       debug:
         msg: "{{ git_commit.stdout_lines | default(['Commit completed']) }}"
-    
+
     - name: "🏷️ Step 4: Create annotated release tag"
       shell: |
         cd {{ project_root }}
@@ -252,11 +252,11 @@
         • Complete CI/CD pipeline
         • Development tools (tam-dev)
         • Automated workflows
-        
+
         Quality: Production Ready
         Verified: Ansible + ESLint
         Platforms: Linux + macOS
-        
+
         All code, documentation, and infrastructure included." 2>&1 || echo "Tag already exists"
       register: git_tag
       ignore_errors: yes
@@ -264,7 +264,7 @@
     # ============================================================================
     # STEP 5: VERIFY COMMIT & TAG
     # ============================================================================
-    
+
     - name: "✅ Step 5: Verify commit was created"
       shell: |
         cd {{ project_root }}
@@ -274,11 +274,11 @@
         echo "Commit includes:"
         git show --stat --oneline HEAD | head -30
       register: verify_commit
-      
+
     - name: "Display commit verification"
       debug:
         msg: "{{ verify_commit.stdout_lines }}"
-    
+
     - name: "✅ Step 5: Verify tag was created"
       shell: |
         cd {{ project_root }}
@@ -286,11 +286,11 @@
         git show v{{ new_version }} --quiet
       register: verify_tag
       ignore_errors: yes
-      
+
     - name: "Display tag verification"
       debug:
         msg: "{{ verify_tag.stdout_lines }}"
-    
+
     - name: "✅ Step 5: Verify no uncommitted changes remain"
       shell: |
         cd {{ project_root }}
@@ -302,7 +302,7 @@
           git status --short
         fi
       register: verify_clean
-      
+
     - name: "Display clean status"
       debug:
         msg: "{{ verify_clean.stdout_lines }}"
@@ -310,7 +310,7 @@
     # ============================================================================
     # STEP 6: PUSH TO GIT (ONE AT A TIME - GitLab security bot blocks parallel uploads)
     # ============================================================================
-    
+
     - name: "🚀 Step 6a: Push main branch to {{ git_remote }} (1/4)"
       shell: |
         cd {{ project_root }}
@@ -319,15 +319,15 @@
         echo "✅ Main branch pushed"
       register: git_push_main
       ignore_errors: yes
-      
+
     - name: "Display main push result"
       debug:
         msg: "{{ git_push_main.stdout_lines | default(['Main branch pushed']) }}"
-    
+
     - name: "⏱️  Wait 2 seconds before next push (GitLab rate limit)"
       pause:
         seconds: 2
-    
+
     - name: "🚀 Step 6b: Push tag to {{ git_remote }} (2/4)"
       shell: |
         cd {{ project_root }}
@@ -336,15 +336,15 @@
         echo "✅ Tag pushed"
       register: git_push_tag
       ignore_errors: yes
-      
+
     - name: "Display tag push result"
       debug:
         msg: "{{ git_push_tag.stdout_lines | default(['Tag pushed']) }}"
-    
+
     - name: "⏱️  Wait 2 seconds before GitHub push (GitLab rate limit)"
       pause:
         seconds: 2
-    
+
     - name: "🚀 Step 6c: Push main branch to GitHub (3/4 - if configured)"
       shell: |
         cd {{ project_root }}
@@ -358,16 +358,16 @@
         fi
       register: github_push_main
       ignore_errors: yes
-      
+
     - name: "Display GitHub main push result"
       debug:
         msg: "{{ github_push_main.stdout_lines | default(['GitHub main status']) }}"
-    
+
     - name: "⏱️  Wait 2 seconds before final push (GitLab rate limit)"
       pause:
         seconds: 2
       when: github_push_main.stdout is defined and 'not configured' not in github_push_main.stdout
-    
+
     - name: "🚀 Step 6d: Push tag to GitHub (4/4 - if configured)"
       shell: |
         cd {{ project_root }}
@@ -383,7 +383,7 @@
         fi
       register: github_push_tag
       ignore_errors: yes
-      
+
     - name: "Display GitHub tag push result"
       debug:
         msg: "{{ github_push_tag.stdout_lines | default(['GitHub tag status']) }}"
@@ -391,7 +391,7 @@
     # ============================================================================
     # STEP 7: FINAL SUMMARY
     # ============================================================================
-    
+
     - name: "📊 Step 7: Generate release summary"
       shell: |
         cd {{ project_root }}
@@ -417,15 +417,15 @@
         echo "  3. Announce: Email TAMs"
         echo "  4. Monitor: Check for issues"
       register: release_summary
-      
+
     - name: "🎉 Display final release summary"
       debug:
         msg: "{{ release_summary.stdout_lines }}"
-    
+
     - name: "🎉 Success Message"
       debug:
         msg: |
-          
+
           ╔═══════════════════════════════════════════════════╗
           ║                                                   ║
           ║    ✅ COMPLETE RELEASE SUCCESSFUL!                ║
@@ -433,7 +433,7 @@
           ║       Taminator v{{ new_version }} is LIVE!                  ║
           ║                                                   ║
           ╚═══════════════════════════════════════════════════╝
-          
+
           🏆 What Was Completed:
           • ✅ Version bumped
           • ✅ Builds created
@@ -442,12 +442,12 @@
           • ✅ Release tagged
           • ✅ Pushed to git
           • ✅ CI triggered (if configured)
-          
+
           📦 Ready for Distribution:
           • Linux AppImage: releases/v{{ new_version }}/Taminator-{{ new_version }}.AppImage
           • macOS builds: Via GitHub CI (~15 minutes)
           • Documentation: Complete and committed
           • Release notes: RELEASE-NOTES-{{ new_version }}.md
-          
+
           🎯 The release is complete and tracked in git!
 
