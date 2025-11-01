@@ -1,0 +1,414 @@
+---
+# Taminator Testing & Deployment Playbook
+# 
+# Complete test deployment with audit logging
+# Tests: AppImage, JavaScript errors, service health, GitHub Actions monitoring
+#
+# Usage:
+#   ansible-playbook ansible/playbooks/test-taminator-deployment.yml
+
+- name: Taminator v2.0.0 Testing & Deployment
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  
+  vars:
+    project_root: "{{ playbook_dir | dirname | dirname }}"
+    version: "2.0.0"
+    audit_log: "{{ project_root }}/test-deployment-audit-{{ ansible_date_time.iso8601_basic_short }}.log"
+    appimage_source: "{{ project_root }}/release/v{{ version }}/linux/x86_64/Taminator-{{ version }}.AppImage"
+    appimage_dest: "{{ ansible_env.HOME }}/Applications/Taminator-{{ version }}.AppImage"
+    github_ci_repo: "thebyrdman-git/taminator-ci"
+    test_results: {}
+  
+  tasks:
+    # ============================================================================
+    # AUDIT LOG INITIALIZATION
+    # ============================================================================
+    
+    - name: Create audit log header
+      copy:
+        content: |
+          ╔════════════════════════════════════════════════════════════════╗
+          ║                                                                ║
+          ║     TAMINATOR v{{ version }} TEST DEPLOYMENT AUDIT LOG        ║
+          ║                                                                ║
+          ╚════════════════════════════════════════════════════════════════╝
+          
+          Date: {{ ansible_date_time.iso8601 }}
+          Host: {{ ansible_hostname }}
+          User: {{ ansible_user_id }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Python: {{ ansible_python_version }}
+          
+          ================================================================================
+          DEPLOYMENT TESTING BEGIN
+          ================================================================================
+        dest: "{{ audit_log }}"
+    
+    # ============================================================================
+    # PRE-FLIGHT CHECKS
+    # ============================================================================
+    
+    - name: Pre-flight checks
+      block:
+        - name: Check if AppImage source exists
+          stat:
+            path: "{{ appimage_source }}"
+          register: appimage_source_stat
+        
+        - name: Verify AppImage exists
+          assert:
+            that:
+              - appimage_source_stat.stat.exists
+            fail_msg: "❌ AppImage not found at {{ appimage_source }}"
+            success_msg: "✅ AppImage found ({{ (appimage_source_stat.stat.size / 1024 / 1024) | round(0) }}MB)"
+        
+        - name: Log AppImage verification
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "✅ Pre-flight: AppImage verified ({{ (appimage_source_stat.stat.size / 1024 / 1024) | round(0) }}MB)"
+        
+        - name: Check if old Taminator process running
+          shell: ps aux | grep -i taminator | grep -v grep | grep -v ansible || true
+          register: old_process_check
+          changed_when: false
+        
+        - name: Kill old Taminator processes if running
+          shell: pkill -9 -f "taminator-gui|Taminator.*AppImage" || true
+          when: old_process_check.stdout != ""
+          register: process_kill
+        
+        - name: Log process cleanup
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "{{ '✅ Pre-flight: Killed old processes' if old_process_check.stdout != '' else '✅ Pre-flight: No old processes found' }}"
+    
+    # ============================================================================
+    # INSTALL APPIMAGE
+    # ============================================================================
+    
+    - name: Install AppImage
+      block:
+        - name: Create Applications directory
+          file:
+            path: "{{ ansible_env.HOME }}/Applications"
+            state: directory
+            mode: '0755'
+        
+        - name: Copy AppImage to Applications
+          copy:
+            src: "{{ appimage_source }}"
+            dest: "{{ appimage_dest }}"
+            mode: '0755'
+          register: appimage_copy
+        
+        - name: Log AppImage installation
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "✅ Installation: AppImage copied to {{ appimage_dest }}"
+        
+        - name: Verify AppImage is executable
+          command: file {{ appimage_dest }}
+          register: appimage_file_check
+          changed_when: false
+        
+        - name: Assert AppImage is valid ELF executable
+          assert:
+            that:
+              - "'ELF 64-bit LSB executable' in appimage_file_check.stdout"
+            fail_msg: "❌ AppImage is not a valid executable"
+            success_msg: "✅ AppImage is valid ELF executable"
+        
+        - name: Log executable verification
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "✅ Installation: AppImage is valid ELF 64-bit executable"
+    
+    # ============================================================================
+    # GITHUB ACTIONS BUILD MONITORING
+    # ============================================================================
+    
+    - name: Monitor GitHub Actions builds
+      block:
+        - name: Check GitHub CLI authentication
+          command: gh auth status
+          register: gh_auth_status
+          changed_when: false
+          failed_when: false
+        
+        - name: Log GitHub auth status
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "{{ '✅ GitHub CLI: Authenticated' if gh_auth_status.rc == 0 else '⚠️ GitHub CLI: Not authenticated (skipping build checks)' }}"
+        
+        - name: List recent GitHub Actions runs
+          command: gh run list --repo {{ github_ci_repo }} --workflow build-cross-platform.yml --limit 5 --json status,conclusion,createdAt,headBranch
+          register: gh_runs
+          when: gh_auth_status.rc == 0
+          changed_when: false
+        
+        - name: Parse GitHub Actions status
+          set_fact:
+            gh_runs_data: "{{ gh_runs.stdout | from_json }}"
+          when: gh_auth_status.rc == 0
+        
+        - name: Check for in-progress Mac/Windows builds
+          set_fact:
+            mac_windows_building: "{{ gh_runs_data | selectattr('status', 'equalto', 'in_progress') | list | length > 0 }}"
+          when: gh_auth_status.rc == 0
+        
+        - name: Log GitHub Actions status
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: |
+              
+              ================================================================================
+              GITHUB ACTIONS BUILD STATUS
+              ================================================================================
+              Repository: {{ github_ci_repo }}
+              Workflow: build-cross-platform.yml
+              Status: {{ 'BUILDING (Mac/Windows in progress)' if mac_windows_building | default(false) else 'IDLE (No active builds)' }}
+              Monitor: https://github.com/{{ github_ci_repo }}/actions
+              ================================================================================
+          when: gh_auth_status.rc == 0
+      rescue:
+        - name: Log GitHub Actions monitoring failure
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "⚠️ GitHub Actions: Monitoring failed (non-critical)"
+    
+    # ============================================================================
+    # TEST APPIMAGE LAUNCH
+    # ============================================================================
+    
+    - name: Test AppImage launch
+      block:
+        - name: Launch Taminator in background
+          shell: |
+            nohup {{ appimage_dest }} > /tmp/taminator-test-{{ ansible_date_time.epoch }}.log 2>&1 &
+            echo $!
+          register: taminator_launch
+          changed_when: false
+        
+        - name: Store Taminator PID
+          set_fact:
+            taminator_pid: "{{ taminator_launch.stdout | trim }}"
+        
+        - name: Log Taminator launch
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "✅ Launch: Taminator started (PID: {{ taminator_pid }})"
+        
+        - name: Wait for Taminator to initialize
+          pause:
+            seconds: 5
+        
+        - name: Check if Taminator is still running
+          shell: ps -p {{ taminator_pid }} > /dev/null 2>&1
+          register: process_check
+          changed_when: false
+          failed_when: false
+        
+        - name: Verify Taminator process running
+          assert:
+            that:
+              - process_check.rc == 0
+            fail_msg: "❌ Taminator process died (check logs)"
+            success_msg: "✅ Taminator process running"
+        
+        - name: Log process health
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "✅ Health Check: Taminator process alive after 5 seconds (PID: {{ taminator_pid }})"
+        
+        - name: Check for service startup
+          uri:
+            url: http://127.0.0.1:8765/health/live
+            method: GET
+            timeout: 2
+          register: service_health
+          until: service_health.status == 200
+          retries: 10
+          delay: 2
+          failed_when: false
+        
+        - name: Log service health
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "{{ '✅ Service: Backend service responding (http://127.0.0.1:8765)' if service_health.status | default(0) == 200 else '⚠️ Service: Backend not responding (may still be starting)' }}"
+    
+    # ============================================================================
+    # JAVASCRIPT ERROR DETECTION
+    # ============================================================================
+    
+    - name: Check for JavaScript errors
+      block:
+        - name: Capture Electron console output
+          shell: cat /tmp/taminator-test-*.log 2>/dev/null | tail -100
+          register: electron_console
+          changed_when: false
+          failed_when: false
+        
+        - name: Search for JavaScript errors
+          set_fact:
+            js_errors: "{{ electron_console.stdout | regex_findall('(Error:|TypeError:|ReferenceError:|SyntaxError:|Uncaught).*') }}"
+        
+        - name: Log JavaScript error detection
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: |
+              
+              ================================================================================
+              JAVASCRIPT ERROR DETECTION
+              ================================================================================
+              Errors found: {{ js_errors | length }}
+              {% if js_errors | length > 0 %}
+              ⚠️ JAVASCRIPT ERRORS DETECTED:
+              {% for error in js_errors %}
+              - {{ error }}
+              {% endfor %}
+              ================================================================================
+              {% else %}
+              ✅ No JavaScript errors detected in console output
+              ================================================================================
+              {% endif %}
+        
+        - name: Display JavaScript errors (if any)
+          debug:
+            msg:
+              - "⚠️ JAVASCRIPT ERRORS DETECTED:"
+              - "{{ js_errors }}"
+          when: js_errors | length > 0
+    
+    # ============================================================================
+    # VERIFY GUI RESPONSIVENESS
+    # ============================================================================
+    
+    - name: Verify GUI responsiveness
+      block:
+        - name: Check Electron renderer processes
+          shell: ps aux | grep taminator-gui | grep -v grep | wc -l
+          register: electron_processes
+          changed_when: false
+        
+        - name: Verify multiple Electron processes (renderer)
+          assert:
+            that:
+              - electron_processes.stdout | int > 3
+            fail_msg: "❌ Not enough Electron processes (GUI may not have loaded)"
+            success_msg: "✅ Multiple Electron processes detected ({{ electron_processes.stdout }} processes)"
+        
+        - name: Log GUI verification
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: "✅ GUI: {{ electron_processes.stdout }} Electron processes detected (GUI loaded)"
+    
+    # ============================================================================
+    # COLLECT DIAGNOSTICS
+    # ============================================================================
+    
+    - name: Collect diagnostics
+      block:
+        - name: Get process tree
+          shell: pstree -p {{ taminator_pid }}
+          register: process_tree
+          changed_when: false
+          failed_when: false
+        
+        - name: Get resource usage
+          shell: ps -p {{ taminator_pid }} -o pid,ppid,%cpu,%mem,vsz,rss,comm --no-headers
+          register: resource_usage
+          changed_when: false
+          failed_when: false
+        
+        - name: Log diagnostics
+          lineinfile:
+            path: "{{ audit_log }}"
+            line: |
+              
+              ================================================================================
+              DIAGNOSTICS
+              ================================================================================
+              Process Tree:
+              {{ process_tree.stdout }}
+              
+              Resource Usage:
+              PID     PPID    %CPU  %MEM  VSZ      RSS      COMMAND
+              {{ resource_usage.stdout }}
+              ================================================================================
+    
+    # ============================================================================
+    # TEST SUMMARY
+    # ============================================================================
+    
+    - name: Generate test summary
+      set_fact:
+        test_summary:
+          appimage_installed: "{{ appimage_copy.changed }}"
+          process_running: "{{ process_check.rc == 0 }}"
+          service_healthy: "{{ service_health.status | default(0) == 200 }}"
+          javascript_errors: "{{ js_errors | length }}"
+          electron_processes: "{{ electron_processes.stdout | int }}"
+          taminator_pid: "{{ taminator_pid }}"
+    
+    - name: Write final test summary
+      lineinfile:
+        path: "{{ audit_log }}"
+        line: |
+          
+          ╔════════════════════════════════════════════════════════════════╗
+          ║                                                                ║
+          ║                    TEST SUMMARY                                ║
+          ║                                                                ║
+          ╚════════════════════════════════════════════════════════════════╝
+          
+          AppImage Installed: {{ '✅ YES' if test_summary.appimage_installed else '❌ NO' }}
+          Process Running: {{ '✅ YES' if test_summary.process_running else '❌ NO' }}
+          Service Healthy: {{ '✅ YES' if test_summary.service_healthy else '⚠️ NO (may still be starting)' }}
+          JavaScript Errors: {{ '⚠️ ' + (test_summary.javascript_errors | string) + ' errors found' if test_summary.javascript_errors > 0 else '✅ None detected' }}
+          Electron Processes: {{ test_summary.electron_processes }}
+          Taminator PID: {{ test_summary.taminator_pid }}
+          
+          Next Steps:
+          {% if test_summary.javascript_errors > 0 %}
+          1. Review JavaScript errors above
+          2. Open DevTools in running Taminator instance
+          3. Debug and fix errors
+          4. Re-build AppImage
+          5. Re-run this playbook
+          {% else %}
+          1. ✅ Taminator is running successfully
+          2. Test OOBE wizard and features
+          3. Report any issues to GitLab
+          4. Monitor Mac/Windows builds: https://github.com/{{ github_ci_repo }}/actions
+          {% endif %}
+          
+          ================================================================================
+          DEPLOYMENT TESTING COMPLETE
+          ================================================================================
+          Date: {{ ansible_date_time.iso8601 }}
+          Audit Log: {{ audit_log }}
+          Console Log: /tmp/taminator-test-{{ ansible_date_time.epoch }}.log
+          ================================================================================
+    
+    - name: Display final results
+      debug:
+        msg:
+          - "╔════════════════════════════════════════════════════════════════╗"
+          - "║                                                                ║"
+          - "║          TAMINATOR v{{ version }} TEST DEPLOYMENT COMPLETE     ║"
+          - "║                                                                ║"
+          - "╚════════════════════════════════════════════════════════════════╝"
+          - ""
+          - "Status: {{ '✅ SUCCESS' if (test_summary.process_running and test_summary.javascript_errors == 0) else '⚠️ ISSUES FOUND' }}"
+          - "PID: {{ test_summary.taminator_pid }}"
+          - "JavaScript Errors: {{ test_summary.javascript_errors }}"
+          - ""
+          - "Audit Log: {{ audit_log }}"
+          - "Console Log: /tmp/taminator-test-{{ ansible_date_time.epoch }}.log"
+          - ""
+          - "Monitor Mac/Windows builds:"
+          - "https://github.com/{{ github_ci_repo }}/actions"
+
