@@ -1,148 +1,42 @@
-# GitLab CI/CD Pipeline for Taminator
-# Runs on MiracleMax self-hosted runner
-# Part of PAI (Personal AI Infrastructure)
+# GitLab CI/CD for Taminator Documentation Site
+# Deploys to GitHub Pages with custom domain: taminator.dev
+
+image: python:3.11
 
 stages:
-  - build
-  - release
+  - test
+  - deploy
 
-variables:
-  NODE_VERSION: "20"
-  ARTIFACTS_EXPIRE: "7 days"
+# Cache pip packages for faster builds
+cache:
+  paths:
+    - .cache/pip
 
-# Linux x86_64 Build (Native on MiracleMax)
-build:linux:x64:
-  stage: build
-  tags:
-    - miraclemax
-    - taminator
-    - docker
-  image: node:${NODE_VERSION}
-  
-  before_script:
-    - node --version
-    - npm --version
-    - cd gui
-    - npm ci
-  
+before_script:
+  - pip install --cache-dir .cache/pip mkdocs-material mkdocs-minify-plugin mkdocs-git-revision-date-localized-plugin
+
+# Test builds on all branches
+test_docs:
+  stage: test
   script:
-    - npm run build -- --linux AppImage --x64
-  
-  artifacts:
-    name: "taminator-linux-x64-${CI_COMMIT_TAG}"
-    paths:
-      - gui/dist/*.AppImage
-    expire_in: ${ARTIFACTS_EXPIRE}
-  
-  only:
-    - tags
-    - main
-
-# Linux ARM64 Build (QEMU emulation on MiracleMax)
-build:linux:arm64:
-  stage: build
-  tags:
-    - miraclemax
-    - taminator
-    - docker
-  image: node:${NODE_VERSION}
-  
-  before_script:
-    # Set up QEMU for ARM64 emulation
-    - apt-get update -qq
-    - apt-get install -y -qq qemu-user-static binfmt-support
-    - update-binfmts --enable qemu-aarch64
-    - cd gui
-    - npm ci
-  
-  script:
-    - npm run build -- --linux AppImage --arm64
-  
-  artifacts:
-    name: "taminator-linux-arm64-${CI_COMMIT_TAG}"
-    paths:
-      - gui/dist/*.AppImage
-    expire_in: ${ARTIFACTS_EXPIRE}
-  
-  only:
-    - tags
-    - main
-  
-  # ARM64 build takes longer due to emulation
-  timeout: 2h
-
-# Create GitLab Release (only on tags)
-release:gitlab:
-  stage: release
-  tags:
-    - miraclemax
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  
-  dependencies:
-    - build:linux:x64
-    - build:linux:arm64
-  
-  script:
-    - echo "Creating GitLab Release for ${CI_COMMIT_TAG}"
-    - ls -lh gui/dist/ || echo "No artifacts found"
-  
-  release:
-    tag_name: '${CI_COMMIT_TAG}'
-    name: 'Taminator ${CI_COMMIT_TAG}'
-    description: |
-      ## Taminator ${CI_COMMIT_TAG} Release
-      
-      Built automatically on MiracleMax (PAI Infrastructure)
-      
-      ### Binaries
-      
-      - **Linux x86_64 AppImage**: Taminator-${CI_COMMIT_TAG#v}-x86_64.AppImage
-      - **Linux ARM64 AppImage**: Taminator-${CI_COMMIT_TAG#v}-arm64.AppImage
-      
-      ### Installation
-      
-      ```bash
-      # Download AppImage
-      wget https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/${CI_COMMIT_TAG}/downloads/Taminator-${CI_COMMIT_TAG#v}-x86_64.AppImage
-      
-      # Make executable
-      chmod +x Taminator-*.AppImage
-      
-      # Run
-      ./Taminator-*.AppImage
-      ```
-      
-      ### Documentation
-      
-      - [README](https://gitlab.cee.redhat.com/jbyrd/taminator/-/blob/${CI_COMMIT_TAG}/README.md)
-      - [Getting Started](https://gitlab.cee.redhat.com/jbyrd/taminator/-/blob/${CI_COMMIT_TAG}/GETTING-STARTED.md)
-      - [Installation Guide](https://gitlab.cee.redhat.com/jbyrd/taminator/-/blob/${CI_COMMIT_TAG}/INSTALLATION-GUIDE-V1.10.0.md)
-      
-      Built with ❤️ on MiracleMax
-    assets:
-      links:
-        - name: 'Linux x86_64 AppImage'
-          url: 'https://gitlab.cee.redhat.com/jbyrd/taminator/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/gui/dist/Taminator-${CI_COMMIT_TAG#v}-x86_64.AppImage?job=build:linux:x64'
-        - name: 'Linux ARM64 AppImage'
-          url: 'https://gitlab.cee.redhat.com/jbyrd/taminator/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/gui/dist/Taminator-${CI_COMMIT_TAG#v}-arm64.AppImage?job=build:linux:arm64'
-  
-  only:
-    - tags
-
-# Test pipeline (runs on branches, not tags)
-test:pipeline:
-  stage: build
-  tags:
-    - miraclemax
-  image: node:${NODE_VERSION}
-  
-  script:
-    - echo "Pipeline test successful on MiracleMax"
-    - node --version
-    - npm --version
-    - cd gui
-    - npm ci
-    - echo "Dependencies installed successfully"
-  
+    - mkdocs build
   except:
-    - tags
+    - main
+
+# Deploy to GitHub Pages (main branch only)
+deploy_github_pages:
+  stage: deploy
+  script:
+    - mkdocs build
+    # Configure git for deployment
+    - git config --global user.email "ci@taminator.dev"
+    - git config --global user.name "Taminator CI"
+    # Add GitHub remote with token
+    - git remote add github-deploy https://${GITHUB_TOKEN}@github.com/thebyrdman-git/taminator.git
+    # Deploy to GitHub Pages
+    - mkdocs gh-deploy --force --remote-name github-deploy --remote-branch gh-pages
+  only:
+    - main
+  # Requires: GitHub token with repo permissions
+  # Set in GitLab: Settings → CI/CD → Variables
+  # Variable: GITHUB_TOKEN
