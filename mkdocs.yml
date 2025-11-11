@@ -13,6 +13,8 @@ edit_uri: -/edit/main/docs-site/
 # Theme Configuration (Red Hat style, matching ansai.dev)
 theme:
   name: material
+  logo: assets/images/logo.png
+  favicon: assets/images/logo.png
   palette:
     # Red Hat color scheme
     - media: "(prefers-color-scheme: light)"
