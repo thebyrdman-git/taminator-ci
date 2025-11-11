@@ -1,16 +1,16 @@
-# Taminator Intelligence v2.1 - AI-Augmented TAM Assistant 🧠
+# TAMINATOR v2.1.1 - AI-Augmented TAM Assistant 🧠
 
-**The Skynet TAMs Actually Want - Now with Intelligence**
+**The Skynet TAMs Actually Want**
 
 ---
 
-## What is Taminator?
+## What is TAMINATOR?
 
-Taminator is a professional desktop application for Red Hat TAMs (Technical Account Managers) that combines RFE/Bug tracking automation with AI-augmented email intelligence.
+TAMINATOR is a professional desktop application for Red Hat TAMs (Technical Account Managers) that combines RFE/Bug tracking automation with AI-augmented email intelligence.
 
-**Built by TAMs, for TAMs** - with AI intelligence in v2.1.
+**Built by TAMs, for TAMs** - with AI intelligence.
 
-**Version**: 2.0.0  
+**Version**: 2.1.1  
 **Architecture**: Container-First (AAP EE Philosophy) + Desktop GUI  
 **CI/CD**: Hybrid (GitHub Actions + MiracleMax Self-Hosted)  
 **Status**: Production Ready

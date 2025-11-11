@@ -1,7 +1,7 @@
 {
   "name": "taminator-gui",
   "version": "2.1.1",
-  "description": "Taminator Intelligence - AI-Augmented TAM Assistant",
+  "description": "TAMINATOR - AI-Augmented TAM Assistant",
   "homepage": "https://gitlab.cee.redhat.com/jbyrd/taminator",
   "repository": {
     "type": "git",
