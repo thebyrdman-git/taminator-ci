@@ -6,7 +6,7 @@
 
 ## Overview
 
-Taminator Intelligence uses **pattern-based AI analysis** to extract structured information from unstructured emails. Unlike external AI services, Taminator runs **100% offline** using local pattern matching and keyword analysis.
+TAMINATOR uses **pattern-based AI analysis** to extract structured information from unstructured emails. Unlike external AI services, TAMINATOR runs **100% offline** using local pattern matching and keyword analysis.
 
 !!! success "Red Hat Policy Compliant"
     - ✅ No external API calls

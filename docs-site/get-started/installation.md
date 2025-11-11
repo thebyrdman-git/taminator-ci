@@ -128,7 +128,7 @@ cat > ~/.local/share/applications/taminator.desktop << 'EOF'
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Taminator Intelligence
+Name=TAMINATOR
 Comment=AI-Augmented TAM Assistant
 Exec=/home/YOUR_USERNAME/Applications/Taminator-2.0.0.AppImage
 Icon=taminator
@@ -194,7 +194,7 @@ open Taminator-2.0.0.dmg
 
 #### Step 3: Launch
 
-- From Start Menu: "Taminator Intelligence"
+- From Start Menu: "TAMINATOR"
 - From Desktop: Double-click Taminator icon
 
 ---
@@ -345,5 +345,5 @@ Database and settings automatically migrate to new versions.
 
 ---
 
-**Welcome to the Taminator Intelligence community!** 🎉
+**Welcome to the TAMINATOR community!** 🎉
 

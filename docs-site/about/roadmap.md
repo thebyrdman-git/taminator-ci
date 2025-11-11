@@ -1,6 +1,6 @@
 # Roadmap
 
-**Taminator Intelligence Development Roadmap**
+**TAMINATOR Development Roadmap**
 
 !!! info "Status Legend"
     - ✅ **Available** - Shipped and ready to use

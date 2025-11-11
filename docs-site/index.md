@@ -1,4 +1,4 @@
-# Taminator Intelligence
+# TAMINATOR
 
 **The Skynet TAMs Actually Want** 🤖✅
 
@@ -40,9 +40,9 @@
 
 ---
 
-## What is Taminator?
+## What is TAMINATOR?
 
-Taminator Intelligence is an **AI-augmented TAM assistant** that combines RFE/Bug tracking automation with intelligent email analysis. Built by TAMs, for TAMs, with AI intelligence embedded.
+TAMINATOR is an **AI-augmented TAM assistant** that combines RFE/Bug tracking automation with intelligent email analysis. Built by TAMs, for TAMs, with AI intelligence embedded.
 
 ### Key Features
 
