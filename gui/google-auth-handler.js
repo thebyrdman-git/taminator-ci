@@ -1,6 +1,6 @@
 /**
  * Google OAuth Handler for Electron Desktop App
- * 
+ *
  * Flow:
  * 1. User clicks "Sign In with Google" in Electron app
  * 2. Electron calls API to get OAuth URL
@@ -22,7 +22,7 @@ class GoogleAuthHandler {
 
     /**
      * Start Google Sign-In flow
-     * 
+     *
      * Opens browser for authentication, then polls for completion
      */
     async signIn() {
@@ -219,6 +219,8 @@ let googleAuth = null;
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    // TaminatorAPI is loaded from api-client.js
+    /* global TaminatorAPI */
     const api = new TaminatorAPI();
     googleAuth = new GoogleAuthHandler(api);
 

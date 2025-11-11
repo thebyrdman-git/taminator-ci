@@ -1,6 +1,6 @@
 /**
  * Service Manager - Auto-start/stop Taminator API Service
- * 
+ *
  * Production-grade service lifecycle management:
  * - Auto-starts service when GUI launches
  * - Health checks before declaring ready
@@ -19,7 +19,7 @@ class ServiceManager {
     this.serviceUrl = 'http://127.0.0.1:8765';
     this.maxStartupTime = 30000; // 30 seconds
     this.healthCheckInterval = null;
-    
+
     // Watchdog configuration
     this.watchdogEnabled = true;
     this.restartAttempts = 0;
@@ -69,7 +69,7 @@ class ServiceManager {
     this.serviceProcess.on('exit', (code, signal) => {
       console.log(`[ServiceManager] Service exited (code: ${code}, signal: ${signal})`);
       this.serviceProcess = null;
-      
+
       // Watchdog: Auto-restart on unexpected exit
       if (this.watchdogEnabled && code !== 0 && code !== null) {
         this._handleCrash(code, signal);
@@ -113,7 +113,7 @@ class ServiceManager {
   /**
    * Check if service is healthy
    * Returns a promise that resolves to true if healthy, false otherwise
-   * 
+   *
    * Uses /health/live for fast startup checks (no expensive AI/rhcase checks)
    */
   isHealthy() {
@@ -153,7 +153,7 @@ class ServiceManager {
       }
 
       // Wait before next check
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      await new Promise(resolve => { setTimeout(resolve, pollInterval); });
     }
 
     throw new Error('Service failed to become healthy within timeout');
@@ -225,15 +225,15 @@ class ServiceManager {
 
     this.healthCheckInterval = setInterval(async () => {
       const now = Date.now();
-      
+
       // Debounce: Skip if last check was too recent
       if (now - lastCheckTime < debounceMs) {
         return;
       }
-      
+
       lastCheckTime = now;
       const healthy = await this.isHealthy();
-      
+
       if (!healthy && onUnhealthy) {
         console.log('[ServiceManager] ⚠️  Service became unhealthy');
         onUnhealthy();
@@ -258,7 +258,7 @@ class ServiceManager {
     // Check if we should restart
     if (!this._shouldRestart()) {
       console.error('[ServiceManager] 🛑 Max restart attempts reached. Service will not auto-restart.');
-      
+
       // Notify user
       if (this.onCrashCallback) {
         this.onCrashCallback({
@@ -268,7 +268,7 @@ class ServiceManager {
           attempts: this.restartAttempts
         });
       }
-      
+
       return;
     }
 
@@ -281,15 +281,15 @@ class ServiceManager {
     console.log(`[ServiceManager] Waiting ${backoffDelay/1000}s before restart (attempt ${this.restartAttempts}/${this.maxRestartAttempts})`);
 
     // Wait before restarting
-    await new Promise(resolve => setTimeout(resolve, backoffDelay));
+    await new Promise(resolve => { setTimeout(resolve, backoffDelay); });
 
     // Attempt restart
     try {
       console.log(`[ServiceManager] Restart attempt ${this.restartAttempts}/${this.maxRestartAttempts}`);
       await this.start();
-      
+
       console.log('[ServiceManager] ✅ Service restarted successfully');
-      
+
       // Notify user of successful recovery
       if (this.onCrashCallback) {
         this.onCrashCallback({
@@ -297,18 +297,18 @@ class ServiceManager {
           attempts: this.restartAttempts
         });
       }
-      
+
     } catch (error) {
       console.error('[ServiceManager] ❌ Restart failed:', error);
-      
+
       // Exponential backoff for retry attempts
       const backoffDelay = Math.min(
         1000 * Math.pow(2, this.restartAttempts) + Math.random() * 1000,
         30000 // Max 30 seconds
       );
-      
+
       console.log(`[ServiceManager] ⏱️ Waiting ${Math.round(backoffDelay/1000)}s before next attempt...`);
-      
+
       // Wait before notifying (allows for retry)
       setTimeout(() => {
         // Notify user of failed restart

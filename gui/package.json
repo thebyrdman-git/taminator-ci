@@ -1,6 +1,6 @@
 {
   "name": "taminator-gui",
-  "version": "2.0.1",
+  "version": "2.1.1",
   "description": "Taminator Intelligence - AI-Augmented TAM Assistant",
   "homepage": "https://gitlab.cee.redhat.com/jbyrd/taminator",
   "repository": {
@@ -16,7 +16,16 @@
     "build:mac": "electron-builder --mac",
     "dev": "electron . --dev",
     "test:oobe": "node test-oobe-simulator.js",
-    "test:oobe:interactive": "node test-oobe-interactive.js"
+    "test:oobe:interactive": "node test-oobe-interactive.js",
+    "lint": "eslint 'public/js/**/*.js' main.js service-manager.js api-client.js google-auth-handler.js oobe-state.js",
+    "lint:fix": "eslint 'public/js/**/*.js' main.js service-manager.js api-client.js google-auth-handler.js oobe-state.js --fix",
+    "prepare": "cd .. && husky gui/.husky"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
   },
   "author": "Jimmy Byrd",
   "license": "ISC",
@@ -31,6 +40,7 @@
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8",
     "electron-builder-squirrel-windows": "^25.1.8",
+    "eslint": "^9.39.1",
     "globals": "^16.5.0"
   },
   "build": {

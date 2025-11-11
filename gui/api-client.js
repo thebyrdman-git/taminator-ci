@@ -1,6 +1,6 @@
 /**
  * Taminator API Client - Frontend SDK
- * 
+ *
  * Production-grade API client for GUI:
  * - Structured requests/responses
  * - Automatic error handling
@@ -60,7 +60,7 @@ class TaminatorAPI {
       if (error instanceof TaminatorAPIError) {
         throw error;
       }
-      
+
       // Network or connection errors
       if (error.message.includes('fetch')) {
         throw new TaminatorAPIError(

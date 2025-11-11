@@ -56,14 +56,14 @@ class OOBEStateManager {
       if (fs.existsSync(OOBE_STATE_FILE)) {
         const data = fs.readFileSync(OOBE_STATE_FILE, 'utf8');
         const state = JSON.parse(data);
-        
+
         // Merge with defaults to handle version upgrades
         return { ...DEFAULT_OOBE_STATE, ...state };
       }
     } catch (error) {
       console.warn('[OOBE] Could not load state, using defaults:', error.message);
     }
-    
+
     return { ...DEFAULT_OOBE_STATE };
   }
 
@@ -76,14 +76,14 @@ class OOBEStateManager {
       if (!fs.existsSync(OOBE_DIR)) {
         fs.mkdirSync(OOBE_DIR, { recursive: true });
       }
-      
+
       // Write state file
       fs.writeFileSync(
         OOBE_STATE_FILE,
         JSON.stringify(this.state, null, 2),
         'utf8'
       );
-      
+
       return true;
     } catch (error) {
       console.error('[OOBE] Could not save state:', error.message);
@@ -95,7 +95,7 @@ class OOBEStateManager {
    * Mark a specific step as completed
    */
   completeStep(stepName) {
-    if (this.state.steps.hasOwnProperty(stepName)) {
+    if (Object.prototype.hasOwnProperty.call(this.state.steps, stepName)) {
       this.state.steps[stepName] = true;
       this.saveState();
     }
@@ -143,7 +143,7 @@ class OOBEStateManager {
    */
   resetState() {
     this.state = { ...DEFAULT_OOBE_STATE };
-    
+
     // Delete the state file
     try {
       if (fs.existsSync(OOBE_STATE_FILE)) {
@@ -152,7 +152,7 @@ class OOBEStateManager {
     } catch (error) {
       console.error('[OOBE] Could not delete state file:', error.message);
     }
-    
+
     return true;
   }
 
