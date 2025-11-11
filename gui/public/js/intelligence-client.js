@@ -311,7 +311,7 @@ class IntelligenceClient {
     }
   }
 
-  saveForLater(intelligence) {
+  saveForLater(_intelligence) {
     alert('Intelligence saved! View in History.');
   }
 }

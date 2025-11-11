@@ -1,0 +1,61 @@
+
+> taminator-gui@2.1.1 lint
+> eslint 'public/js/**/*.js' main.js service-manager.js api-client.js google-auth-handler.js oobe-state.js
+
+
+/home/jbyrd/TAMINATOR/gui/main.js
+   181:40  warning  Async arrow function has no 'await' expression                                           require-await
+   186:42  warning  Async arrow function has no 'await' expression                                           require-await
+   191:45  warning  Async arrow function has no 'await' expression                                           require-await
+   224:46  warning  Async arrow function has no 'await' expression                                           require-await
+   231:43  warning  Async arrow function has no 'await' expression                                           require-await
+   238:62  warning  Async arrow function has no 'await' expression                                           require-await
+   246:69  warning  Async arrow function has no 'await' expression                                           require-await
+   254:62  warning  Async arrow function has no 'await' expression                                           require-await
+   262:42  warning  Async arrow function has no 'await' expression                                           require-await
+   276:44  warning  Async arrow function has no 'await' expression                                           require-await
+   290:47  warning  Async arrow function has no 'await' expression                                           require-await
+   299:60  warning  Async arrow function has no 'await' expression                                           require-await
+   322:13  warning  'responseData' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   378:62  warning  Async arrow function has no 'await' expression                                           require-await
+   414:13  warning  'responseData' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+   550:41  warning  'event' is defined but never used. Allowed unused args must match /^_/u                  no-unused-vars
+   550:48  warning  Async arrow function has no 'await' expression                                           require-await
+   692:64  warning  Async arrow function has no 'await' expression                                           require-await
+   694:11  warning  'cliPath' is assigned a value but never used. Allowed unused vars must match /^_/u       no-unused-vars
+   722:39  warning  Async arrow function has no 'await' expression                                           require-await
+   747:13  warning  'klistOutput' is assigned a value but never used. Allowed unused vars must match /^_/u   no-unused-vars
+   749:14  warning  'e' is defined but never used                                                            no-unused-vars
+   781:46  warning  'event' is defined but never used. Allowed unused args must match /^_/u                  no-unused-vars
+   781:53  warning  'issueData' is defined but never used. Allowed unused args must match /^_/u              no-unused-vars
+   781:64  warning  Async arrow function has no 'await' expression                                           require-await
+   800:9   warning  'stdout' is assigned a value but never used. Allowed unused vars must match /^_/u        no-unused-vars
+   811:29  warning  'code' is defined but never used. Allowed unused args must match /^_/u                   no-unused-vars
+   844:50  warning  Async arrow function has no 'await' expression                                           require-await
+   899:57  warning  Async arrow function has no 'await' expression                                           require-await
+   923:52  warning  Async arrow function has no 'await' expression                                           require-await
+   980:53  warning  Async arrow function has no 'await' expression                                           require-await
+  1020:51  warning  Async arrow function has no 'await' expression                                           require-await
+  1069:56  warning  Async arrow function has no 'await' expression                                           require-await
+  1146:43  warning  'event' is defined but never used. Allowed unused args must match /^_/u                  no-unused-vars
+  1146:50  warning  Async arrow function has no 'await' expression                                           require-await
+  1253:64  warning  Async arrow function has no 'await' expression                                           require-await
+  1299:57  warning  Async arrow function has no 'await' expression                                           require-await
+  1344:71  warning  Async arrow function has no 'await' expression                                           require-await
+  1392:54  warning  Async arrow function has no 'await' expression                                           require-await
+
+/home/jbyrd/TAMINATOR/gui/public/js/error-dialog.js
+  333:20  warning  'text' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/jbyrd/TAMINATOR/gui/public/js/error-handler.js
+  407:25  warning  'errorMessage' is assigned a value but never used. Allowed unused args must match /^_/u  no-unused-vars
+  419:50  warning  'errorMessage' is assigned a value but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/jbyrd/TAMINATOR/gui/public/js/intelligence-client.js
+  314:16  warning  'intelligence' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/jbyrd/TAMINATOR/gui/public/js/startup-splash.js
+  159:15  warning  'progress' is assigned a value but never used. Allowed unused vars must match /^_/u  no-unused-vars
+
+✖ 44 problems (0 errors, 44 warnings)
+

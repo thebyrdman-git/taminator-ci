@@ -61,7 +61,7 @@ class GoogleAuthHandler {
     /**
      * Poll API until authentication is complete
      */
-    async pollForCompletion() {
+    pollForCompletion() {
         return new Promise((resolve, reject) => {
             let attempts = 0;
             const maxAttempts = 60; // 2 minutes (60 * 2 seconds)

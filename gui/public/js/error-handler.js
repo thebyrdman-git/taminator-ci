@@ -404,7 +404,7 @@ class ErrorHandler {
     /**
      * Wrap async function with automatic error handling
      */
-    async wrap(asyncFn, errorMessage = 'Operation failed') {
+    async wrap(asyncFn, _errorMessage = 'Operation failed') {
         try {
             return await asyncFn();
         } catch (error) {
@@ -416,7 +416,7 @@ class ErrorHandler {
     /**
      * Wrap async function with retry logic
      */
-    async wrapWithRetry(asyncFn, maxRetries = 3, errorMessage = 'Operation failed') {
+    async wrapWithRetry(asyncFn, maxRetries = 3, _errorMessage = 'Operation failed') {
         let lastError;
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {

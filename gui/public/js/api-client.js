@@ -84,7 +84,7 @@ class TaminatorApiClient {
    * Check service health
    * @returns {Promise<object>} - Health status
    */
-  async health() {
+  health() {
     return this._request('/health');
   }
 
@@ -92,7 +92,7 @@ class TaminatorApiClient {
    * Get detailed service info
    * @returns {Promise<object>} - Service info
    */
-  async info() {
+  info() {
     return this._request('/info');
   }
 
@@ -104,7 +104,7 @@ class TaminatorApiClient {
    * List all customers
    * @returns {Promise<Array>} - Array of customers
    */
-  async listCustomers() {
+  listCustomers() {
     return this._request('/api/customers/');
   }
 
@@ -113,7 +113,7 @@ class TaminatorApiClient {
    * @param {string} customerId - Customer slug
    * @returns {Promise<object>} - Customer data
    */
-  async getCustomer(customerId) {
+  getCustomer(customerId) {
     return this._request(`/api/customers/${customerId}`);
   }
 
@@ -122,7 +122,7 @@ class TaminatorApiClient {
    * @param {object} customer - Customer data
    * @returns {Promise<object>} - Created customer
    */
-  async createCustomer(customer) {
+  createCustomer(customer) {
     return this._request('/api/customers', {
       method: 'POST',
       body: JSON.stringify(customer)
@@ -134,7 +134,7 @@ class TaminatorApiClient {
    * @param {string} customerId - Customer slug
    * @returns {Promise<void>}
    */
-  async deleteCustomer(customerId) {
+  deleteCustomer(customerId) {
     return this._request(`/api/customers/${customerId}`, {
       method: 'DELETE'
     });
@@ -145,7 +145,7 @@ class TaminatorApiClient {
    * @param {string} customerId - Customer slug
    * @returns {Promise<object>} - Customer stats
    */
-  async getCustomerStats(customerId) {
+  getCustomerStats(customerId) {
     return this._request(`/api/customers/${customerId}/stats`);
   }
 
@@ -158,7 +158,7 @@ class TaminatorApiClient {
    * @param {string} customerId - Customer slug
    * @returns {Promise<Array>} - Array of issues
    */
-  async checkJira(customerId) {
+  checkJira(customerId) {
     return this._request(`/api/jira/${customerId}/check`);
   }
 
@@ -167,7 +167,7 @@ class TaminatorApiClient {
    * @param {string} customerId - Customer slug
    * @returns {Promise<object>} - Update result
    */
-  async updateJira(customerId) {
+  updateJira(customerId) {
     return this._request(`/api/jira/${customerId}/update`, {
       method: 'POST'
     });
@@ -178,7 +178,7 @@ class TaminatorApiClient {
    * @param {string} customerId - Customer slug
    * @returns {Promise<Array>} - Array of issues
    */
-  async listIssues(customerId) {
+  listIssues(customerId) {
     return this._request(`/api/jira/${customerId}/issues`);
   }
 
@@ -192,7 +192,7 @@ class TaminatorApiClient {
    * @param {string} format - Report format (html, markdown, pdf)
    * @returns {Promise<object>} - Post result with URL
    */
-  async postToPortal(customerId, format = 'html') {
+  postToPortal(customerId, format = 'html') {
     return this._request(`/api/portal/${customerId}/post`, {
       method: 'POST',
       body: JSON.stringify({ format })
@@ -205,7 +205,7 @@ class TaminatorApiClient {
    * @param {string} format - Report format
    * @returns {Promise<object>} - Preview data
    */
-  async previewPortal(customerId, format = 'html') {
+  previewPortal(customerId, format = 'html') {
     return this._request(`/api/portal/${customerId}/preview?format=${format}`);
   }
 }

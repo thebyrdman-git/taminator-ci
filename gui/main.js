@@ -3,6 +3,8 @@
  * Electron main process that creates the application window
  */
 
+/* eslint-disable require-await */  // IPC handlers are intentionally async for consistent API
+
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
@@ -11,10 +13,9 @@ const { ServiceManager } = require('./service-manager');
 
 let mainWindow;
 let logsWindow;
-let serviceManager;
 
 // Initialize service manager
-serviceManager = new ServiceManager();
+const serviceManager = new ServiceManager();
 
 /**
  * Get the path to the bundled tam-rfe CLI
@@ -138,7 +139,7 @@ function createWindow() {
   });
 
   // Log console messages from renderer (in dev mode)
-  mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+  mainWindow.webContents.on('console-message', (event, level, message, _line, _sourceId) => {
     if (process.argv.includes('--dev')) {
       console.log(`[Renderer]: ${message}`);
     }
@@ -320,10 +321,10 @@ ipcMain.handle('oobe-test-jira-token', async (event, data) => {
       };
 
       const req = https.request(options, (res) => {
-        let responseData = '';
+        let _responseData = '';
 
         res.on('data', (chunk) => {
-          responseData += chunk;
+          _responseData += chunk;
         });
 
         res.on('end', () => {
@@ -412,10 +413,10 @@ ipcMain.handle('oobe-test-portal-token', async (event, data) => {
       };
 
       const req = https.request(options, (res) => {
-        let responseData = '';
+        let _responseData = '';
 
         res.on('data', (chunk) => {
-          responseData += chunk;
+          _responseData += chunk;
         });
 
         res.on('end', () => {
@@ -548,7 +549,7 @@ ipcMain.handle('oobe-save-manual-tokens', async (event, tokens) => {
  * Load Dashboard data - Production Architecture
  * Now uses API service instead of CLI spawning
  */
-ipcMain.handle('dashboard-load', async (event) => {
+ipcMain.handle('dashboard-load', async (_event) => {
   console.log('[Dashboard] Loading customer data via API...');
 
   try {
@@ -692,7 +693,7 @@ app.on('before-quit', () => {
 // IPC handlers for CLI integration
 ipcMain.handle('run-cli-command', async (event, command, args) => {
   return new Promise((resolve, reject) => {
-    const cliPath = path.join(__dirname, '../src/taminator');
+    const _cliPath = path.join(__dirname, '../src/taminator');
     const process = spawn('python3', ['-m', 'taminator', command, ...args], {
       cwd: path.join(__dirname, '..'),
       env: { ...process.env, PYTHONPATH: path.join(__dirname, '../src') }
@@ -745,9 +746,9 @@ ipcMain.handle('check-auth', async () => {
 
     // Check Kerberos ticket
     try {
-      const klistOutput = execSync('klist -s 2>/dev/null', { timeout: 1000 });
+      execSync('klist -s 2>/dev/null', { timeout: 1000 });
       result.kerberos = true;  // klist -s exits 0 if valid ticket exists
-    } catch (e) {
+    } catch {
       result.kerberos = false;
     }
 
@@ -779,7 +780,7 @@ ipcMain.handle('check-auth', async () => {
 });
 
 // GitHub issue submission handler
-ipcMain.handle('submit-github-issue', async (event, issueData) => {
+ipcMain.handle('submit-github-issue', async (_event, _issueData) => {
   return new Promise((resolve) => {
     const args = ['report-issue'];
 
@@ -798,18 +799,18 @@ ipcMain.handle('submit-github-issue', async (event, issueData) => {
     // Send issue data via stdin (if command supported it)
     // For now, we'll simulate success
 
-    let stdout = '';
+    let _stdout = '';
     let stderr = '';
 
     cliProcess.stdout.on('data', (data) => {
-      stdout += data.toString();
+      _stdout += data.toString();
     });
 
     cliProcess.stderr.on('data', (data) => {
       stderr += data.toString();
     });
 
-    cliProcess.on('close', (code) => {
+    cliProcess.on('close', (_code) => {
       // For demo purposes, simulate successful submission
       // In production, this would actually call the GitHub API via the CLI
 
@@ -1144,7 +1145,7 @@ ipcMain.handle('onboard-discover', async (event, data) => {
 });
 
 // Onboard generate handler - calls tam-rfe onboard to generate config
-ipcMain.handle('onboard-generate', async (event) => {
+ipcMain.handle('onboard-generate', async (_event) => {
   console.log('[Onboard Generate] Generating onboarding configuration');
 
   return new Promise((resolve, reject) => {

@@ -189,7 +189,7 @@ class ServiceManager {
    * Get service health status
    * Returns health data or null if unhealthy
    */
-  async getHealth() {
+  getHealth() {
     return new Promise((resolve) => {
       const req = http.get(`${this.serviceUrl}/health`, { timeout: 2000 }, (res) => {
         let data = '';

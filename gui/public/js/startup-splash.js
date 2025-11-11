@@ -156,7 +156,6 @@ class StartupSplash {
     }
 
     simulateProgress() {
-        const progress = 0;
         const steps = [
             { progress: 20, message: 'Loading configuration...', delay: 300 },
             { progress: 40, message: 'Starting API service...', delay: 800 },

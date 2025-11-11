@@ -330,7 +330,7 @@ ${context}
     return report;
   }
 
-  _copyToClipboard(text) {
+  _copyToClipboard(_text) {
     const textarea = document.getElementById('error-report-text');
     textarea.select();
 
