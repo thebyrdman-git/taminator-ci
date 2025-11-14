@@ -42,12 +42,11 @@ jobs:
         
       - name: Run ESLint
         working-directory: gui
-        run: |
-          npx eslint public/js/intelligence-client.js \
-                      public/js/error-handler.js \
-                      public/js/error-dialog.js \
-                      public/js/loading-states.js \
-                      public/js/api-client.js || true
+        run: npm run lint
+        
+      - name: Run Jest Tests
+        working-directory: gui
+        run: npm test -- --passWithNoTests
         
       - name: Check version consistency
         run: |
@@ -336,4 +335,7 @@ jobs:
           echo "- macOS ZIP: ✅" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Release available at: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+
+
+
 
