@@ -149,10 +149,13 @@ gui/dist/
 *.msi
 *.pkg
 
-# Exception: Allow release files in releases/ directory (tracked by Git LFS)
+# Exception: Allow release files in releases/ and release/ directories (tracked by Git LFS)
 !releases/**/*.AppImage
 !releases/**/*.dmg
 !releases/**/*.exe
+!release/**/*.AppImage
+!release/**/*.dmg
+!release/**/*.exe
 
 # ========================================
 # Backup Files
