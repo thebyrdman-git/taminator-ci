@@ -1,4 +1,4 @@
-# Taminator CI/CD Release Workflow
+# Taminator CI/CD Release Workflow  
 # Automatically builds for Linux and macOS when a tag is pushed
 name: Release Build
 
