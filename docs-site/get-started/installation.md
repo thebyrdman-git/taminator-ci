@@ -104,8 +104,8 @@ firefox http://localhost:8080
 
 #### Step 1: Download
 
-1. Connect to Red Hat VPN
-2. Go to [GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases) or [GitHub Public](https://github.com/thebyrdman-git/taminator-ci/releases/tag/v2.1.2)
+1. **Connect to Red Hat VPN** (required)
+2. Go to **[GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases)**
 3. Download latest AppImage:
    - `Taminator-2.1.2.AppImage` (x86_64)
 
@@ -155,8 +155,8 @@ update-desktop-database ~/.local/share/applications/
 
 #### Step 1: Download
 
-1. Connect to Red Hat VPN
-2. Go to [GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases) or [GitHub Public](https://github.com/thebyrdman-git/taminator-ci/releases/tag/v2.1.2)
+1. **Connect to Red Hat VPN** (required)
+2. Go to **[GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases)**
 3. Download DMG:
    - `Taminator-2.1.2.dmg` (Universal)
 
@@ -186,12 +186,13 @@ open Taminator-2.1.2.dmg
 
 !!! info "Windows Builds"
     Windows builds are available in CI/CD but not yet released for v2.1.2.
-    Check [GitHub Releases](https://github.com/thebyrdman-git/taminator-ci/releases) for updates.
+    Check [GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases) for updates.
 
 #### Step 1: Download
 
-1. Go to [GitHub Releases](https://github.com/thebyrdman-git/taminator-ci/releases)
-2. Download: `Taminator Setup 2.1.2.exe` (when available)
+1. **Connect to Red Hat VPN** (required)
+2. Go to **[GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases)**
+3. Download: `Taminator Setup 2.1.2.exe` (when available)
 
 #### Step 2: Install
 

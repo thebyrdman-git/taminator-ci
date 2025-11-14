@@ -9,10 +9,11 @@ Official release artifacts for TAMINATOR.
 
 ### Download
 
-**Recommended:** Download from GitHub Release (includes all platforms):
-- **GitHub:** https://github.com/thebyrdman-git/taminator-ci/releases/tag/v2.1.2
+**Official Release (Red Hat Internal):**
+- **GitLab CEE:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases
+- Requires Red Hat VPN connection
 
-**Local Artifacts:**
+**Local Artifacts (this repo):**
 - [Taminator-2.1.2.AppImage](v2.1.2/Taminator-2.1.2.AppImage) (135 MB)
 - [Taminator-2.1.2.dmg](v2.1.2/Taminator-2.1.2.dmg) (130 MB)
 
@@ -47,37 +48,36 @@ Official release artifacts for TAMINATOR.
 
 **Linux (AppImage):**
 ```bash
-# Download from GitHub
-wget https://github.com/thebyrdman-git/taminator-ci/releases/download/v2.1.2/Taminator-2.1.2.AppImage
-
-# Make executable
+# Connect to Red Hat VPN first
+# Download from GitLab CEE Releases page
+# Or use local artifact:
 chmod +x Taminator-2.1.2.AppImage
-
-# Run
 ./Taminator-2.1.2.AppImage
 ```
 
 **macOS (DMG):**
 ```bash
-# Download from GitHub
-wget https://github.com/thebyrdman-git/taminator-ci/releases/download/v2.1.2/Taminator-2.1.2.dmg
-
-# Open and install
+# Connect to Red Hat VPN first
+# Download from GitLab CEE Releases page
+# Or use local artifact:
 open Taminator-2.1.2.dmg
-
+# Drag to Applications
 # First run: Right-click → Open (bypass Gatekeeper)
 ```
 
 **Note:** v2.1.2 is a preview release. Backend service not bundled. Wait for v2.1.3 for full functionality.
 
+**Download from:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases (requires VPN)
+
 ### Verify Checksums
 
 ```bash
-# Download checksums
-wget https://github.com/thebyrdman-git/taminator-ci/releases/download/v2.1.2/SHA256SUMS
-
-# Verify
+# Download from GitLab CEE or use local checksums
 sha256sum -c SHA256SUMS
+
+# Or verify manually
+sha256sum Taminator-2.1.2.AppImage
+# Should match: e4c5073857b1a3d66bc2ee1df7e5f2ebc77d16d21cf9e2448f11aeee859ad844
 ```
 
 ### System Requirements
@@ -117,8 +117,9 @@ sha256sum -c SHA256SUMS
 ---
 
 **Philosophy:** Container-First + Everything-as-Code + Automation-First  
-**CI/CD:** GitHub Actions (free unlimited!)  
-**Documentation:** https://taminator.dev
+**Distribution:** GitLab CEE (Red Hat Internal)  
+**Documentation:** https://taminator.dev  
+**CI/CD:** Hybrid (GitLab CEE + GitHub Actions)
 
 🚀 **The Skynet TAMs Actually Want™**
 
