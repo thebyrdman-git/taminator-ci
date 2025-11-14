@@ -341,3 +341,6 @@ For users, continue using v2.0.1 binaries (fully compatible).
 **Created:** November 11, 2025  
 **Status:** Ready to create GitLab release (Option 1 recommended)
 
+
+
+

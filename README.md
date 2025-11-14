@@ -10,7 +10,7 @@ TAMINATOR is a professional desktop application for Red Hat TAMs (Technical Acco
 
 **Built by TAMs, for TAMs** - with AI intelligence.
 
-**Version**: 2.1.2  
+**Version**: 2.1.2 (CI/CD Preview - Backend bundling in v2.1.3)  
 **Architecture**: Container-First (AAP EE Philosophy) + Desktop GUI  
 **CI/CD**: Hybrid (GitHub Actions + MiracleMax Self-Hosted)  
 **Status**: Production Ready

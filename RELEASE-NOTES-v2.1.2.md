@@ -1,8 +1,40 @@
 # TAMINATOR v2.1.2 - Release Notes
 
 **Release Date:** November 14, 2025  
-**Type:** CI/CD & Packaging Release  
+**Type:** CI/CD & Automation Preview Release  
 **Codename:** "Everything-as-Code"
+
+---
+
+## ⚠️ Preview Release Notice
+
+**v2.1.2 is a CI/CD automation preview release.**
+
+**What Works:**
+- ✅ Complete automated build pipeline
+- ✅ Multi-platform packaging (Linux, macOS)
+- ✅ Electron GUI launches successfully
+- ✅ Zero ESLint warnings (61 → 0!)
+- ✅ Documentation site (taminator.dev)
+
+**Known Limitation:**
+- ⚠️ Backend service not bundled in AppImage
+- GUI features work, backend API unavailable
+- **Fix coming in v2.1.3** (backend bundling)
+
+**Recommended Use:**
+- Demo of CI/CD automation
+- GUI/UX testing
+- Code quality showcase
+- Development reference
+
+**For Production:**
+- Wait for v2.1.3 (backend bundling)
+- Or install backend separately via pip
+
+See `KNOWN-ISSUES-v2.1.2.md` for details.
+
+---
 
 ---
 

@@ -335,3 +335,6 @@ tar -czf taminator-docs-$(date +%Y%m%d).tar.gz site/
 5. Monitor deployment
 6. Visit https://taminator.dev 🎉
 
+
+
+
