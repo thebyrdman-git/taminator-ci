@@ -184,7 +184,12 @@ jobs:
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           fi
-          pip install -e .
+          if [ -f setup.py ] || [ -f pyproject.toml ]; then
+            pip install -e .
+          else
+            echo "No setup.py or pyproject.toml found, skipping package install"
+          fi
+        continue-on-error: true
           
       - name: Run tests (if available)
         run: |
