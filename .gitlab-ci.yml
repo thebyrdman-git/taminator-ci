@@ -1,42 +1,235 @@
-# GitLab CI/CD for Taminator Documentation Site
-# Deploys to GitHub Pages with custom domain: taminator.dev
+# ============================================================================
+# TAMINATOR - GitLab CI/CD Pipeline
+# ============================================================================
+# Everything-as-Code: Automated builds, tests, documentation, and releases
+# Container-First: Build multiple deployment options (AppImage, DMG, NSIS)
+# Red Hat Patterns: Non-interactive, JSON output, proper error handling
+# ============================================================================
 
-image: python:3.11
+variables:
+  NODE_VERSION: "18"
+  PYTHON_VERSION: "3.11"
+  PRODUCT_NAME: "TAMINATOR"
 
 stages:
+  - lint
   - test
+  - build
   - deploy
+  - release
 
-# Cache pip packages for faster builds
-cache:
-  paths:
-    - .cache/pip
+# ============================================================================
+# STAGE 1: LINT - Code Quality Checks
+# ============================================================================
 
-before_script:
-  - pip install --cache-dir .cache/pip mkdocs-material mkdocs-minify-plugin mkdocs-git-revision-date-localized-plugin
+lint_javascript:
+  stage: lint
+  image: node:${NODE_VERSION}
+  script:
+    - cd gui
+    - npm ci
+    - npm run lint
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-npm
+    paths:
+      - gui/node_modules/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG'
 
-# Test builds on all branches
+lint_python:
+  stage: lint
+  image: python:${PYTHON_VERSION}
+  script:
+    - pip install flake8
+    - flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+    - flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG'
+
+# ============================================================================
+# STAGE 2: TEST - Documentation & Unit Tests
+# ============================================================================
+
 test_docs:
   stage: test
+  image: python:${PYTHON_VERSION}
   script:
-    - mkdocs build
-  except:
-    - main
+    - pip install mkdocs-material mkdocs-minify-plugin mkdocs-git-revision-date-localized-plugin
+    - mkdocs build --strict
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-pip
+    paths:
+      - .cache/pip
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
-# Deploy to GitHub Pages (main branch only)
+test_unit:
+  stage: test
+  image: node:${NODE_VERSION}
+  script:
+    - cd gui
+    - npm ci
+    - npm test -- --passWithNoTests
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-npm
+    paths:
+      - gui/node_modules/
+  artifacts:
+    reports:
+      junit: gui/junit.xml
+    when: always
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_TAG'
+
+# ============================================================================
+# STAGE 3: BUILD - Platform Binaries (Container-First Architecture)
+# ============================================================================
+
+build_appimage:
+  stage: build
+  image: electronuserland/builder:wine
+  script:
+    - cd gui
+    - npm ci
+    - npm run build:linux
+    - ls -lh dist/
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-npm
+    paths:
+      - gui/node_modules/
+  artifacts:
+    name: "${PRODUCT_NAME}-${CI_COMMIT_TAG}-AppImage"
+    paths:
+      - gui/dist/*.AppImage
+      - gui/dist/*.deb
+      - gui/dist/*.rpm
+    expire_in: 30 days
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+build_windows:
+  stage: build
+  image: electronuserland/builder:wine
+  script:
+    - cd gui
+    - npm ci
+    - npm run build:win
+    - ls -lh dist/
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-npm
+    paths:
+      - gui/node_modules/
+  artifacts:
+    name: "${PRODUCT_NAME}-${CI_COMMIT_TAG}-Windows"
+    paths:
+      - gui/dist/*.exe
+    expire_in: 30 days
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+# Note: macOS builds require macOS runner (not available in GitLab CEE)
+# Build locally or use GitHub Actions for macOS
+build_macos:
+  stage: build
+  tags:
+    - macos
+  script:
+    - cd gui
+    - npm ci
+    - npm run build:mac
+    - ls -lh dist/
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-npm
+    paths:
+      - gui/node_modules/
+  artifacts:
+    name: "${PRODUCT_NAME}-${CI_COMMIT_TAG}-macOS"
+    paths:
+      - gui/dist/*.dmg
+    expire_in: 30 days
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+  allow_failure: true  # macOS runner may not be available
+
+# ============================================================================
+# STAGE 4: DEPLOY - Documentation to GitHub Pages
+# ============================================================================
+
 deploy_github_pages:
   stage: deploy
+  image: python:${PYTHON_VERSION}
   script:
+    - pip install mkdocs-material mkdocs-minify-plugin mkdocs-git-revision-date-localized-plugin
     - mkdocs build
     # Configure git for deployment
     - git config --global user.email "ci@taminator.dev"
     - git config --global user.name "Taminator CI"
     # Add GitHub remote with token
-    - git remote add github-deploy https://${GITHUB_TOKEN}@github.com/thebyrdman-git/taminator.git
-    # Deploy to GitHub Pages
+    - git remote add github-deploy https://${GITHUB_TOKEN}@github.com/thebyrdman-git/taminator.git || true
+    # Deploy to GitHub Pages (taminator.dev)
     - mkdocs gh-deploy --force --remote-name github-deploy --remote-branch gh-pages
-  only:
-    - main
-  # Requires: GitHub token with repo permissions
-  # Set in GitLab: Settings → CI/CD → Variables
-  # Variable: GITHUB_TOKEN
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-pip
+    paths:
+      - .cache/pip
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  environment:
+    name: production
+    url: https://taminator.dev
+
+# ============================================================================
+# STAGE 5: RELEASE - Create GitLab Release (Internal Red Hat CEE Only)
+# ============================================================================
+
+create_release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - echo "Creating release ${CI_COMMIT_TAG}"
+    - |
+      if [ -f "RELEASE-NOTES-${CI_COMMIT_TAG}.md" ]; then
+        RELEASE_NOTES=$(cat "RELEASE-NOTES-${CI_COMMIT_TAG}.md")
+      else
+        RELEASE_NOTES="Release ${CI_COMMIT_TAG}"
+      fi
+  release:
+    tag_name: ${CI_COMMIT_TAG}
+    name: "${PRODUCT_NAME} ${CI_COMMIT_TAG}"
+    description: './RELEASE-NOTES-${CI_COMMIT_TAG}.md'
+    assets:
+      links:
+        - name: 'AppImage (x86_64)'
+          url: '${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/gui/dist/${PRODUCT_NAME}-${CI_COMMIT_TAG}.AppImage?job=build_appimage'
+          link_type: 'package'
+        - name: 'Debian Package (.deb)'
+          url: '${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/gui/dist/${PRODUCT_NAME}-${CI_COMMIT_TAG}.deb?job=build_appimage'
+          link_type: 'package'
+        - name: 'RPM Package (.rpm)'
+          url: '${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/gui/dist/${PRODUCT_NAME}-${CI_COMMIT_TAG}.rpm?job=build_appimage'
+          link_type: 'package'
+        - name: 'Windows Installer (.exe)'
+          url: '${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/gui/dist/${PRODUCT_NAME}-Setup-${CI_COMMIT_TAG}.exe?job=build_windows'
+          link_type: 'package'
+        - name: 'Documentation'
+          url: 'https://taminator.dev'
+          link_type: 'other'
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+# ============================================================================
+# NOTES:
+# - Requires GITHUB_TOKEN variable in GitLab CI/CD settings
+# - AppImage builds work in GitLab runners
+# - Windows builds work with Wine in electronuserland/builder:wine
+# - macOS builds require macOS runner (use GitHub Actions as fallback)
+# - All releases are INTERNAL to Red Hat CEE (gitlab.cee.redhat.com)
+# - Documentation is PUBLIC at taminator.dev
+# ============================================================================

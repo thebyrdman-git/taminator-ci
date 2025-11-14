@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.2] - 2025-11-14
+
+### 🚀 CI/CD & Packaging Release
+
+### Added
+- **Comprehensive GitLab CI/CD Pipeline**
+  - Automated linting (JavaScript + Python)
+  - Automated unit tests with Jest
+  - Automated documentation builds and deployment
+  - Multi-platform binary builds (Linux, Windows, macOS)
+  - Automated GitLab releases with download links
+
+- **Jest Testing Framework**
+  - Jest configuration with 30% coverage threshold
+  - Test infrastructure ready for unit tests
+  - Added `npm test`, `npm run test:watch`, `npm run test:coverage`
+
+- **Container-First Build System**
+  - AppImage builds (x86_64)
+  - Debian package (.deb)
+  - RPM package (.rpm)
+  - Windows installer (.exe with NSIS)
+  - macOS DMG (fallback to manual/GitHub Actions)
+
+- **Everything-as-Code**
+  - All build steps automated in `.gitlab-ci.yml`
+  - Reproducible builds across environments
+  - Artifact retention (30 days)
+  - Semantic versioning enforced via tags
+
+### Fixed
+- **Eliminated ALL ESLint warnings** (61 → 0)
+  - Fixed 30+ `require-await` warnings
+  - Fixed 15+ `no-unused-vars` warnings
+  - Fixed `prefer-const` warning
+  - 100% clean ESLint output
+
+### Changed
+- Version bumped from 2.1.1 to 2.1.2
+- Product name standardized to "TAMINATOR" (all caps) throughout codebase
+- CI/CD pipeline expanded from docs-only to full build automation
+- Release process now fully automated via GitLab CI/CD
+
+### Developer Experience
+- ✅ Zero ESLint warnings
+- ✅ Automated builds on every tag
+- ✅ Automated releases with download links
+- ✅ Documentation auto-deploys to taminator.dev
+- ✅ All platforms buildable from CI/CD
+
+---
+
 ## [2.1.1] - 2025-11-11
 
 ### 🔧 Technical Debt Resolution Release

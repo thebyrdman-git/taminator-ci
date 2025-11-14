@@ -1,4 +1,4 @@
-# TAMINATOR v2.1.1 - AI-Augmented TAM Assistant 🧠
+# TAMINATOR v2.1.2 - AI-Augmented TAM Assistant 🧠
 
 **The Skynet TAMs Actually Want**
 
@@ -10,7 +10,7 @@ TAMINATOR is a professional desktop application for Red Hat TAMs (Technical Acco
 
 **Built by TAMs, for TAMs** - with AI intelligence.
 
-**Version**: 2.1.1  
+**Version**: 2.1.2  
 **Architecture**: Container-First (AAP EE Philosophy) + Desktop GUI  
 **CI/CD**: Hybrid (GitHub Actions + MiracleMax Self-Hosted)  
 **Status**: Production Ready

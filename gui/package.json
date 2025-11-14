@@ -1,6 +1,6 @@
 {
   "name": "taminator-gui",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "TAMINATOR - AI-Augmented TAM Assistant",
   "homepage": "https://gitlab.cee.redhat.com/jbyrd/taminator",
   "repository": {
@@ -15,6 +15,9 @@
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
     "dev": "electron . --dev",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "test:oobe": "node test-oobe-simulator.js",
     "test:oobe:interactive": "node test-oobe-interactive.js",
     "lint": "eslint 'public/js/**/*.js' main.js service-manager.js api-client.js google-auth-handler.js oobe-state.js",
