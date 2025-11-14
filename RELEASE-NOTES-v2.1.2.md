@@ -47,7 +47,7 @@ TAMINATOR v2.1.2 introduces **full automation for builds, tests, and releases**.
 **Key Features:**
 - ✅ **Automated Linting** - JavaScript (ESLint) + Python (flake8)
 - ✅ **Automated Testing** - Jest unit tests run on every commit
-- ✅ **Automated Builds** - Linux, Windows, and macOS binaries
+- ✅ **Automated Builds** - Linux and macOS binaries (Windows coming in v2.1.3)
 - ✅ **Automated Releases** - GitLab releases with download links
 - ✅ **Documentation Deployment** - Auto-deploys to [taminator.dev](https://taminator.dev)
 

@@ -16,9 +16,11 @@ Official release directory for TAMINATOR binaries.
 ## Available Versions
 
 ### v2.1.2 (Current)
-- **Linux:** [Taminator-2.1.2.AppImage](v2.1.2/Taminator-2.1.2.AppImage) (135 MB)
-- **macOS:** [Taminator-2.1.2.dmg](v2.1.2/Taminator-2.1.2.dmg) (130 MB)
+- **Linux:** [Taminator-2.1.2.AppImage](v2.1.2/Taminator-2.1.2.AppImage) (135 MB) ✅
+- **macOS:** [Taminator-2.1.2.dmg](v2.1.2/Taminator-2.1.2.dmg) (130 MB) ✅
+- **Windows:** Not available (coming in v2.1.3) ⏳
 - **Checksums:** [SHA256SUMS](v2.1.2/SHA256SUMS)
+- **Platforms:** Linux & macOS only
 - **Status:** Preview (backend not bundled)
 - **Notes:** See [RELEASE-NOTES-v2.1.2.md](../RELEASE-NOTES-v2.1.2.md)
 

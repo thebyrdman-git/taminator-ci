@@ -47,8 +47,9 @@ https://github.com/thebyrdman-git/taminator-ci/releases/tag/v2.1.2
 ```
 
 **Available Formats:**
-- Linux AppImage (135MB)
-- macOS DMG (130MB)
+- ✅ Linux AppImage (135MB)
+- ✅ macOS DMG (130MB)
+- ⏳ Windows (coming in v2.1.3)
 - SHA256 checksums
 
 **Documentation:**

@@ -23,7 +23,7 @@ Official release artifacts for TAMINATOR.
 
 🚀 **Complete CI/CD Automation:**
 - 5-stage automated pipeline (lint → test → build → deploy → release)
-- Multi-platform builds (Linux, macOS, Windows)
+- Multi-platform builds (Linux, macOS) - Windows coming in v2.1.3
 - One-command releases (`git push origin v2.1.2`)
 - 20-minute automated releases
 

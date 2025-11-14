@@ -184,8 +184,13 @@ open Taminator-2.1.2.dmg
 
 **Best for:** Windows users
 
-!!! info "Windows Builds"
-    Windows builds are available in CI/CD but not yet released for v2.1.2.
+!!! warning "Windows Not Available"
+    **Windows builds are not available for v2.1.2.**
+    
+    - ✅ Linux: Available
+    - ✅ macOS: Available
+    - ⏳ Windows: Coming in v2.1.3
+    
     Check [GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases) for updates.
 
 #### Step 1: Download
