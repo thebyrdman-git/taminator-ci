@@ -22,7 +22,7 @@
     "test:oobe:interactive": "node test-oobe-interactive.js",
     "lint": "eslint 'public/js/**/*.js' main.js service-manager.js api-client.js google-auth-handler.js oobe-state.js",
     "lint:fix": "eslint 'public/js/**/*.js' main.js service-manager.js api-client.js google-auth-handler.js oobe-state.js --fix",
-    "prepare": "cd .. && husky gui/.husky"
+    "prepare": "if [ \"$CI\" != \"true\" ]; then cd .. && husky gui/.husky; fi"
   },
   "lint-staged": {
     "*.js": [

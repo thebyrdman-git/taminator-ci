@@ -15,7 +15,7 @@ on:
         default: '2.0.1'
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   PYTHON_VERSION: '3.11'
 
 jobs:
