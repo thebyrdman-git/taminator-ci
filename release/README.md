@@ -1,96 +1,83 @@
-# Taminator Releases
+# TAMINATOR Releases
 
-Official release artifacts for Taminator Intelligence.
+Official release artifacts for TAMINATOR.
 
-## Current Release: v2.0.0
+## Current Release: v2.1.2
 
-**Release Date:** 2025-10-29  
-**Type:** Major Release - AI Intelligence Integration
+**Release Date:** 2025-11-14  
+**Type:** CI/CD & Automation Preview Release
 
 ### Download
 
-**Linux x86_64:**
-- [Taminator-2.0.0.AppImage](v2.0.0/linux/x86_64/Taminator-2.0.0.AppImage) (179 MB)
-- [taminator-gui_2.0.0_amd64.deb](v2.0.0/linux/x86_64/taminator-gui_2.0.0_amd64.deb) (142 MB)
+**Recommended:** Download from GitHub Release (includes all platforms):
+- **GitHub:** https://github.com/thebyrdman-git/taminator-ci/releases/tag/v2.1.2
 
-**Checksums:** [v2.0.0-checksums.txt](checksums/v2.0.0-checksums.txt)
+**Local Artifacts:**
+- [Taminator-2.1.2.AppImage](v2.1.2/Taminator-2.1.2.AppImage) (135 MB)
+- [Taminator-2.1.2.dmg](v2.1.2/Taminator-2.1.2.dmg) (130 MB)
 
-### What's New in v2.0.0
+**Checksums:** [SHA256SUMS](v2.1.2/SHA256SUMS)
 
-🤖 **AI-Augmented Intelligence:**
-- Email analysis and case classification
-- Automatic urgency detection
-- Contact extraction
-- Recommended actions
-- SQLite-based intelligence database
+### What's New in v2.1.2
 
-🐳 **Container-First Deployment:**
-- Podman/Docker support
-- Systemd service integration
-- Execution Environment philosophy (AAP-aligned)
+🚀 **Complete CI/CD Automation:**
+- 5-stage automated pipeline (lint → test → build → deploy → release)
+- Multi-platform builds (Linux, macOS, Windows)
+- One-command releases (`git push origin v2.1.2`)
+- 20-minute automated releases
 
-🏗️ **Self-Hosted CI/CD:**
-- MiracleMax GitLab runner integration
-- Automatic x86_64 + ARM64 builds
-- Automated release creation
+✨ **Perfect Code Quality:**
+- Eliminated ALL 61 ESLint warnings → 0
+- Pre-commit hooks enforcing quality
+- 100% clean codebase
 
-📊 **Intelligence Features:**
-- Case history tracking
-- Accuracy metrics
-- Feedback loop for learning
-- Pattern recognition
+🧪 **Testing Infrastructure:**
+- Jest framework configured
+- 30% coverage threshold set
+- Automated test execution in CI/CD
+
+⚠️ **Preview Release Notice:**
+- Backend service not bundled in AppImage
+- GUI works, backend API unavailable
+- Fix coming in v2.1.3
+
+**See:** [RELEASE-NOTES-v2.1.2.md](../RELEASE-NOTES-v2.1.2.md) for full details.
 
 ### Installation
 
-**Container (Recommended for Linux):**
+**Linux (AppImage):**
 ```bash
-# One-line install with systemd service
-curl -fsSL https://raw.githubusercontent.com/thebyrdman-git/taminator-staging/main/deployment/install.sh | bash
-
-# Or manual container deployment
-podman run -d \
-  --name taminator-intelligence \
-  --restart=unless-stopped \
-  -v ~/.taminator:/root/.taminator \
-  -p 8080:8080 \
-  registry.gitlab.cee.redhat.com/jbyrd/taminator:v2.0.0
-
-# Access at http://localhost:8080
-```
-
-**AppImage (Alternative):**
-```bash
-# Download
-wget https://github.com/thebyrdman-git/taminator-staging/releases/download/v2.0.0/Taminator-2.0.0.AppImage
+# Download from GitHub
+wget https://github.com/thebyrdman-git/taminator-ci/releases/download/v2.1.2/Taminator-2.1.2.AppImage
 
 # Make executable
-chmod +x Taminator-2.0.0.AppImage
+chmod +x Taminator-2.1.2.AppImage
 
 # Run
-./Taminator-2.0.0.AppImage
+./Taminator-2.1.2.AppImage
 ```
 
-**DEB Package (Debian/Ubuntu):**
+**macOS (DMG):**
 ```bash
-# Download
-wget https://github.com/thebyrdman-git/taminator-staging/releases/download/v2.0.0/taminator-gui_2.0.0_amd64.deb
+# Download from GitHub
+wget https://github.com/thebyrdman-git/taminator-ci/releases/download/v2.1.2/Taminator-2.1.2.dmg
 
-# Install
-sudo dpkg -i taminator-gui_2.0.0_amd64.deb
-sudo apt-get install -f  # Fix dependencies if needed
+# Open and install
+open Taminator-2.1.2.dmg
 
-# Run
-taminator
+# First run: Right-click → Open (bypass Gatekeeper)
 ```
+
+**Note:** v2.1.2 is a preview release. Backend service not bundled. Wait for v2.1.3 for full functionality.
 
 ### Verify Checksums
 
 ```bash
 # Download checksums
-wget https://github.com/thebyrdman-git/taminator-staging/releases/download/v2.0.0/v2.0.0-checksums.txt
+wget https://github.com/thebyrdman-git/taminator-ci/releases/download/v2.1.2/SHA256SUMS
 
-# Verify AppImage
-sha256sum -c v2.0.0-checksums.txt --ignore-missing
+# Verify
+sha256sum -c SHA256SUMS
 ```
 
 ### System Requirements
@@ -109,11 +96,11 @@ sha256sum -c v2.0.0-checksums.txt --ignore-missing
 
 ### Documentation
 
-- [Getting Started Guide](../GETTING-STARTED.md)
-- [Release Workflow](../docs/RELEASE-WORKFLOW.md)
-- [Container Deployment](../docs/CONTAINER-DEPLOYMENT.md)
-- [Intelligence Features](../docs/EMBEDDED-INTELLIGENCE-COMPLETE.md)
-- [Troubleshooting](../TROUBLESHOOTING.md)
+- **Website:** https://taminator.dev
+- [Release Notes](../RELEASE-NOTES-v2.1.2.md)
+- [Known Issues](../KNOWN-ISSUES-v2.1.2.md)
+- [Build Strategy](../BUILD-STRATEGY.md)
+- [Changelog](../CHANGELOG.md)
 
 ### Support
 
@@ -123,11 +110,15 @@ sha256sum -c v2.0.0-checksums.txt --ignore-missing
 
 ### Previous Releases
 
-- [v1.10.1](../docs/archive/v1.x/RELEASE-NOTES-v1.10.1.md) - Bug fixes
-- [v1.10.0](../docs/archive/v1.x/RELEASE-NOTES-v1.10.0.md) - Initial stable release
+- [v2.1.1](../RELEASE-NOTES-v2.1.1.md) - Technical Debt Resolution
+- [v2.0.0](v2.0.0/) - AI Intelligence Integration
+- [v1.10.x](v1.10.1/) - Earlier releases
 
 ---
 
-**Built with ❤️ on MiracleMax Infrastructure**  
-**Self-hosted CI/CD • Red Hat Compliant • TAM-focused**
+**Philosophy:** Container-First + Everything-as-Code + Automation-First  
+**CI/CD:** GitHub Actions (free unlimited!)  
+**Documentation:** https://taminator.dev
+
+🚀 **The Skynet TAMs Actually Want™**
 
