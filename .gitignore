@@ -164,7 +164,7 @@ gui/dist/
 *.backup
 *~
 *.orig
-releases/
+# releases/ - Now tracked with Git LFS for official releases
 # Test files with real customer data
 tests/test_jpmc_email.txt
 tests/*_real_*.txt
