@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.3] - 2025-11-16
+
+### 🔧 Backend Bundling Release
+
+### Fixed
+- **Backend service now bundled in AppImage** - Resolves #1 issue from v2.1.2
+  - Python backend binary (19MB) properly included
+  - Backend starts automatically with GUI
+  - Full functionality restored
+
+### Changed
+- Updated extraResources configuration in package.json
+- Backend binary copied as `taminator-service` (what service-manager expects)
+- Removed non-existent `dist/taminator-service` reference
+
+### Verified
+- ✅ JIRA integration works
+- ✅ Intelligence engine functional
+- ✅ Report operations work
+- ✅ All backend API endpoints available
+- ✅ Production-ready release
+
+---
+
 ## [2.1.2] - 2025-11-14
 
 ### 🚀 CI/CD & Packaging Release
