@@ -87,7 +87,7 @@ firefox http://localhost:8080
 ```
 
 **What gets installed:**
-- Container image: `taminator-intelligence:2.1.2`
+- Container image: `taminator-intelligence:2.1.3`
 - Systemd service: `~/.config/systemd/user/taminator-intelligence.service`
 - Database: `~/.local/share/taminator/intelligence.db`
 - Logs: `journalctl --user -u taminator-intelligence`
@@ -98,29 +98,29 @@ firefox http://localhost:8080
 
 **Best for:** Linux desktop users, occasional use, no container setup
 
-!!! warning "v2.1.2 Preview Release"
-    Current version is a **preview release**. Backend service not bundled in AppImage.
-    Wait for v2.1.3 for full functionality, or use container deployment instead.
+!!! success "v2.1.3 Production Ready"
+    **Full functionality** - Backend service is now bundled in the AppImage!
+    No separate backend installation required.
 
 #### Step 1: Download
 
 1. **Connect to Red Hat VPN** (required)
 2. Go to **[GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases)**
 3. Download latest AppImage:
-   - `Taminator-2.1.2.AppImage` (x86_64)
+   - `Taminator-2.1.3.AppImage` (x86_64, 136 MB)
 
 #### Step 2: Make Executable and Run
 
 ```bash
 # Make executable
-chmod +x Taminator-2.1.2.AppImage
+chmod +x Taminator-2.1.3.AppImage
 
 # Run
-./Taminator-2.1.2.AppImage
+./Taminator-2.1.3.AppImage
 
 # Optional: Move to Applications
 mkdir -p ~/Applications
-mv Taminator-2.1.2.AppImage ~/Applications/
+mv Taminator-2.1.3.AppImage ~/Applications/
 ```
 
 #### Step 3: (Optional) Desktop Integration
@@ -133,7 +133,7 @@ Version=1.0
 Type=Application
 Name=TAMINATOR
 Comment=AI-Augmented TAM Assistant
-Exec=/home/YOUR_USERNAME/Applications/Taminator-2.1.2.AppImage
+Exec=/home/YOUR_USERNAME/Applications/Taminator-2.1.3.AppImage
 Icon=taminator
 Terminal=false
 Categories=Development;Utility;
@@ -149,14 +149,18 @@ update-desktop-database ~/.local/share/applications/
 
 **Best for:** Mac users
 
-!!! warning "v2.1.2 Preview Release"
-    Current version is a **preview release**. Backend service not bundled.
-    Wait for v2.1.3 for full functionality.
+!!! warning "v2.1.2 Available (Preview)"
+    **macOS is currently at v2.1.2** (backend not bundled).
+    
+    - ✅ Linux v2.1.3: Full functionality (backend bundled)
+    - ⏳ macOS v2.1.3: Coming in v2.2.0
+    
+    For now, use v2.1.2 DMG or wait for v2.2.0 for full macOS support.
 
 #### Step 1: Download
 
 1. **Connect to Red Hat VPN** (required)
-2. Go to **[GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases)**
+2. Go to **[GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases/v2.1.2)**
 3. Download DMG:
    - `Taminator-2.1.2.dmg` (Universal)
 
@@ -185,11 +189,11 @@ open Taminator-2.1.2.dmg
 **Best for:** Windows users
 
 !!! warning "Windows Not Available"
-    **Windows builds are not available for v2.1.2.**
+    **Windows builds are not available yet.**
     
-    - ✅ Linux: Available
-    - ✅ macOS: Available
-    - ⏳ Windows: Coming in v2.1.3
+    - ✅ Linux v2.1.3: Available (full functionality)
+    - ✅ macOS v2.1.2: Available (preview)
+    - ⏳ Windows: Coming in v2.2.0
     
     Check [GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases) for updates.
 
@@ -197,11 +201,11 @@ open Taminator-2.1.2.dmg
 
 1. **Connect to Red Hat VPN** (required)
 2. Go to **[GitLab CEE Releases](https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases)**
-3. Download: `Taminator Setup 2.1.2.exe` (when available)
+3. Download: `Taminator Setup 2.2.0.exe` (when available)
 
 #### Step 2: Install
 
-1. Run `Taminator Setup 2.1.2.exe`
+1. Run `Taminator Setup 2.2.0.exe` (when available)
 2. Follow installation wizard
 3. Choose installation directory
 4. Create desktop shortcut (optional)
@@ -285,7 +289,7 @@ podman --version  # Should be 4.0+
 
 # Try rebuilding
 cd ~/taminator
-podman build -t taminator-intelligence:2.1.2 -f Containerfile .
+podman build -t taminator-intelligence:2.1.3 -f Containerfile .
 
 # Check logs for specific errors
 ```
@@ -299,10 +303,10 @@ sudo dnf install fuse fuse-libs  # RHEL/Fedora
 sudo apt install fuse libfuse2   # Ubuntu
 
 # Check permissions
-chmod +x Taminator-2.1.2.AppImage
+chmod +x Taminator-2.1.3.AppImage
 
 # Run with --appimage-extract-and-run (workaround)
-./Taminator-2.1.2.AppImage --appimage-extract-and-run
+./Taminator-2.1.3.AppImage --appimage-extract-and-run
 ```
 
 ### macOS "Unidentified Developer"
