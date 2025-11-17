@@ -54,7 +54,7 @@
 Or via API:
 ```bash
 curl -X PUT \
-  -H "Authorization: token ***REMOVED***eG2q3" \
+  -H "Authorization: token YOUR_GITHUB_TOKEN" \
   -H "Accept: application/vnd.github.v3+json" \
   https://api.github.com/repos/thebyrdman-git/taminator/pages \
   -d '{"https_enforced":true}'
@@ -319,6 +319,7 @@ Professional documentation site for TAMINATOR with:
 **Powered By:** MkDocs Material + GitHub Pages + Cloudflare
 
 🎯 **Mission Accomplished!**
+
 
 
 
