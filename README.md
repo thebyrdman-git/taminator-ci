@@ -1,4 +1,4 @@
-# TAMINATOR v2.1.2 - AI-Augmented TAM Assistant 🧠
+# TAMINATOR v2.1.3 - AI-Augmented TAM Assistant 🧠
 
 **The Skynet TAMs Actually Want**
 
