@@ -2,10 +2,10 @@
 
 Official release artifacts for TAMINATOR.
 
-## Current Release: v2.1.2
+## Current Release: v2.1.3
 
-**Release Date:** 2025-11-14  
-**Type:** CI/CD & Automation Preview Release
+**Release Date:** 2025-11-16  
+**Type:** Backend Bundling Release - Production Ready
 
 ### Download
 
@@ -14,58 +14,49 @@ Official release artifacts for TAMINATOR.
 - Requires Red Hat VPN connection
 
 **Local Artifacts (this repo):**
-- [Taminator-2.1.2.AppImage](v2.1.2/Taminator-2.1.2.AppImage) (135 MB)
-- [Taminator-2.1.2.dmg](v2.1.2/Taminator-2.1.2.dmg) (130 MB)
+- [Taminator-2.1.3.AppImage](v2.1.3/Taminator-2.1.3.AppImage) (136 MB) - **Linux x86_64 - Full Functionality**
 
-**Checksums:** [SHA256SUMS](v2.1.2/SHA256SUMS)
+**Checksums:** [SHA256SUMS](v2.1.3/SHA256SUMS)
 
-### What's New in v2.1.2
+### What's New in v2.1.3
 
-🚀 **Complete CI/CD Automation:**
-- 5-stage automated pipeline (lint → test → build → deploy → release)
-- Multi-platform builds (Linux, macOS) - Windows coming in v2.1.3
-- One-command releases (`git push origin v2.1.2`)
-- 20-minute automated releases
+✅ **Full Functionality - Production Ready:**
+- Backend service (19 MB) now bundled in AppImage
+- Backend starts automatically with GUI
+- Full JIRA integration functional
+- Intelligence engine operational
+- No separate installation required
 
-✨ **Perfect Code Quality:**
-- Eliminated ALL 61 ESLint warnings → 0
-- Pre-commit hooks enforcing quality
-- 100% clean codebase
+🎯 **This Fixes v2.1.2:**
+- v2.1.2: GUI only (backend separate)
+- v2.1.3: **Complete application** (backend included)
+- Zero configuration needed
 
-🧪 **Testing Infrastructure:**
-- Jest framework configured
-- 30% coverage threshold set
-- Automated test execution in CI/CD
+📦 **What's Included:**
+- Electron GUI (117 MB)
+- Python backend service (19 MB)
+- All dependencies bundled
+- Single executable
 
-⚠️ **Preview Release Notice:**
-- Backend service not bundled in AppImage
-- GUI works, backend API unavailable
-- Fix coming in v2.1.3
-
-**See:** [RELEASE-NOTES-v2.1.2.md](../RELEASE-NOTES-v2.1.2.md) for full details.
+**See:** [RELEASE-NOTES-v2.1.3.md](../RELEASE-NOTES-v2.1.3.md) for full details.
 
 ### Installation
 
-**Linux (AppImage):**
+**Linux (AppImage) - v2.1.3:**
 ```bash
 # Connect to Red Hat VPN first
 # Download from GitLab CEE Releases page
 # Or use local artifact:
-chmod +x Taminator-2.1.2.AppImage
-./Taminator-2.1.2.AppImage
+chmod +x Taminator-2.1.3.AppImage
+./Taminator-2.1.3.AppImage
 ```
 
-**macOS (DMG):**
-```bash
-# Connect to Red Hat VPN first
-# Download from GitLab CEE Releases page
-# Or use local artifact:
-open Taminator-2.1.2.dmg
-# Drag to Applications
-# First run: Right-click → Open (bypass Gatekeeper)
-```
+**macOS & Windows:**
+- macOS v2.1.2 (preview): Available at [v2.1.2 release](v2.1.2/)
+- macOS v2.1.3: Coming in v2.2.0
+- Windows: Coming in v2.2.0
 
-**Note:** v2.1.2 is a preview release. Backend service not bundled. Wait for v2.1.3 for full functionality.
+**Note:** v2.1.3 is production-ready with full functionality (backend bundled).
 
 **Download from:** https://gitlab.cee.redhat.com/jbyrd/taminator/-/releases (requires VPN)
 
@@ -76,8 +67,8 @@ open Taminator-2.1.2.dmg
 sha256sum -c SHA256SUMS
 
 # Or verify manually
-sha256sum Taminator-2.1.2.AppImage
-# Should match: e4c5073857b1a3d66bc2ee1df7e5f2ebc77d16d21cf9e2448f11aeee859ad844
+sha256sum Taminator-2.1.3.AppImage
+# Should match: 74a95655963a14147bba44feff75c06e7e84fcd00486928b586fee9498c29586
 ```
 
 ### System Requirements
@@ -97,8 +88,7 @@ sha256sum Taminator-2.1.2.AppImage
 ### Documentation
 
 - **Website:** https://taminator.dev
-- [Release Notes](../RELEASE-NOTES-v2.1.2.md)
-- [Known Issues](../KNOWN-ISSUES-v2.1.2.md)
+- [Release Notes](../RELEASE-NOTES-v2.1.3.md)
 - [Build Strategy](../BUILD-STRATEGY.md)
 - [Changelog](../CHANGELOG.md)
 
@@ -110,6 +100,7 @@ sha256sum Taminator-2.1.2.AppImage
 
 ### Previous Releases
 
+- [v2.1.2](v2.1.2/) - CI/CD & Automation (Preview)
 - [v2.1.1](../RELEASE-NOTES-v2.1.1.md) - Technical Debt Resolution
 - [v2.0.0](v2.0.0/) - AI Intelligence Integration
 - [v1.10.x](v1.10.1/) - Earlier releases
