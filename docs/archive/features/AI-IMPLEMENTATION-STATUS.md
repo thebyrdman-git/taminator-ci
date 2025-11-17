@@ -168,7 +168,7 @@ tam-rfe compose "Test Customer" \
 ```bash
 # LiteLLM Configuration
 export LITELLM_BASE_URL="http://localhost:4000/v1"
-export LITELLM_API_KEY="***REMOVED***"
+export LITELLM_API_KEY="sk-pai-hatter-red-hat-ai-models-2025"
 
 # Model Selection
 export TAMINATOR_AI_MODEL="granite-3.2-8b-instruct"
