@@ -1,11 +1,8 @@
 name: Build Taminator v1.10.1+
 
 on:
-  push:
-    branches: [ main ]
-    # Tags are handled by release.yml
-  pull_request:
-    branches: [ main ]
+  # Push/PR disabled: use Build Taminator App workflow instead. This workflow
+  # requires build-cli-binary.sh and is only for legacy manual builds.
   workflow_dispatch:
 
 jobs:

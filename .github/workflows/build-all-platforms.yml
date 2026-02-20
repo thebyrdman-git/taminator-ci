@@ -1,10 +1,8 @@
 name: Build Taminator v2.0 - All Platforms
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # Push/PR disabled: use Build Taminator App workflow for hosted Linux/macOS.
+  # This workflow uses self-hosted runners and taminator-service.spec.
   workflow_dispatch:
 
 jobs:
