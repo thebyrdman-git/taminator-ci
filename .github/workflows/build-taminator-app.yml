@@ -1,0 +1,69 @@
+# Copy this file to taminator-ci repo as .github/workflows/build-taminator-app.yml
+# taminator-ci repo layout: gui/, web/, tam-rfe, web_server.py, src/ at repo root.
+# Builds the same one-window web UI app (Electron shell) for Linux x86_64 and macOS.
+# Artifacts are downloaded from the Actions run and manually uploaded to GitLab.
+
+name: Build Taminator App
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: Linux x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: gui
+        run: npm ci
+
+      - name: Build Linux (AppImage, deb, rpm)
+        working-directory: gui
+        run: npm run build:linux
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: taminator-linux-x64
+          path: |
+            gui/dist/*.AppImage
+            gui/dist/*.deb
+            gui/dist/*.rpm
+          retention-days: 30
+
+  build-mac:
+    name: macOS (x64 + arm64)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        working-directory: gui
+        run: npm ci
+
+      - name: Build macOS (DMG)
+        working-directory: gui
+        run: npm run build:mac
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: taminator-macos
+          path: gui/dist/*.dmg
+          retention-days: 30
